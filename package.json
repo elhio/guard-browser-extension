@@ -12,7 +12,8 @@
     "zip": "wxt zip",
     "zip:firefox": "wxt zip -b firefox",
     "compile": "tsc --noEmit",
-    "postinstall": "wxt prepare"
+    "postinstall": "wxt prepare",
+    "test:page": "npx --yes serve@latest -l 5500 ."
   },
   "dependencies": {
     "@contentauth/c2pa-web": "^0.12.0",

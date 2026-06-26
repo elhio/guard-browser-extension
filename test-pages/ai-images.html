@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Guard — Testseite für Bild-Scan &amp; C2PA/KI-Erkennung</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: 960px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+        color: #1a1a1a;
+      }
+      h1 {
+        font-size: 1.4rem;
+      }
+      p.intro {
+        color: #444;
+      }
+      .gallery {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 1.5rem;
+        margin-top: 2rem;
+      }
+      figure {
+        margin: 0;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 0.75rem;
+      }
+      figure img {
+        max-width: 100%;
+        max-height: 240px;
+        object-fit: contain;
+        display: block;
+        margin: 0 auto 0.75rem;
+        background: #f4f4f4;
+      }
+      figcaption strong {
+        display: block;
+      }
+      figcaption .expected {
+        color: #555;
+        font-size: 0.9rem;
+      }
+      code {
+        background: #f0f0f0;
+        padding: 0.1rem 0.3rem;
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Guard — Testseite für Bild-Scan &amp; C2PA/KI-Erkennung</h1>
+    <p class="intro">
+      Diese Seite bettet die Beispielbilder aus <code>assets/test-data/</code> ein, damit die Extension sie wie
+      auf einer echten Webseite scannen kann. Lade die Extension (<code>npm run dev</code> oder ein per
+      <code>npm run build</code> gebautes Paket), öffne diese Seite, dann die DevTools-Konsole (F12) und
+      schaue nach Zeilen, die mit <code>[Guard]</code> beginnen.
+    </p>
+
+    <div class="gallery">
+      <figure>
+        <img src="/assets/test-data/hackathon_team_gen.png" alt="Von Gemini generiertes Team-Foto" />
+        <figcaption>
+          <strong>hackathon_team_gen.png</strong>
+          <span class="expected">
+            Von Google Gemini generiert. Erwartung: C2PA-Manifest vorhanden, KI-Erkennung schlägt mit hoher
+            Konfidenz an (digitalSourceType "trainedAlgorithmicMedia" und SynthID-Hinweis in der
+            Provenienzkette).
+          </span>
+        </figcaption>
+      </figure>
+
+      <figure>
+        <img src="/assets/test-data/hackathon_team_gen_GPT.png" alt="Von GPT generiertes Team-Foto" />
+        <figcaption>
+          <strong>hackathon_team_gen_GPT.png</strong>
+          <span class="expected">
+            Gleiches Motiv wie oben, aber von OpenAIs <code>gpt-image</code> generiert. Erwartung:
+            KI-Erkennung schlägt an über softwareAgent "gpt-image", claim_generator_info "OpenAI Media Service
+            API" und digitalSourceType "trainedAlgorithmicMedia". Vendor-Vergleich zur Gemini-Version oben.
+          </span>
+        </figcaption>
+      </figure>
+
+      <figure>
+        <img src="/assets/test-data/robot_futuristic_gen.png" alt="Von Gemini generierter futuristischer Roboter" />
+        <figcaption>
+          <strong>robot_futuristic_gen.png</strong>
+          <span class="expected">
+            Ebenfalls von Google Gemini generiert (gleiche Marker wie oben: trainedAlgorithmicMedia, SynthID).
+            Erwartung: KI-Erkennung schlägt mit hoher Konfidenz an. Direktes Gegenstück zu
+            <code>robot_futuristic.png</code> unten.
+          </span>
+        </figcaption>
+      </figure>
+
+      <figure>
+        <img src="/assets/test-data/robot_futuristic.png" alt="Roboter-Bild ohne Metadaten" />
+        <figcaption>
+          <strong>robot_futuristic.png</strong>
+          <span class="expected">
+            Kein C2PA-Manifest enthalten. Erwartung: <code>manifestStore: null</code>. Dient als Vergleich zur
+            generierten Version <code>robot_futuristic_gen.png</code>.
+          </span>
+        </figcaption>
+      </figure>
+
+      <figure>
+        <img src="/assets/test-data/camera.jpg" alt="Echtes Foto von einer Kamera" />
+        <figcaption>
+          <strong>camera.jpg</strong>
+          <span class="expected">
+            Echtes Foto (Pixel 5), signiert über die Truepic-SDK. Erwartung: C2PA-Manifest vorhanden, aber
+            <em>keine</em> KI-Erkennung (kein bekannter KI-Vendor, kein KI-typischer digitalSourceType).
+          </span>
+        </figcaption>
+      </figure>
+
+      <figure>
+        <img src="/assets/react.svg" alt="React-Logo ohne Metadaten" />
+        <figcaption>
+          <strong>react.svg</strong>
+          <span class="expected">Kein C2PA-Manifest enthalten. Erwartung: <code>manifestStore: null</code>.</span>
+        </figcaption>
+      </figure>
+    </div>
+  </body>
+</html>
