@@ -22,5 +22,12 @@ export default defineContentScript({
 
     console.log('[Guard] scanned images:', candidates);
     console.log('[Guard] C2PA read results:', response.results);
+
+    // Step 3: flag any image whose manifest hints at AI generation.
+    for (const result of response.results) {
+      if (result.status === 'success' && result.aiDetection.isLikelyAiGenerated) {
+        console.log('[Guard] likely AI-generated:', result.candidate.src, result.aiDetection);
+      }
+    }
   },
 });
