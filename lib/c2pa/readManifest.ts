@@ -1,8 +1,8 @@
 import { getC2pa } from './client';
 import { getManifestChain } from './manifestStore';
-import { detectAiGeneration } from './aiDetection/detectAiGeneration';
+import { detectAiGeneration } from '@/lib/c2pa/aiDetection';
 import type { C2paReadResult } from './types';
-import type { ImageCandidate } from '../images/types';
+import type { ImageCandidate } from '@/lib/images';
 
 /** Fetches a single image, reads its C2PA manifest store, and checks it for AI-generation hints. */
 export async function readManifestFor(candidate: ImageCandidate): Promise<C2paReadResult> {

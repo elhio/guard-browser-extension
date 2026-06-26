@@ -2,7 +2,7 @@ import type { Manifest } from '@contentauth/c2pa-types';
 import { AI_SIGNALS } from './signals';
 import type { AiSignalMatch } from './types';
 import { matchesKnownAiVendor } from './vendors';
-import { isAiDigitalSourceType } from './digitalSourceTypes';
+import { isAiDigitalSourceType } from '@/lib/c2pa';
 import { containsGenerativeAiMarker } from './metadataMarkers';
 import { getActions, getSoftwareAgentName } from './manifestActions';
 

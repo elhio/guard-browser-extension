@@ -1,10 +1,10 @@
-import { byHttpSource, scanPageImages, toSerializableCandidate } from '../lib/images';
+import { byHttpSource, scanPageImages, toSerializableCandidate } from '@/lib/images';
 import {
   READ_C2PA_MANIFESTS_MESSAGE,
   type ReadC2paManifestsRequest,
   type ReadC2paManifestsResponse
 } from '../lib/messaging/c2paMessages';
-import { showAiBadges } from '../lib/overlay';
+import { showAiBadges } from '@/lib/overlay';
 
 export default defineContentScript({
   matches: ['*://*/*'],

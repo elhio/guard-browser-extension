@@ -1,5 +1,5 @@
-import type { SerializableImageCandidate } from '../images/serializable';
-import type { C2paReadResult } from '../c2pa/types';
+import type { SerializableImageCandidate } from '@/lib/images';
+import type { C2paReadResult } from '@/lib/c2pa';
 
 /**
  * Content scripts send their scanned candidates to the background script with

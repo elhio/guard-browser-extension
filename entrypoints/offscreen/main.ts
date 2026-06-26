@@ -1,8 +1,8 @@
-import { readManifests } from '../../lib/c2pa';
+import { readManifests } from '@/lib/c2pa';
 import {
   isOffscreenReadC2paManifestsRequest,
   type ReadC2paManifestsResponse
-} from '../../lib/messaging/c2paMessages';
+} from '@/lib/messaging/c2paMessages.ts';
 
 // This page runs as an offscreen document so the C2PA SDK can spawn its Worker
 // (Chrome MV3's service-worker background can't) under the extension's own CSP

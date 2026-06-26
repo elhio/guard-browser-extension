@@ -1,4 +1,4 @@
-import type { C2paReadResult } from '../c2pa/types';
+import type { C2paReadResult } from '@/lib/c2pa';
 import { attachAiBadge } from './attachAiBadge';
 
 /**

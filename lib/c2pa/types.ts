@@ -1,5 +1,5 @@
 import type { ManifestStore } from '@contentauth/c2pa-types';
-import type { ImageCandidate } from '../images/types';
+import type { ImageCandidate } from '@/lib/images';
 import type { AiDetectionResult } from './aiDetection/types';
 
 export interface C2paReadSuccess {

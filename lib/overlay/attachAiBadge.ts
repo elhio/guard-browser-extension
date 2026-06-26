@@ -1,4 +1,4 @@
-import type { AiDetectionResult } from '../c2pa/aiDetection/types';
+import type { AiDetectionResult } from '@/lib/c2pa';
 import { createAiBadgeElement } from './badgeElement';
 import { positionBadgeOverElement } from './positionBadge';
 import { trackBadge } from './badgeTicker';
