@@ -30,7 +30,10 @@ export const KNOWN_AI_GENERATOR_VENDORS: readonly string[] = [
   // "Applied imperceptible SynthID watermark.") — see detectAiActionDescription.
   'gemini',
   'google generative ai',
-  'synthid'
+  'synthid',
+  // OpenAI's image model sets softwareAgent.name to "gpt-image" (its
+  // claim_generator_info name is the more obvious "OpenAI Media Service API").
+  'gpt-image'
 ];
 
 /** Returns the matched vendor fragment if `text` names a known AI generator, otherwise null. */
