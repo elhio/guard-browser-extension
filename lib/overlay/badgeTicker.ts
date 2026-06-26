@@ -33,3 +33,16 @@ export function trackBadge(host: HTMLElement, target: Element): void {
     animationFrameId = requestAnimationFrame(tick);
   }
 }
+
+/** Removes every currently tracked badge from the page (e.g. when detection is turned off). */
+export function clearAllBadges(): void {
+  for (const entry of trackedBadges) {
+    entry.host.remove();
+  }
+  trackedBadges.clear();
+
+  if (animationFrameId !== null) {
+    cancelAnimationFrame(animationFrameId);
+    animationFrameId = null;
+  }
+}

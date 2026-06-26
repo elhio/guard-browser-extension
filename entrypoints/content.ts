@@ -5,7 +5,8 @@ import {
   type ReadC2paManifestsRequest,
   type ReadC2paManifestsResponse
 } from '../lib/messaging/c2paMessages';
-import { showAiBadges } from '@/lib/overlay';
+import { clearAllBadges, showAiBadges } from '@/lib/overlay';
+import { isGuardEnabled, onGuardEnabledChange } from '@/lib/settings';
 
 /** Steps 2-4 of the pipeline for one batch of newly discovered image candidates. */
 async function processCandidates(candidates: ImageCandidate[]): Promise<void> {
@@ -37,14 +38,39 @@ async function processCandidates(candidates: ImageCandidate[]): Promise<void> {
 
 export default defineContentScript({
   matches: ['*://*/*'],
-  main() {
-    // Step 1: find the images on the page we care about, and keep finding
-    // more — many pages (image search results, infinite scroll, ...) render
-    // most of their images well after this script first runs.
-    watchPageImages({
-      filters: [byHttpSource()],
-      onNewCandidates: (candidates) => {
-        void processCandidates(candidates);
+  async main() {
+    let stopWatching: (() => void) | undefined;
+
+    function start(): void {
+      if (stopWatching) return; // already running
+
+      // Step 1: find the images on the page we care about, and keep finding
+      // more — many pages (image search results, infinite scroll, ...) render
+      // most of their images well after this script first runs.
+      stopWatching = watchPageImages({
+        filters: [byHttpSource()],
+        onNewCandidates: (candidates) => {
+          void processCandidates(candidates);
+        }
+      });
+    }
+
+    function stop(): void {
+      stopWatching?.();
+      stopWatching = undefined;
+      clearAllBadges();
+    }
+
+    if (await isGuardEnabled()) {
+      start();
+    }
+
+    // React live to the popup's on/off toggle, without needing a page reload.
+    onGuardEnabledChange((enabled) => {
+      if (enabled) {
+        start();
+      } else {
+        stop();
       }
     });
   },

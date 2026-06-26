@@ -1,34 +1,44 @@
-import { useState } from 'react';
-import reactLogo from '@/assets/react.svg';
-import wxtLogo from '/wxt.svg';
+import { useEffect, useState } from 'react';
+import guardLogo from '@/assets/guard_logo.jpg';
+import { isGuardEnabled, setGuardEnabled } from '@/lib/settings';
 import './App.css';
 
 function App() {
-  const [count, setCount] = useState(0);
+  const [enabled, setEnabled] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    void isGuardEnabled().then(setEnabled);
+  }, []);
+
+  async function toggleEnabled(): Promise<void> {
+    const next = !enabled;
+    setEnabled(next);
+    await setGuardEnabled(next);
+  }
 
   return (
-    <>
-      <div>
-        <a href="https://wxt.dev" target="_blank">
-          <img src={wxtLogo} className="logo" alt="WXT logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <div className="popup">
+      <img src={guardLogo} className="logo" alt="Guard logo" />
+      <h1>GUARD</h1>
+      <p className="subtitle">AI CONTENT DETECTOR</p>
+
+      <div className="status-row">
+        <span>Status:</span>
+        <span className={`status-value ${enabled ? 'on' : 'off'}`}>
+          {enabled === null ? '…' : enabled ? 'ACTIVE' : 'INACTIVE'}
+        </span>
+        <span className={`status-dot ${enabled ? 'on' : 'off'}`} />
       </div>
-      <h1>WXT + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the WXT and React logos to learn more
-      </p>
-    </>
+
+      <button
+        type="button"
+        className={`toggle-button ${enabled ? 'on' : 'off'}`}
+        onClick={toggleEnabled}
+        disabled={enabled === null}
+      >
+        {enabled ? 'Bild-Erkennung deaktivieren' : 'Bild-Erkennung aktivieren'}
+      </button>
+    </div>
   );
 }
 
