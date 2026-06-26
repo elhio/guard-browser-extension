@@ -4,6 +4,7 @@ import {
   type ReadC2paManifestsRequest,
   type ReadC2paManifestsResponse
 } from '../lib/messaging/c2paMessages';
+import { showAiBadges } from '../lib/overlay';
 
 export default defineContentScript({
   matches: ['*://*/*'],
@@ -29,5 +30,11 @@ export default defineContentScript({
         console.log('[Guard] likely AI-generated:', result.candidate.src, result.aiDetection);
       }
     }
+
+    // Step 4: overlay a badge on every image flagged as likely AI-generated.
+    // The DOM <img> element doesn't survive the round trip through the
+    // background script, so look it up again here by src.
+    const elementsBySrc = new Map(candidates.map((candidate) => [candidate.src, candidate.element]));
+    showAiBadges(response.results, elementsBySrc);
   },
 });
