@@ -3,162 +3,254 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Guard — Testseite für Bild-Scan &amp; C2PA/KI-Erkennung</title>
+    <title>Guard Daily — Testseite für Bild-Scan &amp; C2PA/KI-Erkennung</title>
     <style>
+      * {
+        box-sizing: border-box;
+      }
       body {
-        font-family: system-ui, sans-serif;
-        max-width: 960px;
-        margin: 2rem auto;
-        padding: 0 1rem;
+        font-family: 'Georgia', 'Times New Roman', serif;
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 0 1rem 3rem;
         color: #1a1a1a;
+        background: #fafaf8;
       }
-      h1 {
-        font-size: 1.4rem;
+
+      .masthead {
+        border-bottom: 4px solid #1a1a1a;
+        padding: 1.5rem 0 0.75rem;
+        margin-bottom: 0.5rem;
       }
-      p.intro {
-        color: #444;
+      .masthead .kicker {
+        font-family: system-ui, sans-serif;
+        font-size: 0.75rem;
+        letter-spacing: 0.15em;
+        color: #b91c1c;
+        font-weight: 700;
+        text-transform: uppercase;
       }
-      .gallery {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-        gap: 1.5rem;
-        margin-top: 2rem;
+      .masthead h1 {
+        margin: 0.2rem 0 0.3rem;
+        font-size: 2.6rem;
+        letter-spacing: -0.01em;
       }
-      figure {
-        margin: 0;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        padding: 0.75rem;
-      }
-      figure img {
-        max-width: 100%;
-        max-height: 240px;
-        object-fit: contain;
-        display: block;
-        margin: 0 auto 0.75rem;
-        background: #f4f4f4;
-      }
-      figcaption strong {
-        display: block;
-      }
-      figcaption .expected {
+      .masthead .dateline {
+        font-family: system-ui, sans-serif;
+        font-size: 0.8rem;
         color: #555;
-        font-size: 0.9rem;
+        border-top: 1px solid #ccc;
+        padding-top: 0.4rem;
       }
-      code {
-        background: #f0f0f0;
+
+      .editorial-note {
+        font-family: system-ui, sans-serif;
+        font-size: 0.82rem;
+        color: #444;
+        background: #f0eee8;
+        border-left: 3px solid #b91c1c;
+        padding: 0.75rem 1rem;
+        margin: 1rem 0 2rem;
+      }
+      .editorial-note code {
+        background: #e4e1d8;
         padding: 0.1rem 0.3rem;
         border-radius: 4px;
+        font-size: 0.8rem;
+      }
+
+      .articles {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 2rem;
+      }
+
+      article {
+        display: flex;
+        flex-direction: column;
+      }
+      article img {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+        background: #ddd;
+        margin-bottom: 0.6rem;
+      }
+      .eyebrow {
+        font-family: system-ui, sans-serif;
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: #b91c1c;
+        margin-bottom: 0.25rem;
+      }
+      article h2 {
+        font-size: 1.25rem;
+        line-height: 1.25;
+        margin: 0 0 0.4rem;
+      }
+      article p.teaser {
+        font-size: 0.95rem;
+        line-height: 1.4;
+        color: #333;
+        margin: 0 0 0.6rem;
+      }
+      .credit {
+        font-family: system-ui, sans-serif;
+        font-size: 0.72rem;
+        line-height: 1.4;
+        color: #777;
+        border-top: 1px solid #ddd;
+        padding-top: 0.5rem;
+        margin-top: auto;
+      }
+      .credit strong {
+        color: #555;
+      }
+      .credit code {
+        background: #efefef;
+        padding: 0.05rem 0.25rem;
+        border-radius: 3px;
       }
     </style>
   </head>
   <body>
-    <h1>Guard — Testseite für Bild-Scan &amp; C2PA/KI-Erkennung</h1>
-    <p class="intro">
-      Diese Seite bettet die Beispielbilder aus <code>assets/test-data/</code> ein, damit die Extension sie wie
-      auf einer echten Webseite scannen kann. Lade die Extension (<code>npm run dev</code> oder ein per
-      <code>npm run build</code> gebautes Paket), öffne diese Seite, dann die DevTools-Konsole (F12) und
-      schaue nach Zeilen, die mit <code>[Guard]</code> beginnen.
+    <header class="masthead">
+      <div class="kicker">Sonderausgabe · Testumgebung</div>
+      <h1>Guard Daily</h1>
+      <div class="dateline">Lokalteil · Technik · Vermischtes</div>
+    </header>
+
+    <p class="editorial-note">
+      Diese Seite simuliert eine Nachrichtenseite mit mehreren Artikelvorschauen, um die Extension wie auf einer
+      echten Webseite zu testen. Die Bilder stammen aus <code>assets/test-data/</code>. Lade die Extension
+      (<code>npm run dev</code> oder ein per <code>npm run build</code> gebautes Paket), öffne diese Seite, dann
+      die DevTools-Konsole (F12) und schaue nach Zeilen, die mit <code>[Guard]</code> beginnen. Die kleine
+      Quellenangabe unter jedem Artikel zeigt, was die Erkennung jeweils liefern sollte.
     </p>
 
-    <div class="gallery">
-      <figure>
-        <img src="/assets/test-data/hackathon_team_gen.png" alt="Von Gemini generiertes Team-Foto" />
-        <figcaption>
-          <strong>hackathon_team_gen.png</strong>
-          <span class="expected">
-            Von Google Gemini generiert. Erwartung: C2PA-Manifest vorhanden, KI-Erkennung schlägt mit hoher
-            Konfidenz an (digitalSourceType "trainedAlgorithmicMedia" und SynthID-Hinweis in der
-            Provenienzkette).
-          </span>
-        </figcaption>
-      </figure>
+    <div class="articles">
+      <article>
+        <img src="/assets/test-data/hackathon_team_gen.png" alt="Team bei einem Hackathon" />
+        <div class="eyebrow">Technik</div>
+        <h2>Regionales Team gewinnt 48-Stunden-Hackathon</h2>
+        <p class="teaser">
+          Mit einer Idee aus der Nacht zum Sonntag setzte sich ein junges Entwicklerteam gegen die Konkurrenz durch
+          und überzeugte die Jury mit einem funktionsfähigen Prototyp.
+        </p>
+        <div class="credit">
+          <strong>Bildquelle:</strong> KI-generiert (Google Gemini) — <code>hackathon_team_gen.png</code>.
+          Erwartung: C2PA-Manifest vorhanden, KI-Erkennung schlägt mit hoher Konfidenz an (digitalSourceType
+          "trainedAlgorithmicMedia", SynthID-Hinweis in der Provenienzkette).
+        </div>
+      </article>
 
-      <figure>
-        <img src="/assets/test-data/hackathon_team_gen_GPT.png" alt="Von GPT generiertes Team-Foto" />
-        <figcaption>
-          <strong>hackathon_team_gen_GPT.png</strong>
-          <span class="expected">
-            Gleiches Motiv wie oben, aber von OpenAIs <code>gpt-image</code> generiert. Erwartung:
-            KI-Erkennung schlägt an über softwareAgent "gpt-image", claim_generator_info "OpenAI Media Service
-            API" und digitalSourceType "trainedAlgorithmicMedia". Vendor-Vergleich zur Gemini-Version oben.
-          </span>
-        </figcaption>
-      </figure>
+      <article>
+        <img src="/assets/test-data/hackathon_team_gen_GPT.png" alt="Team bei einem Hackathon, zweite Aufnahme" />
+        <div class="eyebrow">Technik</div>
+        <h2>Hackathon-Gewinner im Porträt: So kam das Team zur Lösung</h2>
+        <p class="teaser">
+          Im Nachgang zum Wettbewerb erzählt das Team, wie die Idee entstand und welche Hürden in der Nacht zu
+          meistern waren.
+        </p>
+        <div class="credit">
+          <strong>Bildquelle:</strong> KI-generiert (OpenAI <code>gpt-image</code>) —
+          <code>hackathon_team_gen_GPT.png</code>. Gleiches Motiv wie oben, anderer Vendor. Erwartung:
+          KI-Erkennung schlägt an über softwareAgent "gpt-image", claim_generator_info "OpenAI Media Service API"
+          und digitalSourceType "trainedAlgorithmicMedia".
+        </div>
+      </article>
 
-      <figure>
-        <img src="/assets/test-data/robot_futuristic_gen.png" alt="Von Gemini generierter futuristischer Roboter" />
-        <figcaption>
-          <strong>robot_futuristic_gen.png</strong>
-          <span class="expected">
-            Ebenfalls von Google Gemini generiert (gleiche Marker wie oben: trainedAlgorithmicMedia, SynthID).
-            Erwartung: KI-Erkennung schlägt mit hoher Konfidenz an. Direktes Gegenstück zu
-            <code>robot_futuristic.png</code> unten.
-          </span>
-        </figcaption>
-      </figure>
+      <article>
+        <img src="/assets/test-data/robot_futuristic_gen.png" alt="Futuristischer Roboter" />
+        <div class="eyebrow">Wissenschaft</div>
+        <h2>Neue Generation von Service-Robotern vorgestellt</h2>
+        <p class="teaser">
+          Hersteller zeigen auf einer Fachmesse, wie weit autonome Assistenzsysteme inzwischen entwickelt sind —
+          und was das für den Alltag bedeuten könnte.
+        </p>
+        <div class="credit">
+          <strong>Bildquelle:</strong> KI-generiert (Google Gemini) — <code>robot_futuristic_gen.png</code>.
+          Gleiche Marker wie oben (trainedAlgorithmicMedia, SynthID). Erwartung: hohe Konfidenz. Direktes
+          Gegenstück zum Foto rechts.
+        </div>
+      </article>
 
-      <figure>
-        <img src="/assets/test-data/robot_futuristic.png" alt="Roboter-Bild ohne Metadaten" />
-        <figcaption>
-          <strong>robot_futuristic.png</strong>
-          <span class="expected">
-            Kein C2PA-Manifest enthalten. Erwartung: <code>manifestStore: null</code>. Dient als Vergleich zur
-            generierten Version <code>robot_futuristic_gen.png</code>.
-          </span>
-        </figcaption>
-      </figure>
+      <article>
+        <img src="/assets/test-data/robot_futuristic.png" alt="Roboter-Illustration ohne Metadaten" />
+        <div class="eyebrow">Wissenschaft</div>
+        <h2>Robotik-Forschung: Woran Teams aktuell arbeiten</h2>
+        <p class="teaser">
+          Ein Überblick über laufende Projekte zeigt, wie unterschiedlich die Ansätze in der Branche derzeit sind.
+        </p>
+        <div class="credit">
+          <strong>Bildquelle:</strong> <code>robot_futuristic.png</code>. Kein C2PA-Manifest enthalten. Erwartung:
+          <code>manifestStore: null</code>. Dient als Vergleich zur generierten Version links.
+        </div>
+      </article>
 
-      <figure>
-        <img src="/assets/test-data/girls_ice_gen_gemini.png" alt="Von Gemini generiertes Eislauf-Motiv" />
-        <figcaption>
-          <strong>girls_ice_gen_gemini.png</strong>
-          <span class="expected">
-            Von Google Gemini generiert (gleiche Marker wie oben: trainedAlgorithmicMedia, SynthID, digitalsourcetype/composite).
-            Erwartung: KI-Erkennung schlägt mit hoher Konfidenz an.
-          </span>
-        </figcaption>
-      </figure>
+      <article>
+        <img src="/assets/test-data/girls_ice_gen_gemini.png" alt="Eislaufszene" />
+        <div class="eyebrow">Sport</div>
+        <h2>Eissaison startet früher als erwartet</h2>
+        <p class="teaser">
+          Wegen der kühlen Witterung öffnen mehrere Eisbahnen in der Region schon jetzt ihre Tore für die neue
+          Saison.
+        </p>
+        <div class="credit">
+          <strong>Bildquelle:</strong> KI-generiert (Google Gemini) — <code>girls_ice_gen_gemini.png</code>.
+          Gleiche Marker wie oben (trainedAlgorithmicMedia, SynthID, digitalsourcetype/composite). Erwartung: hohe
+          Konfidenz.
+        </div>
+      </article>
 
-      <figure>
-        <img src="/assets/test-data/girl_bikini_1_gen_stable.png" alt="Von Stable Diffusion generiertes Motiv 1" />
-        <figcaption>
-          <strong>girl_bikini_1_gen_stable.png</strong>
-          <span class="expected">
-            Von Stable Diffusion generiert, aber <em>komplett ohne</em> eingebettete Metadaten (kein C2PA, kein
-            EXIF/XMP — geprüft per <code>exifr</code>: nur das PNG-IHDR-Chunk ist vorhanden). Einziges Signal:
-            1024×1024 ist eine typische KI-Bildgröße (Konfidenz nur 25%). Zeigt die Grenze
-            metadatenbasierter Erkennung bei "bereinigten" Bildern.
-          </span>
-        </figcaption>
-      </figure>
+      <article>
+        <img src="/assets/test-data/girl_bikini_1_gen_stable.png" alt="Sommerliches Strandmotiv 1" />
+        <div class="eyebrow">Lifestyle</div>
+        <h2>Sommer-Trends 2026: Was am Strand getragen wird</h2>
+        <p class="teaser">
+          Von klassischen Schnitten bis zu auffälligen Mustern — ein Blick auf die Looks dieser Saison.
+        </p>
+        <div class="credit">
+          <strong>Bildquelle:</strong> KI-generiert (Stable Diffusion) — <code>girl_bikini_1_gen_stable.png</code>,
+          aber komplett ohne eingebettete Metadaten (kein C2PA, kein EXIF/XMP — per <code>exifr</code> geprüft: nur
+          das PNG-IHDR-Chunk vorhanden). Einziges Signal: 1024×1024 ist eine typische KI-Bildgröße (25%
+          Konfidenz). Zeigt die Grenze metadatenbasierter Erkennung bei "bereinigten" Bildern.
+        </div>
+      </article>
 
-      <figure>
-        <img src="/assets/test-data/girl_bikini_2_gen_stable_pea.jpg" alt="Von Stable Diffusion generiertes Motiv 2 (komprimiert)" />
-        <figcaption>
-          <strong>girl_bikini_2_gen_stable_pea.jpg</strong>
-          <span class="expected">
-            Gleiches Stable-Diffusion-Motiv, aber als JPEG re-encodiert (1024×1024, kein C2PA). Enthält nur ein
-            JFIF-Segment und ein generisches sRGB-ICC-Profil ("Google Inc. 2016") — kein EXIF/IFD0-Segment, daher
-            greift hier nicht einmal die Größenheuristik (die braucht <code>ExifImageWidth</code>/<code>ImageWidth</code>
-            aus EXIF, die bei diesem JPEG fehlen). Einziges (sehr schwaches) Signal: JFIF-Marker vorhanden (10%).
-            Härtester Fall im Test-Set für die metadatenbasierte Erkennung.
-          </span>
-        </figcaption>
-      </figure>
+      <article>
+        <img src="/assets/test-data/girl_bikini_2_gen_stable_pea.jpg" alt="Sommerliches Strandmotiv 2" />
+        <div class="eyebrow">Lifestyle</div>
+        <h2>Editorial: Bildbearbeitung im Wandel der Zeit</h2>
+        <p class="teaser">
+          Webbasierte Editoren machen professionelle Bildbearbeitung heute für jeden zugänglich — ein Streifzug
+          durch die wichtigsten Werkzeuge.
+        </p>
+        <div class="credit">
+          <strong>Bildquelle:</strong> Ursprünglich Stable Diffusion, anschließend über den Web-Editor Photopea
+          exportiert — <code>girl_bikini_2_gen_stable_pea.jpg</code>. EXIF zeigt jetzt
+          <code>Software: "Photopea Editor"</code> (kein bekannter KI-Vendor) und 2949×2949 (keine typische
+          KI-Größe mehr). Kein C2PA. Erwartung: praktisch kein Signal mehr — die Editor-Weiterverarbeitung hat die
+          ursprüngliche KI-Spur verwischt.
+        </div>
+      </article>
 
-      <figure>
-        <img src="/assets/test-data/camera.jpg" alt="Echtes Foto von einer Kamera" />
-        <figcaption>
-          <strong>camera.jpg</strong>
-          <span class="expected">
-            Echtes Foto (Pixel 5), signiert über die Truepic-SDK. Erwartung: C2PA-Manifest vorhanden, aber
-            <em>keine</em> KI-Erkennung (kein bekannter KI-Vendor, kein KI-typischer digitalSourceType). Die
-            EXIF-Kamerasignale (Make/Model/Linse/Aufnahmeeinstellungen) sollten zusätzlich den schwachen
-            "echte Kamera-Aufnahme"-Gegenbeweis liefern.
-          </span>
-        </figcaption>
-      </figure>
+      <article>
+        <img src="/assets/test-data/camera.jpg" alt="Leserfoto aus der Region" />
+        <div class="eyebrow">Leserfotos</div>
+        <h2>Leserfoto der Woche: Eine Momentaufnahme aus der Region</h2>
+        <p class="teaser">
+          Diese Woche erreichte uns ein Schnappschuss, eingesendet direkt vom Smartphone einer Leserin.
+        </p>
+        <div class="credit">
+          <strong>Bildquelle:</strong> Echtes Foto (Pixel 5), signiert über die Truepic-SDK —
+          <code>camera.jpg</code>. Erwartung: C2PA-Manifest vorhanden, aber keine KI-Erkennung. Die
+          EXIF-Kamerasignale (Make/Model/Linse/Aufnahmeeinstellungen) sollten zusätzlich den schwachen "echte
+          Kamera-Aufnahme"-Gegenbeweis liefern.
+        </div>
+      </article>
     </div>
   </body>
 </html>
