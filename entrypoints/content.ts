@@ -5,8 +5,8 @@ import {
   type ReadC2paManifestsRequest,
   type ReadC2paManifestsResponse
 } from '../lib/messaging/c2paMessages';
-import { clearAllBadges, showAiBadges } from '@/lib/overlay';
-import { isGuardEnabled, onGuardEnabledChange } from '@/lib/settings';
+import { applyAiBlur, clearAllBadges, clearAllBlurredImages, setBlurActive, showAiBadges } from '@/lib/overlay';
+import { isBlurEnabled, isGuardEnabled, onBlurEnabledChange, onGuardEnabledChange } from '@/lib/settings';
 
 /** Steps 2-4 of the pipeline for one batch of newly discovered image candidates. */
 async function processCandidates(candidates: ImageCandidate[]): Promise<void> {
@@ -34,6 +34,7 @@ async function processCandidates(candidates: ImageCandidate[]): Promise<void> {
   // background script, so look it up again here by src.
   const elementsBySrc = new Map(candidates.map((candidate) => [candidate.src, candidate.element]));
   showAiBadges(response.results, elementsBySrc);
+  applyAiBlur(response.results, elementsBySrc);
 }
 
 export default defineContentScript({
@@ -59,13 +60,15 @@ export default defineContentScript({
       stopWatching?.();
       stopWatching = undefined;
       clearAllBadges();
+      clearAllBlurredImages();
     }
 
     if (await isGuardEnabled()) {
       start();
     }
+    setBlurActive(await isBlurEnabled());
 
-    // React live to the popup's on/off toggle, without needing a page reload.
+    // React live to the popup's on/off toggles, without needing a page reload.
     onGuardEnabledChange((enabled) => {
       if (enabled) {
         start();
@@ -73,5 +76,6 @@ export default defineContentScript({
         stop();
       }
     });
+    onBlurEnabledChange(setBlurActive);
   },
 });
