@@ -21,6 +21,12 @@ function removeBadge(entry: TrackedBadge): void {
 
 function cleanupRemovedBadges(): void {
   for (const entry of trackedBadges) {
+    // Drop entries whose host was already removed elsewhere (e.g. a feature was
+    // toggled off), so the set doesn't leak stale references.
+    if (!document.contains(entry.host)) {
+      trackedBadges.delete(entry);
+      continue;
+    }
     if (document.contains(entry.target)) continue;
     removeBadge(entry);
     trackedBadges.delete(entry);

@@ -6,24 +6,38 @@ import {
   type ReadC2paManifestsResponse
 } from '../lib/messaging/c2paMessages';
 import {
+  CLASSIFY_IMAGE_MESSAGE,
+  type ClassifyImageRequest,
+  type ClassifyImageResponse
+} from '@/lib/messaging/modelMessages';
+import {
   applyAiBlur,
   clearAllBadges,
   clearAllBlurredImages,
+  clearModelFallback,
   setBlurActive,
   setHoverUnblurActive,
-  showAiBadges
+  showAiBadges,
+  showModelFallback
 } from '@/lib/overlay';
 import {
   getWhitelist,
+  isAiCheckEnabled,
   isBlurEnabled,
   isGuardEnabled,
   isHostWhitelisted,
   isHoverUnblurEnabled,
+  onAiCheckEnabledChange,
   onBlurEnabledChange,
   onGuardEnabledChange,
   onHoverUnblurEnabledChange,
   onWhitelistChange
 } from '@/lib/settings';
+
+// Whether the local-model fallback ("Mit KI prüfen") may be offered. Kept in
+// module scope so processCandidates (below) can read the latest value and the
+// popup toggle can flip it live.
+let aiCheckActive = true;
 
 /** Steps 2-4 of the pipeline for one batch of newly discovered image candidates. */
 async function processCandidates(candidates: ImageCandidate[]): Promise<void> {
@@ -52,6 +66,19 @@ async function processCandidates(candidates: ImageCandidate[]): Promise<void> {
   const elementsBySrc = new Map(candidates.map((candidate) => [candidate.src, candidate.element]));
   showAiBadges(response.results, elementsBySrc);
   applyAiBlur(response.results, elementsBySrc);
+
+  // Step 5: for images the automatic detection found nothing on, offer a local
+  // model fallback the user can trigger by hovering the image and clicking —
+  // unless the user disabled the AI-check option entirely.
+  if (aiCheckActive) {
+    showModelFallback(response.results, elementsBySrc, classifyImage);
+  }
+}
+
+/** Asks the background (→ offscreen model) to classify a single image by src. */
+function classifyImage(src: string): Promise<ClassifyImageResponse> {
+  const request: ClassifyImageRequest = { type: CLASSIFY_IMAGE_MESSAGE, src };
+  return browser.runtime.sendMessage(request) as Promise<ClassifyImageResponse>;
 }
 
 export default defineContentScript({
@@ -90,6 +117,7 @@ export default defineContentScript({
     }
     setBlurActive(await isBlurEnabled());
     setHoverUnblurActive(await isHoverUnblurEnabled());
+    aiCheckActive = await isAiCheckEnabled();
 
     // React live to the popup's on/off toggles, without needing a page reload.
     onGuardEnabledChange((enabled) => {
@@ -103,6 +131,13 @@ export default defineContentScript({
     });
     onBlurEnabledChange(setBlurActive);
     onHoverUnblurEnabledChange(setHoverUnblurActive);
+
+    // Toggling the AI-check option off removes existing fallback buttons at once;
+    // turning it back on applies to images discovered from then on.
+    onAiCheckEnabledChange((enabled) => {
+      aiCheckActive = enabled;
+      if (!enabled) clearModelFallback();
+    });
 
     // React live to whitelist edits in the popup, without needing a page reload.
     onWhitelistChange((whitelist) => {

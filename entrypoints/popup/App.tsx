@@ -3,11 +3,13 @@ import guardLogo from '@/assets/guard_logo.jpg';
 import {
   addToWhitelist,
   getWhitelist,
+  isAiCheckEnabled,
   isBlurEnabled,
   isGuardEnabled,
   isHoverUnblurEnabled,
   normalizeHost,
   removeFromWhitelist,
+  setAiCheckEnabled,
   setBlurEnabled,
   setGuardEnabled,
   setHoverUnblurEnabled
@@ -18,6 +20,7 @@ function App() {
   const [enabled, setEnabled] = useState<boolean | null>(null);
   const [blurEnabled, setBlurEnabledState] = useState<boolean | null>(null);
   const [hoverUnblurEnabled, setHoverUnblurEnabledState] = useState<boolean | null>(null);
+  const [aiCheckEnabled, setAiCheckEnabledState] = useState<boolean | null>(null);
   const [whitelist, setWhitelistState] = useState<string[] | null>(null);
   const [newHost, setNewHost] = useState('');
   const [currentHost, setCurrentHost] = useState<string | null>(null);
@@ -26,6 +29,7 @@ function App() {
     void isGuardEnabled().then(setEnabled);
     void isBlurEnabled().then(setBlurEnabledState);
     void isHoverUnblurEnabled().then(setHoverUnblurEnabledState);
+    void isAiCheckEnabled().then(setAiCheckEnabledState);
     void getWhitelist().then(setWhitelistState);
     void browser.tabs
       .query({ active: true, currentWindow: true })
@@ -49,6 +53,12 @@ function App() {
     const next = !hoverUnblurEnabled;
     setHoverUnblurEnabledState(next);
     await setHoverUnblurEnabled(next);
+  }
+
+  async function toggleAiCheckEnabled(): Promise<void> {
+    const next = !aiCheckEnabled;
+    setAiCheckEnabledState(next);
+    await setAiCheckEnabled(next);
   }
 
   async function handleAddHost(host: string): Promise<void> {
@@ -123,6 +133,20 @@ function App() {
             className={`toggle-switch ${hoverUnblurEnabled ? 'on' : 'off'}`}
             onClick={toggleHoverUnblurEnabled}
             disabled={hoverUnblurEnabled === null || !blurEnabled}
+          >
+            <span className="toggle-knob" />
+          </button>
+        </label>
+
+        <label className="toggle-row">
+          <span className="toggle-label">KI-Prüfung (lokales Modell)</span>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={aiCheckEnabled ?? false}
+            className={`toggle-switch ${aiCheckEnabled ? 'on' : 'off'}`}
+            onClick={toggleAiCheckEnabled}
+            disabled={aiCheckEnabled === null}
           >
             <span className="toggle-knob" />
           </button>

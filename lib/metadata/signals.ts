@@ -36,6 +36,7 @@ export const METADATA_SIGNALS = {
     label: 'Real camera capture evidence',
     description: 'Make/model, lens and/or capture settings are present — this is most likely a real photo, not AI generated',
     confidence: 5,
+    kind: 'authenticity',
     category: 'exif',
     parameters: ['Make', 'Model', 'LensModel', 'LensMake', 'FocalLength', 'ExposureTime', 'FNumber', 'ISO', 'Flash', 'WhiteBalance', 'MeteringMode']
   },
@@ -44,6 +45,7 @@ export const METADATA_SIGNALS = {
     label: 'GPS location data present',
     description: 'Real-world GPS coordinates are rarely embedded by AI generators',
     confidence: 5,
+    kind: 'authenticity',
     category: 'exif',
     parameters: ['GPSLatitude', 'GPSLongitude', 'GPSAltitude']
   },
@@ -76,6 +78,7 @@ export const METADATA_SIGNALS = {
     label: 'Camera capture wording in IPTC',
     description: 'IPTC Source/Credit explicitly describes a camera/digital capture',
     confidence: 10,
+    kind: 'authenticity',
     category: 'iptc',
     parameters: ['Source', 'Credit']
   },

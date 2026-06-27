@@ -1,3 +1,11 @@
+/**
+ * What a signal is evidence *of*:
+ * - 'ai': the image is AI-generated.
+ * - 'authenticity': the image is a genuine real-world capture (e.g. camera EXIF).
+ * Defaults to 'ai' when omitted.
+ */
+export type AiSignalKind = 'ai' | 'authenticity';
+
 export interface AiSignal {
   /** Stable identifier for this signal. */
   id: string;
@@ -7,6 +15,8 @@ export interface AiSignal {
   description: string;
   /** Confidence (0-100) that this signal alone implies AI generation. */
   confidence: number;
+  /** Whether this signal points at AI generation or at genuine authenticity. Defaults to 'ai'. */
+  kind?: AiSignalKind;
 }
 
 export interface AiSignalMatch extends AiSignal {
