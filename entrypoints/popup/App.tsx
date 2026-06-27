@@ -1,15 +1,32 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import guardLogo from '@/assets/guard_logo.jpg';
-import { isBlurEnabled, isGuardEnabled, setBlurEnabled, setGuardEnabled } from '@/lib/settings';
+import {
+  addToWhitelist,
+  getWhitelist,
+  isBlurEnabled,
+  isGuardEnabled,
+  normalizeHost,
+  removeFromWhitelist,
+  setBlurEnabled,
+  setGuardEnabled
+} from '@/lib/settings';
 import './App.css';
 
 function App() {
   const [enabled, setEnabled] = useState<boolean | null>(null);
   const [blurEnabled, setBlurEnabledState] = useState<boolean | null>(null);
+  const [whitelist, setWhitelistState] = useState<string[] | null>(null);
+  const [newHost, setNewHost] = useState('');
+  const [currentHost, setCurrentHost] = useState<string | null>(null);
 
   useEffect(() => {
     void isGuardEnabled().then(setEnabled);
     void isBlurEnabled().then(setBlurEnabledState);
+    void getWhitelist().then(setWhitelistState);
+    void browser.tabs
+      .query({ active: true, currentWindow: true })
+      .then(([tab]) => setCurrentHost(tab?.url ? normalizeHost(tab.url) : null))
+      .catch(() => setCurrentHost(null));
   }, []);
 
   async function toggleEnabled(): Promise<void> {
@@ -23,6 +40,26 @@ function App() {
     setBlurEnabledState(next);
     await setBlurEnabled(next);
   }
+
+  async function handleAddHost(host: string): Promise<void> {
+    const normalized = normalizeHost(host);
+    if (!normalized) return;
+    await addToWhitelist(normalized);
+    setWhitelistState(await getWhitelist());
+  }
+
+  async function handleAddSubmit(event: FormEvent): Promise<void> {
+    event.preventDefault();
+    await handleAddHost(newHost);
+    setNewHost('');
+  }
+
+  async function handleRemoveHost(host: string): Promise<void> {
+    await removeFromWhitelist(host);
+    setWhitelistState(await getWhitelist());
+  }
+
+  const currentHostWhitelisted = currentHost !== null && (whitelist?.includes(currentHost) ?? false);
 
   return (
     <div className="popup">
@@ -66,6 +103,51 @@ function App() {
             <span className="toggle-knob" />
           </button>
         </label>
+      </div>
+
+      <div className="whitelist-section">
+        <h2 className="section-title">Ausnahmen</h2>
+        <p className="section-hint">Bilder auf diesen Seiten werden nicht geprüft.</p>
+
+        {currentHost && (
+          <button
+            type="button"
+            className="add-current-site"
+            onClick={() => void handleAddHost(currentHost)}
+            disabled={currentHostWhitelisted}
+          >
+            {currentHostWhitelisted ? `${currentHost} ist ausgenommen` : `${currentHost} ausnehmen`}
+          </button>
+        )}
+
+        <form className="whitelist-add" onSubmit={(event) => void handleAddSubmit(event)}>
+          <input
+            type="text"
+            className="whitelist-input"
+            placeholder="example.com"
+            value={newHost}
+            onChange={(event) => setNewHost(event.target.value)}
+          />
+          <button type="submit" className="whitelist-add-button" disabled={!newHost.trim()}>
+            +
+          </button>
+        </form>
+
+        <ul className="whitelist-list">
+          {whitelist?.map((host) => (
+            <li key={host} className="whitelist-item">
+              <span className="whitelist-host">{host}</span>
+              <button
+                type="button"
+                className="whitelist-remove"
+                onClick={() => void handleRemoveHost(host)}
+                aria-label={`${host} entfernen`}
+              >
+                ×
+              </button>
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );

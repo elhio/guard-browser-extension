@@ -125,3 +125,129 @@ h1 {
 .toggle-switch.on .toggle-knob {
   transform: translateX(20px);
 }
+
+.whitelist-section {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid #2a2d3a;
+  text-align: left;
+}
+
+.section-title {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: #f5f5f7;
+}
+
+.section-hint {
+  margin: 0.2rem 0 0.7rem;
+  font-size: 0.7rem;
+  color: #9ca3af;
+}
+
+.add-current-site {
+  display: block;
+  width: 100%;
+  margin-bottom: 0.6rem;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid #2dd4bf;
+  border-radius: 8px;
+  background: transparent;
+  color: #2dd4bf;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.add-current-site:disabled {
+  border-color: #2a2d3a;
+  color: #6b7280;
+  cursor: default;
+}
+
+.whitelist-add {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 0.6rem;
+}
+
+.whitelist-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid #2a2d3a;
+  border-radius: 6px;
+  background: #1a1d29;
+  color: #f5f5f7;
+  font-size: 0.75rem;
+}
+
+.whitelist-input:focus {
+  outline: none;
+  border-color: #2dd4bf;
+}
+
+.whitelist-add-button {
+  padding: 0 0.7rem;
+  border: none;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #2dd4bf, #22d3ee);
+  color: #11131c;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.whitelist-add-button:disabled {
+  background: #2a2d3a;
+  color: #6b7280;
+  cursor: default;
+}
+
+.whitelist-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.whitelist-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  padding: 0.3rem 0;
+  font-size: 0.75rem;
+  color: #d1d5db;
+  border-bottom: 1px solid #1a1d29;
+}
+
+.whitelist-item:last-child {
+  border-bottom: none;
+}
+
+.whitelist-host {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.whitelist-remove {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  border: none;
+  border-radius: 50%;
+  background: #2a2d3a;
+  color: #f5f5f7;
+  font-size: 0.8rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.whitelist-remove:hover {
+  background: #ef4444;
+}

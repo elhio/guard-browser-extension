@@ -6,6 +6,6 @@ export default defineConfig({
   manifest: {
     // Chrome MV3 background is a service worker, which can't spawn Workers itself;
     // the C2PA SDK needs one, so we run it in an offscreen document instead.
-    permissions: ['offscreen', 'storage'],
+    permissions: ['offscreen', 'storage', 'activeTab'],
   },
 });

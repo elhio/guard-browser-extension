@@ -6,7 +6,15 @@ import {
   type ReadC2paManifestsResponse
 } from '../lib/messaging/c2paMessages';
 import { applyAiBlur, clearAllBadges, clearAllBlurredImages, setBlurActive, showAiBadges } from '@/lib/overlay';
-import { isBlurEnabled, isGuardEnabled, onBlurEnabledChange, onGuardEnabledChange } from '@/lib/settings';
+import {
+  getWhitelist,
+  isBlurEnabled,
+  isGuardEnabled,
+  isHostWhitelisted,
+  onBlurEnabledChange,
+  onGuardEnabledChange,
+  onWhitelistChange
+} from '@/lib/settings';
 
 /** Steps 2-4 of the pipeline for one batch of newly discovered image candidates. */
 async function processCandidates(candidates: ImageCandidate[]): Promise<void> {
@@ -63,19 +71,37 @@ export default defineContentScript({
       clearAllBlurredImages();
     }
 
-    if (await isGuardEnabled()) {
+    async function shouldRunHere(): Promise<boolean> {
+      if (!(await isGuardEnabled())) return false;
+      return !isHostWhitelisted(location.hostname, await getWhitelist());
+    }
+
+    if (await shouldRunHere()) {
       start();
     }
     setBlurActive(await isBlurEnabled());
 
     // React live to the popup's on/off toggles, without needing a page reload.
     onGuardEnabledChange((enabled) => {
-      if (enabled) {
-        start();
-      } else {
+      if (!enabled) {
         stop();
+        return;
       }
+      void getWhitelist().then((whitelist) => {
+        if (!isHostWhitelisted(location.hostname, whitelist)) start();
+      });
     });
     onBlurEnabledChange(setBlurActive);
+
+    // React live to whitelist edits in the popup, without needing a page reload.
+    onWhitelistChange((whitelist) => {
+      if (isHostWhitelisted(location.hostname, whitelist)) {
+        stop();
+        return;
+      }
+      void isGuardEnabled().then((enabled) => {
+        if (enabled) start();
+      });
+    });
   },
 });
