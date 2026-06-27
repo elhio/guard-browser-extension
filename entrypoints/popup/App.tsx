@@ -1,19 +1,27 @@
 import { useEffect, useState } from 'react';
 import guardLogo from '@/assets/guard_logo.jpg';
-import { isGuardEnabled, setGuardEnabled } from '@/lib/settings';
+import { isBlurEnabled, isGuardEnabled, setBlurEnabled, setGuardEnabled } from '@/lib/settings';
 import './App.css';
 
 function App() {
   const [enabled, setEnabled] = useState<boolean | null>(null);
+  const [blurEnabled, setBlurEnabledState] = useState<boolean | null>(null);
 
   useEffect(() => {
     void isGuardEnabled().then(setEnabled);
+    void isBlurEnabled().then(setBlurEnabledState);
   }, []);
 
   async function toggleEnabled(): Promise<void> {
     const next = !enabled;
     setEnabled(next);
     await setGuardEnabled(next);
+  }
+
+  async function toggleBlurEnabled(): Promise<void> {
+    const next = !blurEnabled;
+    setBlurEnabledState(next);
+    await setBlurEnabled(next);
   }
 
   return (
@@ -30,14 +38,35 @@ function App() {
         <span className={`status-dot ${enabled ? 'on' : 'off'}`} />
       </div>
 
-      <button
-        type="button"
-        className={`toggle-button ${enabled ? 'on' : 'off'}`}
-        onClick={toggleEnabled}
-        disabled={enabled === null}
-      >
-        {enabled ? 'Bild-Erkennung deaktivieren' : 'Bild-Erkennung aktivieren'}
-      </button>
+      <div className="toggle-list">
+        <label className="toggle-row">
+          <span className="toggle-label">Bild-Erkennung</span>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={enabled ?? false}
+            className={`toggle-switch ${enabled ? 'on' : 'off'}`}
+            onClick={toggleEnabled}
+            disabled={enabled === null}
+          >
+            <span className="toggle-knob" />
+          </button>
+        </label>
+
+        <label className="toggle-row">
+          <span className="toggle-label">KI-Bilder unscharf machen</span>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={blurEnabled ?? false}
+            className={`toggle-switch ${blurEnabled ? 'on' : 'off'}`}
+            onClick={toggleBlurEnabled}
+            disabled={blurEnabled === null}
+          >
+            <span className="toggle-knob" />
+          </button>
+        </label>
+      </div>
     </div>
   );
 }
