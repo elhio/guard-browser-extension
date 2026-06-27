@@ -104,15 +104,15 @@ export const AVAILABLE_MODELS: AIModel[] = [
   //   parameterCount: '86M',
   //   type: 'image-classification'
   // },
-  // {
-  //   id: 'vit-ai-detector',
-  //   name: 'ViT AI-Image Detector',
-  //   sizeMB: 330,
-  //   ramMB: 600,
-  //   description: 'Vision Transformer (ViT-Base) trainiert auf dem CIFAKE-Datensatz (~94% Genauigkeit). Erkennt KI-generierte Bilder (Stable Diffusion, DALL-E, Midjourney). Apache 2.0.',
-  //   parameterCount: '86M',
-  //   type: 'image-classification'
-  // },
+  {
+    id: 'vit-ai-detector',
+    name: 'ViT AI-Image Detector',
+    sizeMB: 330,
+    ramMB: 600,
+    description: 'Vision Transformer (ViT-Base) trainiert auf dem CIFAKE-Datensatz (~94% Genauigkeit). Erkennt KI-generierte Bilder (Stable Diffusion, DALL-E, Midjourney). Apache 2.0.',
+    parameterCount: '86M',
+    type: 'image-classification'
+  },
   {
     id: 'lens-light',
     //name: 'Lens Light V1 (Custom)',

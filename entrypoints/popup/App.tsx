@@ -52,6 +52,18 @@ function App() {
   const chatBottomRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  // Helper to safely send messages via the chrome runtime port, preventing disconnected port exceptions
+  const safePostMessage = (message: any) => {
+    try {
+      if (portRef.current) {
+        portRef.current.postMessage(message);
+      }
+    } catch (e) {
+      console.warn("Failed to post message to background port:", e);
+      portRef.current = null;
+    }
+  };
+
   // Load persisted states from browser storage on mount
   useEffect(() => {
     try {
@@ -79,6 +91,13 @@ function App() {
   useEffect(() => {
     const port = browser.runtime.connect({ name: 'model-runner' });
     portRef.current = port as any;
+
+    const onDisconnect = () => {
+      if (portRef.current === port) {
+        portRef.current = null;
+      }
+    };
+    port.onDisconnect.addListener(onDisconnect);
 
     port.onMessage.addListener((message: any) => {
       if (message.type === 'STATUS_UPDATE') {
@@ -142,10 +161,18 @@ function App() {
     });
 
     // Query status on load
-    port.postMessage({ type: 'GET_STATUS' });
+    try {
+      port.postMessage({ type: 'GET_STATUS' });
+    } catch (e) {
+      console.warn("Failed to send initial GET_STATUS:", e);
+    }
 
     return () => {
+      port.onDisconnect.removeListener(onDisconnect);
       port.disconnect();
+      if (portRef.current === port) {
+        portRef.current = null;
+      }
     };
   }, []);
 
@@ -225,7 +252,7 @@ function App() {
   const handleLoadModel = () => {
     if (modelState.status === 'downloading' || modelState.status === 'loading') return;
     
-    portRef.current?.postMessage({
+    safePostMessage({
       type: 'LOAD_MODEL',
       modelId: selectedModelId,
       device: selectedDevice,
@@ -234,7 +261,7 @@ function App() {
   };
 
   const handleUnloadModel = () => {
-    portRef.current?.postMessage({
+    safePostMessage({
       type: 'UNLOAD_MODEL'
     });
   };
@@ -276,7 +303,7 @@ function App() {
 
     setIsClassifying(true);
     setFftResult(null);
-    portRef.current?.postMessage({
+    safePostMessage({
       type: 'CLASSIFY_IMAGE',
       imageDataUrl: currentImageUrl
     });
@@ -300,14 +327,14 @@ function App() {
     setChatHistory((prev) => [...prev, { sender: 'user', text: prompt }]);
 
     // Trigger generation via background API
-    portRef.current?.postMessage({
+    safePostMessage({
       type: 'GENERATE_TEXT',
       prompt
     });
   };
 
   const handleClearLogs = () => {
-    portRef.current?.postMessage({ type: 'CLEAR_LOGS' });
+    safePostMessage({ type: 'CLEAR_LOGS' });
   };
 
   // Memory Telemetry Math
