@@ -350,6 +350,22 @@ function App() {
   const humanScore = humanResult ? humanResult.score : (1 - combinedAiScore);
   const isAIImage = combinedAiScore > 0.5;
 
+  const displayResults = classificationResults.map(res => {
+    const lbl = res.label.toLowerCase();
+    const isAiLabel = lbl.includes('artificial') || lbl.includes('fake') || lbl.includes('ki-generiert') || lbl.includes('(ai)');
+    const isHumanLabel = lbl.includes('human') || lbl.includes('real');
+
+    if (fftResult !== null) {
+      if (isAiLabel) {
+        return { ...res, score: combinedAiScore };
+      }
+      if (isHumanLabel) {
+        return { ...res, score: 1 - combinedAiScore };
+      }
+    }
+    return res;
+  });
+
   // Custom renderer for code blocks and inline code
   const renderMessageText = (text: string) => {
     const parts = text.split(/(```[\s\S]*?```)/g);
@@ -667,7 +683,7 @@ function App() {
                         )}
                         <h4 className="results-title">Ergebnisse der lokalen Analyse:</h4>
                         <div className="results-list">
-                          {classificationResults.map((res, index) => {
+                          {displayResults.map((res, index) => {
                             const percent = (res.score * 100).toFixed(1);
                             return (
                               <div key={index} className="result-row">
