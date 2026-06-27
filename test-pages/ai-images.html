@@ -34,6 +34,15 @@
         margin: 0.2rem 0 0.3rem;
         font-size: 2.6rem;
         letter-spacing: -0.01em;
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+      }
+      .masthead h1 .site-icon {
+        width: 7rem;
+        height: 3rem;
+        border-radius: 8px;
+        object-fit: cover;
       }
       .masthead .dateline {
         font-family: system-ui, sans-serif;
@@ -131,6 +140,21 @@
     </p>
 
     <div class="articles">
+      <article>
+        <img src="/assets/test-data/trump_gen_GPT.png" alt="Politik-Aufmacher" />
+        <div class="eyebrow">Politik</div>
+        <h2>Aufmacher: Was hinter dem viralen Foto steckt</h2>
+        <p class="teaser">
+          Ein Bild macht in den sozialen Netzwerken die Runde — wir ordnen ein, woher es stammt und wie es zu
+          bewerten ist.
+        </p>
+        <div class="credit">
+          <strong>Bildquelle:</strong> KI-generiert (OpenAI <code>gpt-image</code>) — <code>trump_gen_GPT.png</code>.
+          Enthält ein C2PA-Manifest mit softwareAgent "gpt-image" und digitalSourceType "trainedAlgorithmicMedia".
+          Erwartung: KI-Erkennung schlägt mit hoher Konfidenz an.
+        </div>
+      </article>
+
       <article>
         <img src="/assets/test-data/hackathon_team_gen.png" alt="Team bei einem Hackathon" />
         <div class="eyebrow">Technik</div>
