@@ -110,21 +110,53 @@
       </figure>
 
       <figure>
-        <img src="/assets/test-data/camera.jpg" alt="Echtes Foto von einer Kamera" />
+        <img src="/assets/test-data/girls_ice_gen_gemini.png" alt="Von Gemini generiertes Eislauf-Motiv" />
         <figcaption>
-          <strong>camera.jpg</strong>
+          <strong>girls_ice_gen_gemini.png</strong>
           <span class="expected">
-            Echtes Foto (Pixel 5), signiert über die Truepic-SDK. Erwartung: C2PA-Manifest vorhanden, aber
-            <em>keine</em> KI-Erkennung (kein bekannter KI-Vendor, kein KI-typischer digitalSourceType).
+            Von Google Gemini generiert (gleiche Marker wie oben: trainedAlgorithmicMedia, SynthID, digitalsourcetype/composite).
+            Erwartung: KI-Erkennung schlägt mit hoher Konfidenz an.
           </span>
         </figcaption>
       </figure>
 
       <figure>
-        <img src="/assets/react.svg" alt="React-Logo ohne Metadaten" />
+        <img src="/assets/test-data/girl_bikini_1_gen_stable.png" alt="Von Stable Diffusion generiertes Motiv 1" />
         <figcaption>
-          <strong>react.svg</strong>
-          <span class="expected">Kein C2PA-Manifest enthalten. Erwartung: <code>manifestStore: null</code>.</span>
+          <strong>girl_bikini_1_gen_stable.png</strong>
+          <span class="expected">
+            Von Stable Diffusion generiert, aber <em>komplett ohne</em> eingebettete Metadaten (kein C2PA, kein
+            EXIF/XMP — geprüft per <code>exifr</code>: nur das PNG-IHDR-Chunk ist vorhanden). Einziges Signal:
+            1024×1024 ist eine typische KI-Bildgröße (Konfidenz nur 25%). Zeigt die Grenze
+            metadatenbasierter Erkennung bei "bereinigten" Bildern.
+          </span>
+        </figcaption>
+      </figure>
+
+      <figure>
+        <img src="/assets/test-data/girl_bikini_2_gen_stable_pea.jpg" alt="Von Stable Diffusion generiertes Motiv 2 (komprimiert)" />
+        <figcaption>
+          <strong>girl_bikini_2_gen_stable_pea.jpg</strong>
+          <span class="expected">
+            Gleiches Stable-Diffusion-Motiv, aber als JPEG re-encodiert (1024×1024, kein C2PA). Enthält nur ein
+            JFIF-Segment und ein generisches sRGB-ICC-Profil ("Google Inc. 2016") — kein EXIF/IFD0-Segment, daher
+            greift hier nicht einmal die Größenheuristik (die braucht <code>ExifImageWidth</code>/<code>ImageWidth</code>
+            aus EXIF, die bei diesem JPEG fehlen). Einziges (sehr schwaches) Signal: JFIF-Marker vorhanden (10%).
+            Härtester Fall im Test-Set für die metadatenbasierte Erkennung.
+          </span>
+        </figcaption>
+      </figure>
+
+      <figure>
+        <img src="/assets/test-data/camera.jpg" alt="Echtes Foto von einer Kamera" />
+        <figcaption>
+          <strong>camera.jpg</strong>
+          <span class="expected">
+            Echtes Foto (Pixel 5), signiert über die Truepic-SDK. Erwartung: C2PA-Manifest vorhanden, aber
+            <em>keine</em> KI-Erkennung (kein bekannter KI-Vendor, kein KI-typischer digitalSourceType). Die
+            EXIF-Kamerasignale (Make/Model/Linse/Aufnahmeeinstellungen) sollten zusätzlich den schwachen
+            "echte Kamera-Aufnahme"-Gegenbeweis liefern.
+          </span>
         </figcaption>
       </figure>
     </div>

@@ -1,4 +1,7 @@
 import type { AiSignal } from './types';
+import { AI_DETECTION_CONFIDENCE_THRESHOLD } from '@/lib/aiSignals/threshold';
+
+export { AI_DETECTION_CONFIDENCE_THRESHOLD };
 
 /**
  * Catalog of AI-generation signals, in descending confidence order.
@@ -56,6 +59,3 @@ export const AI_SIGNALS = {
     confidence: 40
   }
 } as const satisfies Record<string, AiSignal>;
-
-/** Below this confidence, matches are reported but don't flip isLikelyAiGenerated. */
-export const AI_DETECTION_CONFIDENCE_THRESHOLD = 50;
