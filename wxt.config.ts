@@ -6,11 +6,17 @@ export default defineConfig({
   manifest: {
     // Chrome MV3 background is a service worker, which can't spawn Workers itself;
     // the C2PA SDK needs one, so we run it in an offscreen document instead.
-    permissions: ['offscreen', 'storage', 'activeTab'],
+    permissions: ['offscreen', 'storage', 'activeTab', 'unlimitedStorage'],
     // The C2PA SDK compiles a WASM module; MV3's default script-src 'self' CSP
     // blocks that unless 'wasm-unsafe-eval' is explicitly allowed.
     content_security_policy: {
       extension_pages: "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';",
     },
+    web_accessible_resources: [
+      {
+        resources: ['wasm/*'],
+        matches: ['<all_urls>']
+      }
+    ]
   },
 });
