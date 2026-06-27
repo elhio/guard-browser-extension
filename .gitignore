@@ -24,3 +24,6 @@ web-ext.config.ts
 *.njsproj
 *.sln
 *.sw?
+
+# Custom DINOv2 Model Files
+public/my-custom-dinov2/
