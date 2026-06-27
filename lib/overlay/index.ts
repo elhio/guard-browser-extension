@@ -1,3 +1,3 @@
 export * from './attachAiBadge';
 export * from './showAiBadges';
-export { clearAllBadges } from './badgeTicker';
+export { clearAllBadges } from './badgeLifecycle';

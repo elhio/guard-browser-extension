@@ -3,9 +3,9 @@ import type { AiDetectionResult } from '@/lib/c2pa';
 const BADGE_STYLES = `
   :host {
     all: initial;
-    position: fixed;
-    top: 0;
-    left: 0;
+    position: absolute;
+    top: 4px;
+    left: 4px;
     z-index: 2147483647;
     pointer-events: none;
   }
@@ -31,8 +31,9 @@ function buildTooltip(aiDetection: AiDetectionResult): string {
 /**
  * Creates a small "AI-generated" badge as a Shadow DOM host element, isolated
  * from the host page's CSS so it can't be broken or overridden by page styles.
- * The host itself carries the `position: fixed` placement (set later via
- * `positionBadgeOverElement`); the shadow content is purely visual.
+ * The host carries `position: absolute` and is meant to be appended into a
+ * `position: relative` wrapper around the target image (see imageWrapper.ts),
+ * so it stays aligned with the image natively, with no JS repositioning.
  */
 export function createAiBadgeElement(aiDetection: AiDetectionResult): HTMLElement {
   const host = document.createElement('div');
