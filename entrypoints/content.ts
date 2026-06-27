@@ -5,14 +5,23 @@ import {
   type ReadC2paManifestsRequest,
   type ReadC2paManifestsResponse
 } from '../lib/messaging/c2paMessages';
-import { applyAiBlur, clearAllBadges, clearAllBlurredImages, setBlurActive, showAiBadges } from '@/lib/overlay';
+import {
+  applyAiBlur,
+  clearAllBadges,
+  clearAllBlurredImages,
+  setBlurActive,
+  setHoverUnblurActive,
+  showAiBadges
+} from '@/lib/overlay';
 import {
   getWhitelist,
   isBlurEnabled,
   isGuardEnabled,
   isHostWhitelisted,
+  isHoverUnblurEnabled,
   onBlurEnabledChange,
   onGuardEnabledChange,
+  onHoverUnblurEnabledChange,
   onWhitelistChange
 } from '@/lib/settings';
 
@@ -80,6 +89,7 @@ export default defineContentScript({
       start();
     }
     setBlurActive(await isBlurEnabled());
+    setHoverUnblurActive(await isHoverUnblurEnabled());
 
     // React live to the popup's on/off toggles, without needing a page reload.
     onGuardEnabledChange((enabled) => {
@@ -92,6 +102,7 @@ export default defineContentScript({
       });
     });
     onBlurEnabledChange(setBlurActive);
+    onHoverUnblurEnabledChange(setHoverUnblurActive);
 
     // React live to whitelist edits in the popup, without needing a page reload.
     onWhitelistChange((whitelist) => {

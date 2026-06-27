@@ -5,16 +5,19 @@ import {
   getWhitelist,
   isBlurEnabled,
   isGuardEnabled,
+  isHoverUnblurEnabled,
   normalizeHost,
   removeFromWhitelist,
   setBlurEnabled,
-  setGuardEnabled
+  setGuardEnabled,
+  setHoverUnblurEnabled
 } from '@/lib/settings';
 import './App.css';
 
 function App() {
   const [enabled, setEnabled] = useState<boolean | null>(null);
   const [blurEnabled, setBlurEnabledState] = useState<boolean | null>(null);
+  const [hoverUnblurEnabled, setHoverUnblurEnabledState] = useState<boolean | null>(null);
   const [whitelist, setWhitelistState] = useState<string[] | null>(null);
   const [newHost, setNewHost] = useState('');
   const [currentHost, setCurrentHost] = useState<string | null>(null);
@@ -22,6 +25,7 @@ function App() {
   useEffect(() => {
     void isGuardEnabled().then(setEnabled);
     void isBlurEnabled().then(setBlurEnabledState);
+    void isHoverUnblurEnabled().then(setHoverUnblurEnabledState);
     void getWhitelist().then(setWhitelistState);
     void browser.tabs
       .query({ active: true, currentWindow: true })
@@ -39,6 +43,12 @@ function App() {
     const next = !blurEnabled;
     setBlurEnabledState(next);
     await setBlurEnabled(next);
+  }
+
+  async function toggleHoverUnblurEnabled(): Promise<void> {
+    const next = !hoverUnblurEnabled;
+    setHoverUnblurEnabledState(next);
+    await setHoverUnblurEnabled(next);
   }
 
   async function handleAddHost(host: string): Promise<void> {
@@ -99,6 +109,20 @@ function App() {
             className={`toggle-switch ${blurEnabled ? 'on' : 'off'}`}
             onClick={toggleBlurEnabled}
             disabled={blurEnabled === null}
+          >
+            <span className="toggle-knob" />
+          </button>
+        </label>
+
+        <label className="toggle-row">
+          <span className="toggle-label">Beim Hover scharf stellen</span>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={hoverUnblurEnabled ?? false}
+            className={`toggle-switch ${hoverUnblurEnabled ? 'on' : 'off'}`}
+            onClick={toggleHoverUnblurEnabled}
+            disabled={hoverUnblurEnabled === null || !blurEnabled}
           >
             <span className="toggle-knob" />
           </button>
