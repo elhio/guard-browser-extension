@@ -202,5 +202,284 @@
   },
   "setup_wizard_btn_finish": {
     "message": "Finish"
+  },
+  "settings_dashboard_title": {
+    "message": "Guard"
+  },
+  "settings_dashboard_description": {
+    "message": "Manage the configuration of your browser extension on this page."
+  },
+  "settings_dashboard_logo_alt": {
+    "message": "Guard Logo"
+  },
+  "settings_account_title": {
+    "message": "Account"
+  },
+  "settings_account_profile_title": {
+    "message": "Go to profile"
+  },
+  "settings_account_profile_disabled_title": {
+    "message": "Please log in to manage profile"
+  },
+  "settings_account_waiting_auth": {
+    "message": "Waiting for authentication..."
+  },
+  "settings_account_sign_in": {
+    "message": "Sign In"
+  },
+  "settings_account_free_plan": {
+    "message": "Free Plan"
+  },
+  "settings_account_logout": {
+    "message": "Logout"
+  },
+  "settings_action_title": {
+    "message": "Action on Detection"
+  },
+  "settings_action_mark_label": {
+    "message": "Mark"
+  },
+  "settings_action_mark_desc": {
+    "message": "Adds a subtle visual indicator to the image."
+  },
+  "settings_action_mark_aria": {
+    "message": "Select Mark action"
+  },
+  "settings_action_blur_label": {
+    "message": "Blur"
+  },
+  "settings_action_blur_desc": {
+    "message": "Covers the image with a blur effect."
+  },
+  "settings_action_blur_aria": {
+    "message": "Select Blur action"
+  },
+  "settings_action_hide_label": {
+    "message": "Hide"
+  },
+  "settings_action_hide_desc": {
+    "message": "Hides the image behind a black box."
+  },
+  "settings_action_hide_aria": {
+    "message": "Select Hide action"
+  },
+  "settings_detection_title": {
+    "message": "Default Detection"
+  },
+  "settings_detection_metadata_label": {
+    "message": "Metadata"
+  },
+  "settings_detection_metadata_desc": {
+    "message": "Checks the data attached to the images. This feature is fundamental and always activated."
+  },
+  "settings_detection_metadata_aria": {
+    "message": "Metadata detection (always enabled)"
+  },
+  "settings_detection_lens_label": {
+    "message": "Lens Mobile"
+  },
+  "settings_detection_lens_desc": {
+    "message": "Offers higher accuracy by scanning the images with a locally running detection model. Consumes more energy."
+  },
+  "settings_detection_lens_aria": {
+    "message": "Toggle Lens Mobile detection"
+  },
+  "settings_exception_title": {
+    "message": "Exception Site List"
+  },
+  "settings_exception_empty": {
+    "message": "No sites have been added to the exception list."
+  },
+  "settings_exception_remove": {
+    "message": "Remove"
+  },
+  "settings_general_title": {
+    "message": "General"
+  },
+  "settings_general_status": {
+    "message": "Status"
+  },
+  "settings_general_deactivate": {
+    "message": "Deactivate"
+  },
+  "settings_general_activate": {
+    "message": "Activate"
+  },
+  "settings_general_active": {
+    "message": "Active"
+  },
+  "settings_general_inactive": {
+    "message": "Inactive"
+  },
+  "settings_general_version": {
+    "message": "Version"
+  },
+  "settings_general_update": {
+    "message": "Update"
+  },
+  "settings_general_update_available": {
+    "message": "Update available:"
+  },
+  "settings_general_update_downloading": {
+    "message": "Chrome is downloading it now."
+  },
+  "settings_general_update_latest": {
+    "message": "You are already running the latest version!"
+  },
+  "settings_general_update_throttled": {
+    "message": "Update check throttled by the browser. Please try again later."
+  },
+  "settings_general_update_error": {
+    "message": "Update checking is only available when installed from the Chrome Web Store."
+  },
+  "settings_tasks_title": {
+    "message": "Selected Tasks"
+  },
+  "settings_tasks_ai_label": {
+    "message": "AI-Generated"
+  },
+  "settings_tasks_ai_desc": {
+    "message": "Detects images created or manipulated by generative AI."
+  },
+  "settings_tasks_ai_aria": {
+    "message": "Toggle AI-Generated detection"
+  },
+  "settings_tasks_violent_label": {
+    "message": "Violent"
+  },
+  "settings_tasks_violent_desc": {
+    "message": "Detects graphic, violent, or gory content."
+  },
+  "settings_tasks_violent_aria": {
+    "message": "Toggle Violent detection"
+  },
+  "settings_tasks_explicit_label": {
+    "message": "Explicit"
+  },
+  "settings_tasks_explicit_desc": {
+    "message": "Detects adult, obscene, or pornographic content."
+  },
+  "settings_tasks_explicit_aria": {
+    "message": "Toggle Explicit detection"
+  },
+  "settings_verification_title": {
+    "message": "Advanced Verification"
+  },
+  "settings_verification_manage_title": {
+    "message": "Manage spaces"
+  },
+  "settings_verification_manage_disabled_title": {
+    "message": "Please log in to manage spaces"
+  },
+  "settings_verification_manage_aria": {
+    "message": "Manage spaces in external tab"
+  },
+  "settings_verification_login_required": {
+    "message": "Please log in to load your available spaces."
+  },
+  "settings_verification_no_workspaces": {
+    "message": "No workspaces found."
+  },
+  "settings_verification_conj_and": {
+    "message": " and "
+  },
+  "settings_verification_media_image": {
+    "message": "images"
+  },
+  "settings_verification_media_video": {
+    "message": "videos"
+  },
+  "settings_verification_fallback_model": {
+    "message": "a model"
+  },
+  "settings_verification_desc_template": {
+    "message": "Detects {tasks} in {media} using {predictor}."
+  },
+  "settings_verification_no_desc_fallback": {
+    "message": "No description available."
+  },
+  "settings_verification_error_media": {
+    "message": "This space does not support image analysis."
+  },
+  "settings_verification_error_task_ai": {
+    "message": "Your tasks require AI-Generated detection."
+  },
+  "settings_verification_error_task_violent": {
+    "message": "Your tasks require Violent detection."
+  },
+  "settings_verification_error_task_explicit": {
+    "message": "Your tasks require Explicit detection."
+  },
+  "settings_verification_select_aria": {
+    "message": "Select"
+  },
+  "popover_logo_title": {
+    "message": "Guard Logo"
+  },
+  "popover_status_label": {
+    "message": "Status"
+  },
+  "popover_status_loading": {
+    "message": "Loading..."
+  },
+  "popover_status_active": {
+    "message": "Active"
+  },
+  "popover_status_disabled": {
+    "message": "Disabled"
+  },
+  "popover_tasks_label": {
+    "message": "Tasks"
+  },
+  "popover_tasks_none": {
+    "message": "No tasks selected"
+  },
+  "popover_more": {
+    "message": "more"
+  },
+  "popover_task_ai": {
+    "message": "AI-Generated"
+  },
+  "popover_task_nsfw": {
+    "message": "NSFW"
+  },
+  "popover_task_violent": {
+    "message": "Violent"
+  },
+  "popover_handling_label": {
+    "message": "Handling"
+  },
+  "popover_handling_blur": {
+    "message": "Blur"
+  },
+  "popover_handling_hide": {
+    "message": "Hide"
+  },
+  "popover_verification_label": {
+    "message": "First Check"
+  },
+  "popover_verification_none": {
+    "message": "None selected"
+  },
+  "popover_verification_metadata": {
+    "message": "Metadata"
+  },
+  "popover_verification_lens_desc": {
+    "message": " (runs locally, uses more energy)"
+  },
+  "popover_add_exception": {
+    "message": "Add exception"
+  },
+  "popover_settings": {
+    "message": "Settings"
+  },
+  "popover_stats_part1": {
+    "message": "On this page "
+  },
+  "popover_stats_part2": {
+    "message": " images were checked and "
+  },
+  "popover_stats_part3": {
+    "message": " were detected."
   }
 }

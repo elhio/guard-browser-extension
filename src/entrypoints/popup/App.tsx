@@ -10,13 +10,9 @@ import {
   isGuardEnabled,
   isHoverUnblurEnabled,
   normalizeHost,
-  removeFromWhitelist,
-  setAiCheckEnabled,
-  setBlurEnabled,
   setGuardEnabled,
-  setHoverUnblurEnabled,
 } from '@/lib/settings';
-import { formatNumber } from '@/lib/i18n';
+import { formatNumber, t } from '@/lib/i18n';
 
 type ModelType = 'local' | 'remote';
 
@@ -54,41 +50,36 @@ function App() {
       .catch(() => setCurrentHost(null));
   }, []);
 
+  // Define options with their translated labels
+  const taskOptions = [
+    { id: 'AI-Generiert', label: t('popover_task_ai') },
+    { id: 'NSFW', label: t('popover_task_nsfw') },
+    { id: 'Gewalt', label: t('popover_task_violent') }
+  ];
+
+  const handlingOptions = [
+    { id: 'Blur', label: t('popover_handling_blur') },
+    { id: 'Hide', label: t('popover_handling_hide') }
+  ];
+
+  const verificationOptions = [
+    { id: 'Metadata', label: t('popover_verification_metadata'), desc: '' },
+    { id: 'Lens Mobile', label: 'Lens Mobile', desc: t('popover_verification_lens_desc') }
+  ];
+
   const getTaskSummary = () => {
-    if (selectedTasks.length === 0) return "Keine Aufgaben ausgewählt";
-    const first = selectedTasks[0];
+    if (selectedTasks.length === 0) return t('popover_tasks_none');
+    const firstId = selectedTasks[0];
+    const firstLabel = taskOptions.find(tObj => tObj.id === firstId)?.label || firstId;
     return selectedTasks.length > 1
-      ? `${first} +${selectedTasks.length - 1} weitere`
-      : first;
+      ? `${firstLabel} +${selectedTasks.length - 1} ${t('popover_more')}`
+      : firstLabel;
   };
 
   async function toggleEnabled(): Promise<void> {
     const next = !enabled;
     setEnabled(next);
     await setGuardEnabled(next);
-  }
-
-  async function toggleBlurEnabled(): Promise<void> {
-    const next = !blurEnabled;
-    setBlurEnabledState(next);
-    await setBlurEnabled(next);
-  }
-
-  async function toggleHoverUnblurEnabled(): Promise<void> {
-    const next = !hoverUnblurEnabled;
-    setHoverUnblurEnabledState(next);
-    await setHoverUnblurEnabled(next);
-  }
-
-  async function toggleAiCheckEnabled(): Promise<void> {
-    const next = !aiCheckEnabled;
-    setAiCheckEnabledState(next);
-    await setAiCheckEnabled(next);
-  }
-
-  async function handleModelChange(event: React.ChangeEvent<HTMLSelectElement>): Promise<void> {
-    const next = event.target.value as ModelType;
-    setModelTypeState(next);
   }
 
   async function handleAddHost(host: string): Promise<void> {
@@ -98,35 +89,26 @@ function App() {
     setWhitelistState(await getWhitelist());
   }
 
-  async function handleAddSubmit(event: SyntheticEvent<HTMLFormElement>): Promise<void> {
-    event.preventDefault();
-    await handleAddHost(newHost);
-    setNewHost('');
-  }
-
-  async function handleRemoveHost(host: string): Promise<void> {
-    await removeFromWhitelist(host);
-    setWhitelistState(await getWhitelist());
-  }
-
   const currentHostWhitelisted = currentHost !== null && (whitelist?.includes(currentHost) ?? false);
 
   const totalImages = 0;
   const aiImages = 0;
+
+  const currentHandlingLabel = handlingOptions.find(h => h.id === handling)?.label || handling;
 
   return (
     <div className="w-[360px] p-6 bg-white text-gray-800 font-sans shadow-lg">
 
       {/* Header Section (Centered) */}
       <div className="flex flex-col items-center mb-6">
-        <GuardLogo className="w-16 h-16 text-teal-500 mb-3" title="Guard Logo" />
+        <GuardLogo className="w-16 h-16 text-teal-500 mb-3" title={t('popover_logo_title')} />
         <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 leading-none mb-1">Guard</h1>
         <span className="text-xs text-gray-400 mt-1 font-mono">v{version}</span>
       </div>
 
       <div className="mb-2">
         <div className="mb-1">
-          <label className="text-xs font-bold text-gray-800 uppercase tracking-wider">Status</label>
+          <label className="text-xs font-bold text-gray-800 uppercase tracking-wider">{t('popover_status_label')}</label>
         </div>
 
         <button
@@ -138,7 +120,7 @@ function App() {
           }`}
         >
           <span className="font-medium text-sm text-gray-700">
-            {enabled === null ? 'Laden...' : enabled ? 'Aktiv' : 'Deaktiviert'}
+            {enabled === null ? t('popover_status_loading') : enabled ? t('popover_status_active') : t('popover_status_disabled')}
           </span>
 
           <div className="flex items-center gap-2">
@@ -149,7 +131,7 @@ function App() {
 
       <div className="mb-2">
         <div className="mb-1">
-          <label className="text-xs font-bold text-gray-800 uppercase tracking-wider">Aufgaben</label>
+          <label className="text-xs font-bold text-gray-800 uppercase tracking-wider">{t('popover_tasks_label')}</label>
         </div>
 
         <details className="relative" onToggle={(e) => setIsTasksOpen((e.target as HTMLDetailsElement).open)}>
@@ -159,19 +141,19 @@ function App() {
           </summary>
 
           <div className="absolute w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-10 p-2">
-            {['AI-Generiert', 'NSFW', 'Gewalt'].map(task => (
-              <label key={task} className="flex items-center gap-2 p-1 cursor-pointer hover:bg-gray-50 rounded">
+            {taskOptions.map(task => (
+              <label key={task.id} className="flex items-center gap-2 p-1 cursor-pointer hover:bg-gray-50 rounded">
                 <input
                   type="checkbox"
-                  checked={selectedTasks.includes(task)}
-                  disabled={selectedTasks.length === 1 && selectedTasks.includes(task)}
+                  checked={selectedTasks.includes(task.id)}
+                  disabled={selectedTasks.length === 1 && selectedTasks.includes(task.id)}
                   onChange={(e) => {
-                    if (e.target.checked) setSelectedTasks([...selectedTasks, task]);
-                    else setSelectedTasks(selectedTasks.filter(t => t !== task));
+                    if (e.target.checked) setSelectedTasks([...selectedTasks, task.id]);
+                    else setSelectedTasks(selectedTasks.filter(t => t !== task.id));
                   }}
                   className="accent-teal-500"
                 />
-                <span className="text-sm text-gray-700">{task}</span>
+                <span className="text-sm text-gray-700">{task.label}</span>
               </label>
             ))}
           </div>
@@ -180,39 +162,38 @@ function App() {
 
       <div className="mb-2">
         <div className="mb-1">
-          <label className="text-xs font-bold text-gray-800 uppercase tracking-wider">Umgang</label>
+          <label className="text-xs font-bold text-gray-800 uppercase tracking-wider">{t('popover_handling_label')}</label>
         </div>
 
         <details
           className="relative"
           open={isHandlingOpen}
-          // REMOVED onToggle here
         >
           <summary
             className="list-none cursor-pointer flex justify-between items-center p-2 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-700 hover:bg-gray-100 transition-colors"
             onClick={(e) => {
-              e.preventDefault(); // Prevents the browser from fighting React
+              e.preventDefault();
               setIsHandlingOpen(!isHandlingOpen);
             }}
           >
-            <span>{handling}</span>
+            <span>{currentHandlingLabel}</span>
             <span className="text-gray-400 text-xs">{isHandlingOpen ? '▲' : '▼'}</span>
           </summary>
 
           <div className="absolute w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-10 p-2">
-            {['Blur', 'Hide'].map(option => (
-              <label key={option} className="flex items-center gap-2 p-1 cursor-pointer hover:bg-gray-50 rounded">
+            {handlingOptions.map(option => (
+              <label key={option.id} className="flex items-center gap-2 p-1 cursor-pointer hover:bg-gray-50 rounded">
                 <input
                   type="radio"
                   name="darstellung"
-                  checked={handling === option}
+                  checked={handling === option.id}
                   onChange={() => {
-                    setHandling(option);
-                    setIsHandlingOpen(false); // Closes menu
+                    setHandling(option.id);
+                    setIsHandlingOpen(false);
                   }}
                   className="accent-teal-500"
                 />
-                <span className="text-sm text-gray-700">{option}</span>
+                <span className="text-sm text-gray-700">{option.label}</span>
               </label>
             ))}
           </div>
@@ -221,7 +202,7 @@ function App() {
 
       <div className="mb-6">
         <div className="mb-1">
-          <label className="text-xs font-bold text-gray-800 uppercase tracking-wider">Erste Überprüfung</label>
+          <label className="text-xs font-bold text-gray-800 uppercase tracking-wider">{t('popover_verification_label')}</label>
         </div>
 
         <details
@@ -237,17 +218,14 @@ function App() {
           >
             <span>
               {selectedVerification.length === 0
-                ? "Keine ausgewählt"
-                : `${selectedVerification[0]}${selectedVerification.length > 1 ? ` +${selectedVerification.length - 1} weitere` : ''}`}
+                ? t('popover_verification_none')
+                : `${verificationOptions.find(v => v.id === selectedVerification[0])?.label || selectedVerification[0]}${selectedVerification.length > 1 ? ` +${selectedVerification.length - 1} ${t('popover_more')}` : ''}`}
             </span>
             <span className="text-gray-400 text-xs">{isVerificationOpen ? '▲' : '▼'}</span>
           </summary>
 
           <div className="absolute w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-10 p-2">
-            {[
-              { id: 'Metadata', desc: '' },
-              { id: 'Lens Mobile', desc: ' (runs locally, uses more energy)' }
-            ].map(item => (
+            {verificationOptions.map(item => (
               <label key={item.id} className="flex items-center gap-2 p-1 cursor-pointer hover:bg-gray-50 rounded">
                 <input
                   type="checkbox"
@@ -260,7 +238,7 @@ function App() {
                   className="accent-teal-500"
                 />
                 <span className="text-sm text-gray-700">
-                  {item.id}
+                  {item.label}
                   <span className="text-gray-400 text-[11px] font-normal">{item.desc}</span>
                 </span>
               </label>
@@ -271,8 +249,6 @@ function App() {
 
       <div className="bg-gray-50 -mx-6 -mb-6 p-4 border-t border-gray-200">
         <div className="flex flex-col gap-1">
-
-          {/* Add Exception Item */}
           <button
             onClick={() => currentHost && handleAddHost(currentHost)}
             disabled={currentHostWhitelisted}
@@ -280,11 +256,9 @@ function App() {
           >
             <LuListPlus size={16} className="text-gray-700 group-hover:text-gray-500 transition-colors" />
             <span className="font-medium text-gray-700 group-hover:text-gray-500 transition-colors">
-              Ausnahme hinzufügen
+              {t('popover_add_exception')}
             </span>
           </button>
-
-          {/* Settings Item */}
           <button
             onClick={() => {
               browser.tabs.create({ url: browser.runtime.getURL('/options.html') });
@@ -293,14 +267,12 @@ function App() {
           >
             <LuSettings size={16} className="text-gray-700 group-hover:text-gray-500 transition-colors" />
             <span className="font-medium text-gray-700 group-hover:text-gray-500 transition-colors">
-              Einstellungen
+              {t('popover_settings')}
             </span>
           </button>
         </div>
-
-        {/* Status Text Moved Here */}
         <p className="text-[10px] text-center text-gray-400 mt-4 mb-1 tracking-wide">
-          Auf dieser Seite wurden {formatNumber(totalImages)} Bilder überprüft und {formatNumber(aiImages)} erkannt.
+          {t('popover_stats_part1')}{formatNumber(totalImages)}{t('popover_stats_part2')}{formatNumber(aiImages)}{t('popover_stats_part3')}
         </p>
       </div>
 

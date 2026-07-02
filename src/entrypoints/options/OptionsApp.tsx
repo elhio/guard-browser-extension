@@ -12,7 +12,13 @@ export default function OptionsApp() {
     });
   }, []);
 
-  if (isSetupComplete === null) return <div>Loading...</div>;
+  if (isSetupComplete === null) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-teal-600" />
+      </div>
+    );
+  }
 
   return isSetupComplete ? (
     <SettingsDashboard onReset={() => setIsSetupComplete(false)} />

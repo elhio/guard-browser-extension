@@ -202,5 +202,284 @@
   },
   "setup_wizard_btn_finish": {
     "message": "Abschließen"
+  },
+  "settings_dashboard_title": {
+    "message": "Guard"
+  },
+  "settings_dashboard_description": {
+    "message": "Verwalte die Konfiguration deiner Browser-Erweiterung auf dieser Seite."
+  },
+  "settings_dashboard_logo_alt": {
+    "message": "Guard-Logo"
+  },
+  "settings_account_title": {
+    "message": "Konto"
+  },
+  "settings_account_profile_title": {
+    "message": "Zum Profil"
+  },
+  "settings_account_profile_disabled_title": {
+    "message": "Bitte melde dich an, um dein Profil zu verwalten"
+  },
+  "settings_account_waiting_auth": {
+    "message": "Warten auf Authentifizierung..."
+  },
+  "settings_account_sign_in": {
+    "message": "Anmelden"
+  },
+  "settings_account_free_plan": {
+    "message": "Free"
+  },
+  "settings_account_logout": {
+    "message": "Abmelden"
+  },
+  "settings_action_title": {
+    "message": "Aktion bei Erkennung"
+  },
+  "settings_action_mark_label": {
+    "message": "Markieren"
+  },
+  "settings_action_mark_desc": {
+    "message": "Fügt dem Bild eine dezente visuelle Markierung hinzu."
+  },
+  "settings_action_mark_aria": {
+    "message": "Aktion Markieren auswählen"
+  },
+  "settings_action_blur_label": {
+    "message": "Weichzeichnen"
+  },
+  "settings_action_blur_desc": {
+    "message": "Überzieht das Bild mit einem Unschärfe-Effekt."
+  },
+  "settings_action_blur_aria": {
+    "message": "Aktion Weichzeichnen auswählen"
+  },
+  "settings_action_hide_label": {
+    "message": "Verbergen"
+  },
+  "settings_action_hide_desc": {
+    "message": "Verbirgt das Bild hinter einer schwarzen Box."
+  },
+  "settings_action_hide_aria": {
+    "message": "Aktion Verbergen auswählen"
+  },
+  "settings_detection_title": {
+    "message": "Standard-Erkennung"
+  },
+  "settings_detection_metadata_label": {
+    "message": "Metadaten"
+  },
+  "settings_detection_metadata_desc": {
+    "message": "Prüft die Daten, die an Bilder angehängt sind. Diese Funktion ist essenziell und immer aktiviert."
+  },
+  "settings_detection_metadata_aria": {
+    "message": "Metadaten-Erkennung (immer aktiviert)"
+  },
+  "settings_detection_lens_label": {
+    "message": "Lens Mobile"
+  },
+  "settings_detection_lens_desc": {
+    "message": "Bietet eine höhere Genauigkeit, indem die Bilder mit einem lokal ausgeführten Erkennungsmodell gescannt werden. Verbraucht mehr Energie."
+  },
+  "settings_detection_lens_aria": {
+    "message": "Lens Mobile-Erkennung umschalten"
+  },
+  "settings_exception_title": {
+    "message": "Ausnahmeliste"
+  },
+  "settings_exception_empty": {
+    "message": "Es wurden noch keine Websites zur Ausnahmeliste hinzugefügt."
+  },
+  "settings_exception_remove": {
+    "message": "Entfernen:"
+  },
+  "settings_general_title": {
+    "message": "Allgemein"
+  },
+  "settings_general_status": {
+    "message": "Status"
+  },
+  "settings_general_deactivate": {
+    "message": "Deaktivieren"
+  },
+  "settings_general_activate": {
+    "message": "Aktivieren"
+  },
+  "settings_general_active": {
+    "message": "Aktiv"
+  },
+  "settings_general_inactive": {
+    "message": "Inaktiv"
+  },
+  "settings_general_version": {
+    "message": "Version"
+  },
+  "settings_general_update": {
+    "message": "Aktualisieren"
+  },
+  "settings_general_update_available": {
+    "message": "Update verfügbar:"
+  },
+  "settings_general_update_downloading": {
+    "message": "Chrome lädt es jetzt herunter."
+  },
+  "settings_general_update_latest": {
+    "message": "Du nutzt bereits die neueste Version!"
+  },
+  "settings_general_update_throttled": {
+    "message": "Update-Prüfung vom Browser gedrosselt. Bitte versuche es später noch einmal."
+  },
+  "settings_general_update_error": {
+    "message": "Die Update-Prüfung ist nur verfügbar, wenn die Erweiterung aus dem Chrome Web Store installiert wurde."
+  },
+  "settings_tasks_title": {
+    "message": "Ausgewählte Aufgaben"
+  },
+  "settings_tasks_ai_label": {
+    "message": "KI-generiert"
+  },
+  "settings_tasks_ai_desc": {
+    "message": "Erkennt Bilder, die von generativer KI erstellt oder manipuliert wurden."
+  },
+  "settings_tasks_ai_aria": {
+    "message": "KI-Erkennung umschalten"
+  },
+  "settings_tasks_violent_label": {
+    "message": "Gewalt"
+  },
+  "settings_tasks_violent_desc": {
+    "message": "Erkennt drastische, gewalttätige oder blutige Inhalte."
+  },
+  "settings_tasks_violent_aria": {
+    "message": "Gewalt-Erkennung umschalten"
+  },
+  "settings_tasks_explicit_label": {
+    "message": "Explizit"
+  },
+  "settings_tasks_explicit_desc": {
+    "message": "Erkennt nicht jugendfreie, obszöne oder pornografische Inhalte."
+  },
+  "settings_tasks_explicit_aria": {
+    "message": "Explizit-Erkennung umschalten"
+  },
+  "settings_verification_title": {
+    "message": "Erweiterte Überprüfung"
+  },
+  "settings_verification_manage_title": {
+    "message": "Workspaces verwalten"
+  },
+  "settings_verification_manage_disabled_title": {
+    "message": "Bitte melde dich an, um Workspaces zu verwalten"
+  },
+  "settings_verification_manage_aria": {
+    "message": "Workspaces in externem Tab verwalten"
+  },
+  "settings_verification_login_required": {
+    "message": "Bitte melde dich an, um deine verfügbaren Workspaces zu laden."
+  },
+  "settings_verification_no_workspaces": {
+    "message": "Keine Workspaces gefunden."
+  },
+  "settings_verification_conj_and": {
+    "message": " und "
+  },
+  "settings_verification_media_image": {
+    "message": "Bildern"
+  },
+  "settings_verification_media_video": {
+    "message": "Videos"
+  },
+  "settings_verification_fallback_model": {
+    "message": "einem Modell"
+  },
+  "settings_verification_desc_template": {
+    "message": "Erkennt {tasks} in {media} unter Verwendung von {predictor}."
+  },
+  "settings_verification_no_desc_fallback": {
+    "message": "Keine Beschreibung verfügbar."
+  },
+  "settings_verification_error_media": {
+    "message": "Dieser Space unterstützt keine Bildanalyse."
+  },
+  "settings_verification_error_task_ai": {
+    "message": "Deine Aufgaben erfordern KI-Erkennung."
+  },
+  "settings_verification_error_task_violent": {
+    "message": "Deine Aufgaben erfordern Gewalterkennung."
+  },
+  "settings_verification_error_task_explicit": {
+    "message": "Deine Aufgaben erfordern Explizit-Erkennung."
+  },
+  "settings_verification_select_aria": {
+    "message": "Auswählen:"
+  },
+  "popover_logo_title": {
+    "message": "Guard-Logo"
+  },
+  "popover_status_label": {
+    "message": "Status"
+  },
+  "popover_status_loading": {
+    "message": "Laden..."
+  },
+  "popover_status_active": {
+    "message": "Aktiv"
+  },
+  "popover_status_disabled": {
+    "message": "Deaktiviert"
+  },
+  "popover_tasks_label": {
+    "message": "Aufgaben"
+  },
+  "popover_tasks_none": {
+    "message": "Keine Aufgaben ausgewählt"
+  },
+  "popover_more": {
+    "message": "weitere"
+  },
+  "popover_task_ai": {
+    "message": "KI-generiert"
+  },
+  "popover_task_nsfw": {
+    "message": "NSFW"
+  },
+  "popover_task_violent": {
+    "message": "Gewalt"
+  },
+  "popover_handling_label": {
+    "message": "Umgang"
+  },
+  "popover_handling_blur": {
+    "message": "Weichzeichnen"
+  },
+  "popover_handling_hide": {
+    "message": "Verbergen"
+  },
+  "popover_verification_label": {
+    "message": "Erste Überprüfung"
+  },
+  "popover_verification_none": {
+    "message": "Keine ausgewählt"
+  },
+  "popover_verification_metadata": {
+    "message": "Metadaten"
+  },
+  "popover_verification_lens_desc": {
+    "message": " (läuft lokal, verbraucht mehr Energie)"
+  },
+  "popover_add_exception": {
+    "message": "Ausnahme hinzufügen"
+  },
+  "popover_settings": {
+    "message": "Einstellungen"
+  },
+  "popover_stats_part1": {
+    "message": "Auf dieser Seite wurden "
+  },
+  "popover_stats_part2": {
+    "message": " Bilder überprüft und "
+  },
+  "popover_stats_part3": {
+    "message": " erkannt."
   }
 }
