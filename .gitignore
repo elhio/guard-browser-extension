@@ -1,4 +1,22 @@
-# Logs
+# WXT specific
+.wxt
+.output
+stats.html
+stats-*.json
+web-ext.config.ts
+
+# dependencies
+node_modules
+yarn.lock
+pnpm-lock.yaml
+bun.lockb
+
+# environment variables
+.env
+.env.*
+!.env.example
+
+# logs
 logs
 *.log
 npm-debug.log*
@@ -7,20 +25,24 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-.output
-stats.html
-stats-*.json
-.wxt
-web-ext.config.ts
-
-# Editor directories and files
+# editor directories and files
 .vscode/*
 !.vscode/extensions.json
 .idea
-.DS_Store
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# testing
+coverage

@@ -1,0 +1,206 @@
+{
+  "login_heading": {
+    "message": "Konto verknüpfen"
+  },
+  "login_subheading": {
+    "message": "Melde dich bei deinem Elhio Konto an, damit Guard auf erweiterte Erkennungs-Modelle und deine persönlichen Einstellungen zugreifen kann."
+  },
+  "login_btn_website": {
+    "message": "Auf der Webseite anmelden"
+  },
+  "login_btn_skip": {
+    "message": "Überspringen"
+  },
+  "login_no_account": {
+    "message": "Du hast noch kein Konto?"
+  },
+  "login_register_link": {
+    "message": "Registrieren"
+  },
+  "login_waiting_title": {
+    "message": "Warte auf Authentifizierung..."
+  },
+  "login_waiting_subtitle": {
+    "message": "Bitte schließe den Vorgang im neu geöffneten Tab ab."
+  },
+  "login_cancel": {
+    "message": "Abbrechen"
+  },
+  "setup_tasks_heading": {
+    "message": "Was soll Guard erkennen?"
+  },
+  "setup_tasks_subheading": {
+    "message": "Wähle aus, welche Arten von Bildern automatisch auf Webseiten analysiert und markiert werden sollen."
+  },
+  "setup_task_ai_title": {
+    "message": "KI-Generiert"
+  },
+  "setup_task_ai_desc": {
+    "message": "Erkennt Bilder, die von generativer KI erstellt oder manipuliert wurden."
+  },
+  "setup_task_violent_title": {
+    "message": "Gewalttätig"
+  },
+  "setup_task_violent_desc": {
+    "message": "Identifiziert drastische, gewalttätige oder blutige Inhalte."
+  },
+  "setup_task_explicit_title": {
+    "message": "Explizit"
+  },
+  "setup_task_explicit_desc": {
+    "message": "Erkennt nicht jugendfreie, obszöne oder pornografische Inhalte."
+  },
+  "setup_tasks_tooltip_empty": {
+    "message": "Bitte wähle mindestens eine Kategorie aus, um fortzufahren."
+  },
+  "setup_action_heading": {
+    "message": "Aktion bei Erkennung"
+  },
+  "setup_action_subheading": {
+    "message": "Was soll passieren, wenn einer der vorher ausgewählten Inhalt entdeckt wird?"
+  },
+  "setup_action_indicate_title": {
+    "message": "Markieren"
+  },
+  "setup_action_indicate_desc": {
+    "message": "Fügt dem Bild einen dezenten visuellen Hinweis hinzu."
+  },
+  "setup_action_blur_title": {
+    "message": "Unscharf machen"
+  },
+  "setup_action_blur_desc": {
+    "message": "Verdeckt das Bild mit einem Unschärfe-Effekt."
+  },
+  "setup_action_hide_title": {
+    "message": "Ausblenden"
+  },
+  "setup_action_hide_desc": {
+    "message": "Blende das Bild vollständig mit einer schwarzen Box auf der Webseite aus."
+  },
+  "setup_detector_heading": {
+    "message": "Standard Erkennung"
+  },
+  "setup_detector_subheading": {
+    "message": "Wähle aus, wie die Bilder standardmäßig analysiert werden sollen."
+  },
+  "setup_detector_lens_title": {
+    "message": "Lens Mobile"
+  },
+  "setup_detector_lens_desc": {
+    "message": "Bietet höhere Genauigkeit, da Bilder mit einem lokal laufenden Erkennungs-Modell gescannt werden. Verbraucht mehr Energie."
+  },
+  "setup_detector_metadata_title": {
+    "message": "Metadaten"
+  },
+  "setup_detector_metadata_desc": {
+    "message": "Prüft die mit dem Bild verknüpften Daten. Diese Funktion ist grundlegend und immer aktiviert."
+  },
+  "setup_verificator_heading": {
+    "message": "Erweiterte Prüfung"
+  },
+  "setup_verificator_subheading": {
+    "message": "Falls du ein Bild nachprüfen möchtest, kannst du es in einem deiner Spaces aus Elhio genauer überprüfen lassen."
+  },
+  "setup_verificator_no_workspaces": {
+    "message": "Keine Workspaces gefunden."
+  },
+  "setup_verificator_mock_personal_title": {
+    "message": "Demo Space"
+  },
+  "setup_verificator_mock_personal_desc": {
+    "message": "Beispiel für einen persönlichen Space des Nutzers."
+  },
+  "setup_verificator_mock_team_title": {
+    "message": "Pro Space"
+  },
+  "setup_verificator_mock_team_desc": {
+    "message": "Beispiel für einen Demo Space mit einem fortschrittlichen Modell."
+  },
+  "setup_verificator_no_desc_fallback": {
+    "message": "Keine Beschreibung verfügbar."
+  },
+  "setup_verificator_error_media": {
+    "message": "Dieser Workspace unterstützt keine Bilder."
+  },
+  "setup_verificator_error_task_ai": {
+    "message": "Dieser Workspace unterstützt keine KI-Erkennung."
+  },
+  "setup_verificator_error_task_violent": {
+    "message": "Dieser Workspace unterstützt keine Gewalterkennung."
+  },
+  "setup_verificator_error_task_explicit": {
+    "message": "Dieser Workspace unterstützt keine Explizit-Erkennung."
+  },
+  "space_desc_template": {
+    "message": "Erkennt {tasks} auf {media} mit {predictor}."
+  },
+  "space_conj_and": {
+    "message": " und "
+  },
+  "space_media_image": {
+    "message": "Bildern"
+  },
+  "space_media_video": {
+    "message": "Videos"
+  },
+  "space_fallback_model": {
+    "message": "einem Modell"
+  },
+  "setup_summary_heading": {
+    "message": "Zusammenfassung"
+  },
+  "setup_summary_subheading": {
+    "message": "Überprüfe ob deine Einstellungen korrekt sind. Du kannst diese später jederzeit in den Optionen ändern."
+  },
+  "setup_summary_account": {
+    "message": "Account"
+  },
+  "setup_summary_tasks": {
+    "message": "Ausgewählte Kategorien"
+  },
+  "setup_summary_action": {
+    "message": "Aktion"
+  },
+  "setup_summary_default_detection": {
+    "message": "Standard-Erkennung"
+  },
+  "setup_summary_advanced_verification": {
+    "message": "Erweiterte Prüfung"
+  },
+  "setup_summary_skipped": {
+    "message": "Übersprungen"
+  },
+  "setup_summary_metadata_only": {
+    "message": "Metadaten"
+  },
+  "setup_summary_metadata_lens": {
+    "message": "Metadaten + Lens Mobile"
+  },
+  "setup_summary_task_ai": {
+    "message": "KI-Generiert"
+  },
+  "setup_summary_task_violent": {
+    "message": "Gewalttätig"
+  },
+  "setup_summary_task_explicit": {
+    "message": "Explizit"
+  },
+  "setup_summary_unknown_space": {
+    "message": "Unbekannter Workspace"
+  },
+  "setup_summary_error": {
+    "message": "Fehler beim Laden"
+  },
+  "setup_wizard_btn_back": {
+    "message": "Zurück"
+  },
+  "setup_wizard_btn_next": {
+    "message": "Weiter"
+  },
+  "setup_wizard_btn_skip": {
+    "message": "Überspringen"
+  },
+  "setup_wizard_btn_finish": {
+    "message": "Abschließen"
+  }
+}

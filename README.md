@@ -1,11 +1,15 @@
-# Guard
-
-[![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![Built with WXT](https://img.shields.io/badge/Built%20with-WXT-2b6cb0.svg)](https://wxt.dev/)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
-
-> The browser extension Guard: A real-time filter that detects deepfakes and blocks unsafe visual media directly on 
-> the webpage
+<div align="center">
+  <h1>
+    <img src="./src/assets/guard.svg" width="100" alt="Guard Logo"><br>
+    Guard
+  </h1>
+  <p><em>A browser extension to detect deepfakes and any other visual content you choose to filter out, right on the webpage</em></p>
+  <p>
+    <a href="https://www.gnu.org/licenses/agpl-3.0"><img src="https://img.shields.io/badge/License-AGPL%20v3-blue.svg" alt="License: AGPL v3"></a>
+    <a href="https://wxt.dev/"><img src="https://img.shields.io/badge/Built%20with-WXT-2b6cb0.svg" alt="Built with WXT"></a>
+    <a href="https://github.com/elhio/guard-browser-extension/fork"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs Welcome"></a>
+  </p>
+</div>
 
 ## Features
 
@@ -49,18 +53,23 @@ This project is built using [WXT](https://wxt.dev/), the Next-gen Web Extension 
     git clone https://github.com/elhio/guard-browser-extension.git
     cd guard-browser-extension
     ```
+   
+2. Copy the example environment file:
+    ```bash
+    cp .env.example .env
+    ```
 
-2. Install dependencies:
+3. Install dependencies:
     ```bash
     npm install # or yarn install / pnpm install
     ```
 
-3. Start the development server (loads the extension in a fresh browser profile):
+4. Start the development server (loads the extension in a fresh browser profile):
     ```bash
     npm run dev
     ```
 
-4. Build for production:
+5. Build for production:
     ```bash
     npm run build
     ```

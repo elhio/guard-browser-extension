@@ -1,0 +1,206 @@
+{
+  "login_heading": {
+    "message": "Link Account"
+  },
+  "login_subheading": {
+    "message": "Log in to your Elhio account to allow Guard to access advanced detection models and your personal settings."
+  },
+  "login_btn_website": {
+    "message": "Log in on the website"
+  },
+  "login_btn_skip": {
+    "message": "Skip"
+  },
+  "login_no_account": {
+    "message": "Don't have an account?"
+  },
+  "login_register_link": {
+    "message": "Sign up"
+  },
+  "login_waiting_title": {
+    "message": "Waiting for authentication..."
+  },
+  "login_waiting_subtitle": {
+    "message": "Please complete the process in the newly opened tab."
+  },
+  "login_cancel": {
+    "message": "Cancel"
+  },
+  "setup_tasks_heading": {
+    "message": "What should Guard detect?"
+  },
+  "setup_tasks_subheading": {
+    "message": "Choose which types of images should be automatically analyzed and marked on websites."
+  },
+  "setup_task_ai_title": {
+    "message": "AI-Generated"
+  },
+  "setup_task_ai_desc": {
+    "message": "Detects images created or manipulated by generative AI."
+  },
+  "setup_task_violent_title": {
+    "message": "Violent"
+  },
+  "setup_task_violent_desc": {
+    "message": "Identifies graphic, violent, or gory content."
+  },
+  "setup_task_explicit_title": {
+    "message": "Explicit"
+  },
+  "setup_task_explicit_desc": {
+    "message": "Detects adult, obscene, or pornographic content."
+  },
+  "setup_tasks_tooltip_empty": {
+    "message": "Please select at least one category to continue."
+  },
+  "setup_action_heading": {
+    "message": "Action on Detection"
+  },
+  "setup_action_subheading": {
+    "message": "What should happen when the previously selected content is detected?"
+  },
+  "setup_action_indicate_title": {
+    "message": "Mark"
+  },
+  "setup_action_indicate_desc": {
+    "message": "Adds a subtle visual indicator to the image."
+  },
+  "setup_action_blur_title": {
+    "message": "Blur"
+  },
+  "setup_action_blur_desc": {
+    "message": "Covers the image with a blur effect."
+  },
+  "setup_action_hide_title": {
+    "message": "Hide"
+  },
+  "setup_action_hide_desc": {
+    "message": "Hides the image behind a black box."
+  },
+  "setup_detector_heading": {
+    "message": "Default Detection"
+  },
+  "setup_detector_subheading": {
+    "message": "Choose how the images should be analyzed by default."
+  },
+  "setup_detector_lens_title": {
+    "message": "Lens Mobile"
+  },
+  "setup_detector_lens_desc": {
+    "message": "Offers higher accuracy by scanning the images with a locally running detection model. Consumes more energy."
+  },
+  "setup_detector_metadata_title": {
+    "message": "Metadata"
+  },
+  "setup_detector_metadata_desc": {
+    "message": "Checks the data attached to the image. This feature is fundamental and always activated."
+  },
+  "setup_verificator_heading": {
+    "message": "Advanced Verification"
+  },
+  "setup_verificator_subheading": {
+    "message": "If you want to verify an image, you can have it checked more thoroughly in one of your spaces on Elhio."
+  },
+  "setup_verificator_no_workspaces": {
+    "message": "No workspaces found."
+  },
+  "setup_verificator_mock_personal_title": {
+    "message": "Demo Space"
+  },
+  "setup_verificator_mock_personal_desc": {
+    "message": "Example for a personal space by the user."
+  },
+  "setup_verificator_mock_team_title": {
+    "message": "Pro Space"
+  },
+  "setup_verificator_mock_team_desc": {
+    "message": "Example for a demo space with an advanced model."
+  },
+  "setup_verificator_no_desc_fallback": {
+    "message": "No description available."
+  },
+  "setup_verificator_error_media": {
+    "message": "This workspace does not support images."
+  },
+  "setup_verificator_error_task_ai": {
+    "message": "This workspace does not support AI detection."
+  },
+  "setup_verificator_error_task_violent": {
+    "message": "This workspace does not support violence detection."
+  },
+  "setup_verificator_error_task_explicit": {
+    "message": "This workspace does not support explicit content detection."
+  },
+  "space_desc_template": {
+    "message": "Detects {tasks} on {media} with {predictor}."
+  },
+  "space_conj_and": {
+    "message": " and "
+  },
+  "space_media_image": {
+    "message": "Images"
+  },
+  "space_media_video": {
+    "message": "Videos"
+  },
+  "space_fallback_model": {
+    "message": "a model"
+  },
+  "setup_summary_heading": {
+    "message": "Summary"
+  },
+  "setup_summary_subheading": {
+    "message": "Check that your settings are correct. You can change them at any time in the settings menu."
+  },
+  "setup_summary_account": {
+    "message": "Account"
+  },
+  "setup_summary_tasks": {
+    "message": "Selected Tasks"
+  },
+  "setup_summary_action": {
+    "message": "Action"
+  },
+  "setup_summary_default_detection": {
+    "message": "Default Detection"
+  },
+  "setup_summary_advanced_verification": {
+    "message": "Advanced Verification"
+  },
+  "setup_summary_skipped": {
+    "message": "Skipped"
+  },
+  "setup_summary_metadata_only": {
+    "message": "Metadata"
+  },
+  "setup_summary_metadata_lens": {
+    "message": "Metadata + Lens Mobile"
+  },
+  "setup_summary_task_ai": {
+    "message": "AI-Generated"
+  },
+  "setup_summary_task_violent": {
+    "message": "Violent"
+  },
+  "setup_summary_task_explicit": {
+    "message": "Explicit"
+  },
+  "setup_summary_unknown_space": {
+    "message": "Unknown Workspace"
+  },
+  "setup_summary_error": {
+    "message": "Error loading"
+  },
+  "setup_wizard_btn_back": {
+    "message": "Back"
+  },
+  "setup_wizard_btn_next": {
+    "message": "Next"
+  },
+  "setup_wizard_btn_skip": {
+    "message": "Skip"
+  },
+  "setup_wizard_btn_finish": {
+    "message": "Finish"
+  }
+}
