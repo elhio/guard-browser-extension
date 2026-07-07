@@ -35,7 +35,7 @@ export default defineConfig({
     ],
     web_accessible_resources: [
       {
-        resources: ['wasm/*'],
+        resources: ['wasm/*.wasm', 'wasm/*.mjs'],
         matches: ['<all_urls>']
       }
     ]

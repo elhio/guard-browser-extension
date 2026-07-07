@@ -1,6 +1,6 @@
 import type { Manifest } from '@contentauth/c2pa-types';
 import { AI_SIGNAL_DETECTORS } from './detectors';
-import { AI_DETECTION_CONFIDENCE_THRESHOLD } from './signals';
+import { DETECTION_THRESHOLDS } from './signals';
 import type { CategoryDetectionResult, DetectionSignalMatch } from './types';
 
 /**
@@ -23,7 +23,7 @@ export function detectAiGeneration(manifests: readonly Manifest[]): CategoryDete
 
   const confidence = matches[0]?.confidence ?? 0;
   return {
-    detected: confidence >= AI_DETECTION_CONFIDENCE_THRESHOLD,
+    detected: confidence >= DETECTION_THRESHOLDS.aiGenerated,
     confidence,
     matches
   };

@@ -1,50 +1,100 @@
 import { browser } from 'wxt/browser';
 import { readManifests } from '@/lib/c2pa';
 import {
-  isOffscreenReadC2paManifestsRequest,
-  type ReadC2paManifestsResponse
-} from '@/lib/messaging/c2paMessages';
-import {
   isOffscreenClassifyImageRequest,
-  type ClassifyImageResponse
-} from '@/lib/messaging/modelMessages';
+  type ClassifyImageResponse,
+  type ClassifyImageResult
+} from '@/lib/messaging/classifyMessages';
+import type { ImageAnalysisResult } from '@/lib/detection/types';
 
 browser.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-  // PATH 1: C2PA Manifests
-  if (isOffscreenReadC2paManifestsRequest(message)) {
-    (async () => {
-      try {
-        const results = await readManifests(message.candidates);
-        sendResponse({ results } satisfies ReadC2paManifestsResponse);
-      } catch (error) {
-        console.error('[Offscreen] C2PA Error:', error);
-        // always send a response so the background script doesn't hang
-        sendResponse({
-          results: [],
-          error: error instanceof Error ? error.message : String(error)
-        });
-      }
-    })();
-    return true; // keep channel open
-  }
-
-  // PATH 2: Local AI Model
   if (isOffscreenClassifyImageRequest(message)) {
     (async () => {
       try {
-        const { classifyImageAiScore } = await import('@/lib/localModel/runner');
-        const aiScore = await classifyImageAiScore(message.src);
+        const { candidates, tasks, useDetectorLocalModel } = message;
 
-        sendResponse({ aiScore } satisfies ClassifyImageResponse);
+        // 1. Run Metadata / C2PA Extraction
+        // Assuming readManifests has been updated to return an array of ImageAnalysisResult
+        const baseResults: ImageAnalysisResult[] = await readManifests(candidates);
+
+        // Map results by source URL for easy lookup
+        const resultsMap = new Map<string, ImageAnalysisResult>(
+          baseResults.map((res) => [res.src, res])
+        );
+
+        const finalResults: ClassifyImageResult[] = [];
+
+        let classifyImageAiScore: ((src: string) => Promise<number | null>) | null = null;
+        if (useDetectorLocalModel && tasks.aiGenerated) {
+          const runner = await import('@/lib/localModel/runner');
+          classifyImageAiScore = runner.classifyImageAiScore;
+        }
+
+        for (const candidate of candidates) {
+          try {
+            const analysis = resultsMap.get(candidate.src) || {
+              src: candidate.src,
+              categories: {}
+            };
+
+            if (classifyImageAiScore) {
+              const score = await classifyImageAiScore(candidate.src);
+
+              if (score !== null) {
+                const modelPercent = Math.round(score * 100);
+
+                if (!analysis.categories.aiGenerated) {
+                  analysis.categories.aiGenerated = { detected: false, confidence: 0, matches: [] };
+                }
+
+                // Push the local model result as a new piece of evidence
+                analysis.categories.aiGenerated.matches.push({
+                  id: 'local-model-ai',
+                  category: 'aiGenerated',
+                  label: 'Local AI Model',
+                  description: 'Inference result from the locally running on-device model',
+                  confidence: modelPercent,
+                  kind: score > 0.5 ? 'aiGenerated' : 'authentic',
+                  evidence: `Model confidence score: ${modelPercent}%`
+                });
+
+                // Ensure the overall confidence reflects the highest signal found
+                if (modelPercent > analysis.categories.aiGenerated.confidence) {
+                  analysis.categories.aiGenerated.confidence = modelPercent;
+                  analysis.categories.aiGenerated.detected = modelPercent > 50;
+                }
+              }
+            }
+
+            finalResults.push({
+              status: 'success',
+              ...analysis
+            });
+
+          } catch (error) {
+            finalResults.push({
+              status: 'error',
+              src: candidate.src,
+              error: error instanceof Error ? error.message : String(error)
+            });
+          }
+        }
+
+        sendResponse({ results: finalResults } satisfies ClassifyImageResponse);
+
       } catch (error) {
-        console.error('[Offscreen] Model Error:', error);
+        console.error('[Offscreen] Classification Error:', error);
+
         sendResponse({
-          aiScore: null,
-          error: error instanceof Error ? error.message : String(error)
+          results: message.candidates.map(c => ({
+            status: 'error',
+            src: c.src,
+            error: error instanceof Error ? error.message : String(error)
+          }))
         } satisfies ClassifyImageResponse);
       }
     })();
-    return true; // keep channel open
+    return true;
   }
 
   return undefined;

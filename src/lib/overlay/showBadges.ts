@@ -1,33 +1,66 @@
-import type { C2paReadResult } from '@/lib/c2pa';
-import type { ClassifyImageResponse } from '@/lib/messaging/modelMessages';
+import type { ClassifyImageResult } from '@/lib/messaging/classifyMessages';
+import type { VerifyImageResponse } from '@/lib/messaging/verifyMessages';
+import type { ImageCandidate } from '@/lib/images';
 import { attachBadge } from './attachBadge';
+import { revealImage } from './applyAction';
 
 /**
- * Batch-processes scanned images and attaches the interactive unified badge to them
- *
- * Note: The `results` array comes back from the background script. Because DOM elements cannot be
- * serialized and passed across extension runtime messaging boundaries, the `candidate` in the result is
- * just a data object. We use `elementsBySrc` to map the resolved URLs back to the live `<img>` DOM nodes.
- *
- * @param results - The array of parsed C2PA/metadata results from the background worker
- * @param elementsBySrc - A map linking absolute image URLs back to their live DOM nodes
- * @param buildAnalyze - A factory function that takes an image URL and returns the specific API callback for that image
+ * Immediately attaches a spinning badge to newly discovered images
  */
-export function showBadges(
-  results: readonly C2paReadResult[],
+export function markBadgesProcessing(
+  candidates: readonly ImageCandidate[],
+  elementsBySrc: ReadonlyMap<string, HTMLImageElement | undefined>
+): void {
+  for (const candidate of candidates) {
+    const element = elementsBySrc.get(candidate.src);
+    if (element) {
+      const badge = attachBadge(element);
+      badge.setProcessing('Analyzing image...');
+    }
+  }
+}
+
+/**
+ * Updates existing spinning badges with the final classification results
+ */
+export function updateBadges(
+  results: readonly ClassifyImageResult[],
   elementsBySrc: ReadonlyMap<string, HTMLImageElement | undefined>,
-  buildAnalyze: (src: string) => () => Promise<ClassifyImageResponse>
+  verifyApiCallback?: (src: string) => Promise<VerifyImageResponse>
 ): void {
   for (const result of results) {
-    if (result.status !== 'success') continue;
+    const element = elementsBySrc.get(result.src);
+    if (!element) continue;
 
-    const element = elementsBySrc.get(result.candidate.src);
-    if (element) {
-      attachBadge(
-        element,
-        result.aiDetection,
-        buildAnalyze(result.candidate.src)
-      );
+    const badge = attachBadge(element);
+
+    if (result.status === 'error') {
+      badge.setError(result.error || 'Failed to analyze image');
+      continue;
     }
+
+    const isAlert =
+      (result.categories.aiGenerated?.confidence ?? 0) > 50 ||
+      (result.categories.violent?.confidence ?? 0) > 50 ||
+      (result.categories.explicit?.confidence ?? 0) > 50;
+
+    function runVerification(): void {
+      if (!verifyApiCallback) return;
+      badge.setVerificationPending();
+
+      verifyApiCallback(result.src)
+        .then((res) => {
+          if (res.success) badge.setVerificationResult(res.data);
+          else badge.setError(res.error);
+        })
+        .catch((err) => badge.setError(err.message || 'Verification failed'));
+    }
+
+    badge.setResult({
+      result,
+      isAlert,
+      onVerify: verifyApiCallback ? runVerification : undefined,
+      onReveal: () => revealImage(element)
+    });
   }
 }

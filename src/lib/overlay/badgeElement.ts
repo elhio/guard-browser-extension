@@ -1,4 +1,5 @@
-import type { CategoryDetectionResult } from '@/lib/c2pa';
+import type { ImageAnalysisResult } from '@/lib/detection/types';
+import type { VerifyImageData } from '@/lib/messaging/verifyMessages';
 
 /**
  * Isolated CSS styles for the badge component.
@@ -10,54 +11,82 @@ const BADGE_STYLES = `
   :host {
     all: initial;
     position: absolute;
-    top: 4px;
-    left: 4px;
+    top: 8px;
+    right: 8px; /* <-- CHANGED: Moves the badge to the top right */
     z-index: 2147483647;
+    font-family: system-ui, -apple-system, sans-serif;
   }
-  .badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 3px 9px;
-    border-radius: 999px;
-    font: 600 12px/1.4 system-ui, sans-serif;
-    white-space: nowrap;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
-    color: #fff;
+  
+  .wrapper { position: relative; display: inline-flex; }
+
+  /* Ring Base */
+  .ring {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    box-sizing: border-box;
     cursor: pointer;
-    border: 1px solid rgba(255, 255, 255, 0.25);
-    transition: background 0.15s ease;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(4px);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
   }
-  .badge.button {
-    background: rgba(17, 19, 28, 0.82);
-  }
-  .badge.button:hover {
-    background: rgba(17, 19, 28, 0.95);
-  }
-  .badge.authentic {
-    background: rgba(22, 122, 80, 0.92);
-  }
-  .badge.authentic:hover {
-    background: rgba(22, 122, 80, 1);
-  }
-  .badge.ai {
-    background: rgba(178, 36, 36, 0.92);
-  }
-  .badge.ai:hover {
-    background: rgba(178, 36, 36, 1);
-  }
-  .badge.pending {
-    background: rgba(17, 19, 28, 0.82);
+
+  /* Ring States */
+  .ring.idle { border: 3px solid rgba(200, 200, 200, 0.4); background: rgba(0, 0, 0, 0.2); }
+  .ring.alert { border: 3px solid rgba(239, 68, 68, 0.9); background: rgba(239, 68, 68, 0.3); }
+  
+  .ring.processing {
+    border: 3px solid rgba(255, 255, 255, 0.2);
+    border-top-color: #3b82f6; /* Blue spinner */
+    background: rgba(0, 0, 0, 0.4);
+    animation: spin 1s linear infinite;
     cursor: wait;
   }
-  .badge.error {
-    background: rgba(120, 120, 120, 0.92);
+
+  .ring.error {
+    border: 3px solid rgba(156, 163, 175, 0.8); /* Gray */
+    background: rgba(107, 114, 128, 0.5);
     cursor: not-allowed;
   }
-`;
 
-/** Represents the specific visual and semantic states the badge can inhabit. */
-type Variant = 'button' | 'authentic' | 'pending' | 'ai' | 'error';
+  @keyframes spin { 100% { transform: rotate(360deg); } }
+  .ring:hover { transform: scale(1.05); }
+
+  /* Tooltip */
+  .tooltip {
+    position: absolute; 
+    top: 100%; 
+    right: 0; /* <-- CHANGED: Anchors tooltip to the right so it doesn't overflow off-screen */
+    margin-top: 8px;
+    background: rgba(17, 19, 28, 0.95); border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px; padding: 12px; width: 220px; color: #fff; font-size: 13px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.6); display: none; flex-direction: column; gap: 12px; cursor: default;
+  }
+  .wrapper:hover .tooltip { display: flex; }
+
+  /* Inner UI Elements */
+  .results-grid { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; }
+  .category-label { color: #cbd5e1; }
+  .category-score { font-weight: 600; }
+  .score-high { color: #ef4444; }
+  .score-low { color: #10b981; }
+  .divider { height: 1px; background: rgba(255, 255, 255, 0.15); margin: 4px 0; }
+  .message-text { color: #cbd5e1; font-size: 13px; text-align: center; }
+
+  /* Buttons */
+  .btn {
+    color: white; border: none; border-radius: 6px; padding: 8px;
+    cursor: pointer; font-weight: 600; font-size: 12px; width: 100%;
+    transition: background 0.15s;
+  }
+  .verify-btn { background: #2563eb; }
+  .verify-btn:hover:not(:disabled) { background: #1d4ed8; }
+  .verify-btn:disabled { background: #475569; cursor: not-allowed; color: #cbd5e1; }
+  .verify-btn.error { background: #dc2626; color: white; }
+  
+  .reveal-btn { background: #4b5563; margin-top: 4px; }
+  .reveal-btn:hover { background: #374151; }
+`;
 
 /**
  * Represents the interface for interacting with the encapsulated badge DOM element
@@ -70,10 +99,24 @@ type Variant = 'button' | 'authentic' | 'pending' | 'ai' | 'error';
  */
 export interface UnifiedBadge {
   host: HTMLElement;
-  showInitialState: (detection: CategoryDetectionResult, onClick: () => void) => void;
-  showPending: () => void;
-  showResult: (aiScore: number) => void;
-  showError: () => void;
+  setProcessing: (msg: string) => void;
+  setResult: (config: { result: ImageAnalysisResult; isAlert: boolean; onVerify?: () => void; onReveal?: () => void }) => void;
+  setVerificationPending: () => void;
+  setVerificationResult: (data: VerifyImageData) => void;
+  setError: (msg: string) => void;
+}
+
+/**
+ * Helper to build rows for the tooltip results grid
+ */
+function buildScoreRow(label: string, score: number, isScale0To1 = false): string {
+  const percent = isScale0To1 ? Math.round(score * 100) : Math.round(score);
+  const colorClass = percent > 50 ? 'score-high' : 'score-low';
+
+  return `
+    <div class="category-label">${label}</div>
+    <div class="category-score ${colorClass}">${percent}%</div>
+  `;
 }
 
 /**
@@ -82,22 +125,6 @@ export interface UnifiedBadge {
  * @param aiDetection - The summarized results containing matched signals
  * @returns A formatted string listing each triggered rule, its confidence, and specific evidence
  */
-function buildTooltip(aiDetection: CategoryDetectionResult): string {
-  if (!aiDetection.matches.length) return 'Click to verify with advanced model';
-  const evidence = aiDetection.matches.map((m) => `${m.label} (${m.confidence}%): ${m.evidence}`).join('\n');
-  return `${evidence}\n\n(Click to verify with advanced model)`;
-}
-
-/**
- * Creates a single interactive unified badge instance
- *
- * Note: The badge utilizes a closed shadow DOM to strictly isolate its CSS
- * from the host page. It acts as a lightweight state machine, starting with an initial
- * likelihood based on metadata, and safely transitioning in-place to a pending or result
- * state when the user triggers an external verification.
- *
- * @returns A `UnifiedBadge` object containing the mountable host element and state transition methods
- */
 export function createBadgeElement(): UnifiedBadge {
   const host = document.createElement('div');
   const shadow = host.attachShadow({ mode: 'closed' });
@@ -105,38 +132,86 @@ export function createBadgeElement(): UnifiedBadge {
   const style = document.createElement('style');
   style.textContent = BADGE_STYLES;
 
-  const badge = document.createElement('span');
-  shadow.append(style, badge);
+  const wrapper = document.createElement('div');
+  wrapper.className = 'wrapper';
 
-  function render(variant: Variant, text: string, onClick?: () => void, tooltip?: string): void {
-    badge.className = `badge ${variant}`;
-    badge.textContent = text;
-    badge.title = tooltip ?? '';
-    badge.style.pointerEvents = onClick ? 'auto' : 'none';
-    badge.onclick = onClick ?? null;
-  }
+  const ring = document.createElement('div');
+  const tooltip = document.createElement('div');
+  tooltip.className = 'tooltip';
+
+  const detailsContainer = document.createElement('div');
+
+  const verifyBtn = document.createElement('button');
+  verifyBtn.className = 'btn verify-btn';
+  verifyBtn.textContent = 'Verify with Advanced Model';
+
+  const revealBtn = document.createElement('button');
+  revealBtn.className = 'btn reveal-btn';
+  revealBtn.textContent = '👁 Unblur / Reveal Image';
+
+  tooltip.append(detailsContainer, verifyBtn, revealBtn);
+  wrapper.append(ring, tooltip);
+  shadow.append(style, wrapper);
+
+  let currentVerifyCallback: (() => void) | undefined;
+  let currentRevealCallback: (() => void) | undefined;
+
+  verifyBtn.addEventListener('click', (e) => {
+    e.preventDefault(); e.stopPropagation();
+    if (currentVerifyCallback) currentVerifyCallback();
+  });
+
+  revealBtn.addEventListener('click', (e) => {
+    e.preventDefault(); e.stopPropagation();
+    if (currentRevealCallback) {
+      currentRevealCallback();
+      revealBtn.style.display = 'none'; // Hide button after it's clicked
+    }
+  });
 
   return {
     host,
-    showInitialState: (detection, onClick) => {
-      const tooltip = buildTooltip(detection);
-      if (detection.detected) {
-        render('ai', `⚠ AI-Generated (${detection.confidence}%)`, onClick, tooltip);
-      } else if (detection.matches.length > 0) {
-        render('authentic', `✓ Metadata (${detection.confidence}% AI)`, onClick, tooltip);
-      } else {
-        render('button', '🔍 Verify', onClick, tooltip);
-      }
+    setProcessing: (msg) => {
+      ring.className = 'ring processing';
+      verifyBtn.style.display = 'none';
+      revealBtn.style.display = 'none';
+      detailsContainer.innerHTML = `<div class="message-text">⏳ ${msg}</div>`;
     },
-    showPending: () => render('pending', '⏳ Analyze …'),
-    showResult: (aiScore) => {
-      const percent = Math.round(aiScore * 100);
-      if (aiScore >= 0.5) {
-        render('ai', `🤖 AI-Generated (${percent}%)`);
-      } else {
-        render('authentic', `✓ Verification (${percent}% AI)`);
-      }
+    setResult: ({ result, isAlert, onVerify, onReveal }) => {
+      ring.className = isAlert ? 'ring alert' : 'ring idle';
+      currentVerifyCallback = onVerify;
+      currentRevealCallback = onReveal;
+
+      verifyBtn.style.display = onVerify ? 'block' : 'none';
+      revealBtn.style.display = (isAlert && onReveal) ? 'block' : 'none'; // Only show reveal if there's an active alert action
+
+      detailsContainer.innerHTML = `
+        ${buildScoreRow('AI Generated', result.categories.aiGenerated?.confidence ?? 0)}
+        ${buildScoreRow('Violent', result.categories.violent?.confidence ?? 0)}
+        ${buildScoreRow('Explicit', result.categories.explicit?.confidence ?? 0)}
+      `;
     },
-    showError: () => render('error', '⚠ Verification failed')
+    setVerificationPending: () => {
+      verifyBtn.disabled = true;
+      verifyBtn.textContent = '⏳ Analyzing...';
+      verifyBtn.classList.remove('error');
+    },
+    setVerificationResult: (data) => {
+      verifyBtn.style.display = 'none';
+      detailsContainer.innerHTML += `
+        <div class="divider" style="grid-column: 1 / -1;"></div>
+        <div class="category-label" style="grid-column: 1 / -1; font-weight: bold; color: #fff;">External API Results:</div>
+        ${buildScoreRow('AI Generated', data.aiGenerated ?? 0, true)}
+        ${buildScoreRow('Violent', data.violent ?? 0, true)}
+        ${buildScoreRow('Explicit', data.explicit ?? 0, true)}
+      `;
+      const isAdvancedAlert = (data.aiGenerated ?? 0) > 0.50 || (data.violent ?? 0) > 0.50 || (data.explicit ?? 0) > 0.50;
+      ring.className = isAdvancedAlert ? 'ring alert' : 'ring idle';
+    },
+    setError: (msg) => {
+      ring.className = 'ring error';
+      verifyBtn.style.display = 'none';
+      detailsContainer.innerHTML = `<div class="message-text">⚠ ${msg}</div>`;
+    }
   };
 }

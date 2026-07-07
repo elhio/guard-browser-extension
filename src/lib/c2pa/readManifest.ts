@@ -3,8 +3,8 @@ import { getManifestChain } from './manifestStore';
 import { detectAiGeneration } from '@/lib/c2pa/aiDetection';
 import { combineCategoryResults } from '@/lib/detection/combineResults';
 import { extractImageMetadata, detectMetadataSignals } from '@/lib/metadata';
-import type { C2paReadResult } from './types';
-import type { ImageCandidate } from '@/lib/images';
+import type { SerializableImageCandidate } from '@/lib/images';
+import type { ImageAnalysisResult } from '@/lib/detection/types';
 
 /**
  * Fetches a target image and evaluates it for AI-generation signals using a dual-pass approach.
@@ -17,7 +17,7 @@ import type { ImageCandidate } from '@/lib/images';
  * @param candidate - The image candidate object containing the `src` URL to fetch
  * @returns A promise resolving to a `C2paReadResult`. On success, it contains the combined detection results.
  */
-export async function readManifestFor(candidate: ImageCandidate): Promise<C2paReadResult> {
+export async function readManifestFor(candidate: SerializableImageCandidate): Promise<ImageAnalysisResult> {
   try {
     const response = await fetch(candidate.src);
     if (!response.ok) {
@@ -33,10 +33,13 @@ export async function readManifestFor(candidate: ImageCandidate): Promise<C2paRe
 
     if (!reader) {
       return {
-        status: 'success',
-        candidate,
-        manifestStore: null,
-        aiDetection: combineCategoryResults('aiGenerated', [detectAiGeneration([]), metadataAiDetection])
+        src: candidate.src,
+        categories: {
+          aiGenerated: combineCategoryResults('aiGenerated', [
+            detectAiGeneration([]),
+            metadataAiDetection
+          ])
+        }
       };
     }
 
@@ -45,19 +48,23 @@ export async function readManifestFor(candidate: ImageCandidate): Promise<C2paRe
       const manifestChain = getManifestChain(manifestStore);
 
       return {
-        status: 'success',
-        candidate,
-        manifestStore,
-        aiDetection: combineCategoryResults('aiGenerated', [detectAiGeneration(manifestChain), metadataAiDetection])
+        src: candidate.src,
+        categories: {
+          aiGenerated: combineCategoryResults('aiGenerated', [
+            detectAiGeneration(manifestChain),
+            metadataAiDetection
+          ])
+        }
       };
     } finally {
       await reader.free();
     }
   } catch (error) {
+    console.warn(`[Guard] Failed to parse metadata for ${candidate.src}:`, error);
+
     return {
-      status: 'error',
-      candidate,
-      error: error instanceof Error ? error.message : String(error)
+      src: candidate.src,
+      categories: {}
     };
   }
 }

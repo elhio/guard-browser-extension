@@ -13,8 +13,17 @@
 
 ## Features
 
-* **[Feature 1]:** *(Coming Soon)*
-* **[Feature 2]:** *(Coming Soon)*
+**🛡️ Multi-Layered Content Moderation:** Automatically checks web images as you browse to find AI-made, violent, or 
+sexual content before you see them.
+
+**⚡ Fast Local Inference:** Runs a lightweight AI classification model entirely on-device using ONNX Runtime 
+and WebAssembly. To save system resources, you can disable the AI model and rely on instant C2PA metadata checks.
+
+**🌐 Deep Scan Verification:** Not sure about a local result? Click the “Verify” button on the badge to send the image 
+to our advanced API models for a highly accurate secondary verification.
+
+**⚙️ Granular Control:** Toggle specific detection tasks (e.g., turn off violence detection but keep AI detection), 
+choose how the extension reacts to flagged content (mark, blur, or hide), or whitelist specific websites.
 
 ## Installation
 

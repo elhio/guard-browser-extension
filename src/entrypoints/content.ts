@@ -4,31 +4,23 @@ import { QueryClient } from '@tanstack/react-query';
 import { byHttpSource, toSerializableCandidate, watchPageImages } from '@/lib/images';
 import type { ImageCandidate } from '@/lib/images';
 import {
-  READ_C2PA_MANIFESTS_MESSAGE,
-  type ReadC2paManifestsRequest,
-  type ReadC2paManifestsResponse
-} from '../lib/messaging/c2paMessages';
-import {
   CLASSIFY_IMAGE_MESSAGE,
   type ClassifyImageRequest,
   type ClassifyImageResponse
-} from '@/lib/messaging/modelMessages';
+} from '@/lib/messaging/classifyMessages';
 import {
-  EXTERNAL_API_VERIFY_MESSAGE,
-  type ExternalApiVerifyRequest,
-  type ExternalApiVerifyResponse
-} from '@/lib/messaging/apiMessages';
+  VERIFY_IMAGE_MESSAGE,
+  type VerifyImageRequest,
+  type VerifyImageResponse
+} from '@/lib/messaging/verifyMessages';
 
 import {
-  applyBlur,
+  applyAction,
   clearAllBadges,
-  clearAllBlurredImages,
-  clearModelFallback,
-  setBlurActive,
-  setHoverUnblurActive,
-  showBadges,
-  showModelFallback,
-  //showExternalScanButton
+  clearAllActions,
+  setAction,
+  markBadgesProcessing,
+  updateBadges,
 } from '@/lib/overlay';
 
 import { settings } from '@/lib/settings/store';
@@ -41,55 +33,63 @@ const queryClient = new QueryClient({
   },
 });
 
-let aiCheckActive = true;
-
 async function processCandidates(candidates: ImageCandidate[]): Promise<void> {
-  const response = await queryClient.fetchQuery({
-    queryKey: ['c2paManifests', candidates.map(c => c.src)],
-    queryFn: async () => {
-      const request: ReadC2paManifestsRequest = {
-        type: READ_C2PA_MANIFESTS_MESSAGE,
-        candidates: candidates.map(toSerializableCandidate)
-      };
-      return browser.runtime.sendMessage(request) as Promise<ReadC2paManifestsResponse>;
-    }
-  });
-
-  for (const result of response.results) {
-    if (result.status === 'success' && result.aiDetection.isLikelyAiGenerated) {
-      console.log('[Guard] Likely AI-generated:', result.candidate.src, result.aiDetection);
-    }
-  }
-
+  const currentSettings = await settings.getValue();
   const elementsBySrc = new Map(candidates.map((candidate) => [candidate.src, candidate.element]));
-  showBadges(response.results, elementsBySrc);
-  applyBlur(response.results, elementsBySrc);
 
-  if (aiCheckActive) {
-    showModelFallback(response.results, elementsBySrc, classifyImage);
-    //showExternalScanButton(response.results, elementsBySrc, verifyWithExternalApi);
+  markBadgesProcessing(candidates, elementsBySrc);
+
+  try {
+    const response = await queryClient.fetchQuery({
+      queryKey: [
+        'classifyImages',
+        candidates.map(c => c.src),
+        currentSettings.tasks,
+        currentSettings.useDetectorLocalModel
+      ],
+      queryFn: async () => {
+        const request: ClassifyImageRequest = {
+          type: CLASSIFY_IMAGE_MESSAGE,
+          candidates: candidates.map(toSerializableCandidate),
+          tasks: currentSettings.tasks,
+          useDetectorLocalModel: currentSettings.useDetectorLocalModel
+        };
+        return browser.runtime.sendMessage(request) as Promise<ClassifyImageResponse>;
+      }
+    });
+
+    if (!response || !response.results) {
+      console.warn('[Guard] Classification skipped: Background script returned null or no results.');
+      return;
+    }
+
+    updateBadges(response.results, elementsBySrc, verifyWithExternalApi);
+
+    applyAction(response.results, elementsBySrc);
+
+  } catch (error) {
+    console.error('[Guard] Error processing image candidates:', error);
+
+    for (const candidate of candidates) {
+       const element = elementsBySrc.get(candidate.src);
+       if (!element) continue;
+
+       import('@/lib/overlay').then(({ attachBadge }) => {
+           attachBadge(element).setError('Extension background task failed');
+       });
+    }
   }
 }
 
-function classifyImage(src: string): Promise<ClassifyImageResponse> {
+function verifyWithExternalApi(src: string): Promise<VerifyImageResponse> {
   return queryClient.fetchQuery({
-    queryKey: ['classifyImage', src],
+    queryKey: ['verifyImages', src],
     queryFn: async () => {
-      const request: ClassifyImageRequest = { type: CLASSIFY_IMAGE_MESSAGE, src };
-      return browser.runtime.sendMessage(request) as Promise<ClassifyImageResponse>;
-    }
-  });
-}
+      const request: VerifyImageRequest = { type: VERIFY_IMAGE_MESSAGE, src };
+      const res = (await browser.runtime.sendMessage(request)) as VerifyImageResponse;
 
-function verifyWithExternalApi(src: string): Promise<ExternalApiVerifyResponse> {
-  return queryClient.fetchQuery({
-    queryKey: ['verifyWithExternalApi', src],
-    queryFn: async () => {
-      const request: ExternalApiVerifyRequest = { type: EXTERNAL_API_VERIFY_MESSAGE, src };
-      const res = await browser.runtime.sendMessage(request) as Promise<ExternalApiVerifyResponse>;
-
-      if (!(await res).success) {
-        throw new Error((await res).error);
+      if (!res.success) {
+        throw new Error(res.error);
       }
       return res;
     }
@@ -134,7 +134,7 @@ export default defineContentScript({
       stopWatching?.();
       stopWatching = undefined;
       clearAllBadges();
-      clearAllBlurredImages();
+      clearAllActions();
     }
 
     const isHostWhitelisted = (host: string, whitelist: string[]) => whitelist.includes(host);
@@ -145,9 +145,7 @@ export default defineContentScript({
 
     let currentSettings = await settings.getValue();
 
-    setBlurActive(currentSettings.detectionAction === 'blur');
-    setHoverUnblurActive(currentSettings.detectionAction === 'blur');
-    aiCheckActive = currentSettings.tasks?.aiGenerated ?? true;
+    setAction(currentSettings.detectionAction);
 
     if (shouldRun(currentSettings)) {
       start();
@@ -166,21 +164,9 @@ export default defineContentScript({
       }
 
       if (currentSettings.detectionAction !== newSettings.detectionAction) {
-        setBlurActive(newSettings.detectionAction === 'blur');
-        setHoverUnblurActive(newSettings.detectionAction === 'blur');
+        setAction(newSettings.detectionAction);
       }
 
-      const wasAiActive = currentSettings.tasks?.aiGenerated ?? true;
-      const nowAiActive = newSettings.tasks?.aiGenerated ?? true;
-
-      if (wasAiActive !== nowAiActive) {
-        aiCheckActive = nowAiActive;
-        if (!nowAiActive) {
-          clearModelFallback();
-        }
-      }
-
-      // Update local reference for the next change comparison
       currentSettings = newSettings;
     });
   },

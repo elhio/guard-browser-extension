@@ -1,5 +1,4 @@
 export * from './attachBadge.ts';
 export * from './showBadges.ts';
-export * from './applyBlur.ts';
-export * from './showModelFallback';
+export * from './applyAction.ts';
 export { clearAllBadges } from './badgeLifecycle';
