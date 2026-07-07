@@ -1,4 +1,7 @@
-/** Width/height pairs that diffusion models commonly default to or are constrained to. */
+/**
+ * A curated list of specific width/height pairs (in pixels) that popular diffusion models (like Stable Diffusion,
+ * Midjourney, and DALL-E) commonly default to or are strictly constrained to
+ */
 const TYPICAL_AI_DIMENSIONS: ReadonlyArray<readonly [number, number]> = [
   [512, 512],
   [768, 768],
@@ -18,10 +21,11 @@ const TYPICAL_AI_DIMENSIONS: ReadonlyArray<readonly [number, number]> = [
 ];
 
 /**
- * Whether `width`x`height` matches a dimension pair AI image generators commonly
- * produce. Weak on its own (real photos get cropped to round numbers too,
- * and 1920x1080 is also an extremely common screenshot/video-still size) —
- * meant to nudge confidence, not decide it alone.
+ * Evaluates whether a given width and height perfectly match a dimension pair commonly produced by AI image generators
+ *
+ * @param width - The image width in pixels
+ * @param height - The image height in pixels
+ * @returns True if the dimensions strictly match a known AI generation default; otherwise, false
  */
 export function looksLikeTypicalAiDimension(width: number | undefined, height: number | undefined): boolean {
   if (!width || !height) return false;

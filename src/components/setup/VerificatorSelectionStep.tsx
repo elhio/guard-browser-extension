@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
+
 import { RadioCard } from '@/components/ui/RadioCard';
-import { t, getAppLocale } from '@/lib/i18n';
-import type { SpacePublic } from '@/types/api';
+import { t } from '@/lib/i18n';
+import { fetchUserProfile, fetchUserSpaces, type SpacePublic } from '@/lib/api';
 import type { TasksState } from '@/components/setup/TaskSelectionStep';
 
 interface VerificatorSelectionStepProps {
@@ -19,51 +21,21 @@ export function VerificatorSelectionStep({
   tasks,
   onSelect
 }: VerificatorSelectionStepProps) {
-  const [spaces, setSpaces] = useState<SpacePublic[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const { data: user, isLoading: isUserLoading } = useQuery({
+    queryKey: ['userProfile', token],
+    queryFn: () => fetchUserProfile(token!),
+    enabled: !!token && isAuthenticated,
+    staleTime: 1000 * 60 * 5,
+  });
 
-  useEffect(() => {
-    // If the user skipped, completely abort the fetch even if a token exists
-    if (!isAuthenticated || !token) return;
+  const { data: spaces = [], isLoading: isSpacesLoading } = useQuery({
+    queryKey: ['userSpaces', token, user?.id],
+    queryFn: () => fetchUserSpaces(token!, user!.id),
+    enabled: !!token && !!user?.id && isAuthenticated,
+    staleTime: 1000 * 60 * 5,
+  });
 
-    const fetchSpaces = async () => {
-      setIsLoading(true);
-      try {
-        const baseUrl = import.meta.env.VITE_API_URL;
-        const currentLang = getAppLocale();
-
-        const userResponse = await fetch(`${baseUrl}/api/v1/users/me?lang=${currentLang}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        if (!userResponse.ok) {
-          throw new Error(`Failed to fetch user: ${userResponse.status}`);
-        }
-
-        const userData = await userResponse.json();
-        const userId = userData.id;
-
-        const spacesResponse = await fetch(`${baseUrl}/api/v1/spaces/?user_id=${userId}&lang=${currentLang}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        if (!spacesResponse.ok) {
-          throw new Error(`Failed to fetch spaces: ${spacesResponse.status}`);
-        }
-
-        const spacesJson = await spacesResponse.json();
-        setSpaces(spacesJson.data || []);
-      } catch (error) {
-        console.error('Error fetching spaces:', error);
-        // If the fetch fails, you might want to clear the spaces to trigger the empty state safely
-        setSpaces([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchSpaces();
-  }, [token, isAuthenticated]);
+  const isLoading = isUserLoading || isSpacesLoading;
 
   const generateDynamicDescription = (space: SpacePublic) => {
     const andStr = t('space_conj_and');
@@ -93,7 +65,6 @@ export function VerificatorSelectionStep({
     }
 
     const predictor = space.predictor_name || t('space_fallback_model');
-
     const template = t('space_desc_template');
 
     if (!formattedTasks || !formattedMedia) {
@@ -106,14 +77,14 @@ export function VerificatorSelectionStep({
       .replace('{predictor}', predictor);
   };
 
-  const checkSpaceEligibility = (space: SpacePublic): { eligible: boolean; reason?: string } => {
+  const checkSpaceEligibility = useCallback((space: SpacePublic): { eligible: boolean; reason?: string } => {
     if (!space.enabled_media?.includes('image')) {
       return { eligible: false, reason: t('setup_verificator_error_media') };
     }
 
     const enabledTasks = space.enabled_task_names || [];
 
-    if (tasks.ai && !enabledTasks.some(t => ['AI-Generated', 'AI-Generiert'].includes(t))) {
+    if (tasks.aiGenerated && !enabledTasks.some(t => ['AI-Generated', 'AI-Generiert'].includes(t))) {
       return { eligible: false, reason: t('setup_verificator_error_task_ai') };
     }
     if (tasks.violent && !enabledTasks.some(t => ['Violent', 'Gewalttätig'].includes(t))) {
@@ -124,7 +95,21 @@ export function VerificatorSelectionStep({
     }
 
     return { eligible: true };
-  };
+  }, [tasks]);
+
+  useEffect(() => {
+    if (selectedSpace && spaces.length > 0) {
+      const activeSpace = spaces.find(s => s.id === selectedSpace);
+      if (activeSpace) {
+        const { eligible } = checkSpaceEligibility(activeSpace);
+        if (!eligible) {
+          queueMicrotask(() => {
+            onSelect('');
+          });
+        }
+      }
+    }
+  }, [selectedSpace, spaces, checkSpaceEligibility, onSelect]);
 
   return (
     <div className="animate-in fade-in slide-in-from-right-2 duration-300">
@@ -144,10 +129,6 @@ export function VerificatorSelectionStep({
           ) : spaces.length > 0 ? (
             spaces.map((space) => {
               const { eligible, reason } = checkSpaceEligibility(space);
-
-              if (!eligible && selectedSpace === space.id) {
-                setTimeout(() => onSelect(''), 0);
-              }
 
               return (
                 <RadioCard

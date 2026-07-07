@@ -1,5 +1,3 @@
-import { useEffect, useState } from 'react';
-import { browser } from 'wxt/browser';
 import { t } from '@/lib/i18n';
 import { GeneralSettingsCard } from '@/components/settings/GeneralSettingsCard';
 import { TasksSettingsCard } from '@/components/settings/TasksSettingsCard';
@@ -9,39 +7,19 @@ import { VerificationSettingsCard } from '@/components/settings/VerificationSett
 import { AccountSettingsCard } from '@/components/settings/AccountSettingsCard';
 import { ExceptionSiteListCard } from '@/components/settings/ExceptionSiteListCard';
 
-interface SettingsDashboardProps {
-  onReset: () => void;
-}
-
-export default function SettingsDashboard({ onReset }: SettingsDashboardProps) {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [detectionAction, setDetectionAction] = useState('indicate');
-  const [defaultModel, setDefaultModel] = useState('local_onnx');
-
-  // Load preferences when dashboard mounts
-  useEffect(() => {
-    browser.storage.local.get(['isLoggedIn', 'detectionAction', 'defaultModel']).then((res) => {
-      if (res.isLoggedIn !== undefined) setIsLoggedIn(res.isLoggedIn);
-      if (res.detectionAction !== undefined) setDetectionAction(res.detectionAction);
-      if (res.defaultModel !== undefined) setDefaultModel(res.defaultModel);
-    });
-  }, []);
-
+export default function SettingsDashboard() {
   return (
     <div className="mx-auto max-w-3xl p-6 md:p-10 font-sans">
       {/* Header Section */}
       <header className="mb-8 flex justify-between gap-4 pb-4">
         <div>
-          {/* Title */}
           <h1 className="text-2xl font-extrabold tracking-tight text-gray-900">
             {t('settings_dashboard_title')}
           </h1>
-          {/* Description */}
           <p className="mt-2 text-sm text-gray-500">
             {t('settings_dashboard_description')}
           </p>
         </div>
-
         <div className="shrink-0 py-1">
           <img
             src="/icons/128.png"

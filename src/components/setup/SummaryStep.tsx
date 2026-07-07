@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react';
-import { browser } from 'wxt/browser';
+import { useQuery } from '@tanstack/react-query';
+
 import { t } from '@/lib/i18n';
 import type { TasksState } from '@/components/setup/TaskSelectionStep';
-import type { SpacePublic } from '@/types/api';
+import { fetchUserProfile, fetchUserSpaces } from '@/lib/api';
 
 interface SummaryStepProps {
-  token: string | null;
+  token: string | null | undefined;
   isAuthenticated: boolean;
   tasks: TasksState;
   detectionAction: string;
@@ -21,56 +21,47 @@ export function SummaryStep({
   useDetectorLocalModel,
   verificatorSpace,
 }: SummaryStepProps) {
-  const [userName, setUserName] = useState<string>('...');
-  const [spaceName, setSpaceName] = useState<string>('...');
+  const { data: user, isLoading: isUserLoading, isError: isUserError } = useQuery({
+    queryKey: ['userProfile', token],
+    queryFn: () => fetchUserProfile(token!),
+    enabled: !!token && isAuthenticated,
+    staleTime: 1000 * 60 * 10,
+  });
 
-  useEffect(() => {
-    if (!isAuthenticated || !token) {
-      setUserName(t('setup_summary_skipped'));
-      setSpaceName(t('setup_summary_skipped'));
-      return;
-    }
-
-    const fetchDetails = async () => {
-      try {
-        const baseUrl = import.meta.env.VITE_API_URL;
-        const currentLang = browser.i18n.getUILanguage().split('-')[0].toLowerCase();
-
-        const userResponse = await fetch(`${baseUrl}/api/v1/users/me?lang=${currentLang}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        if (userResponse.ok) {
-          const userData = await userResponse.json();
-          setUserName(userData.full_name || userData.name || userData.email || 'Benutzer');
-
-          const spacesResponse = await fetch(`${baseUrl}/api/v1/spaces/?user_id=${userData.id}&lang=${currentLang}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-
-          if (spacesResponse.ok) {
-            const spacesJson = await spacesResponse.json();
-            const selected = spacesJson.data?.find((s: SpacePublic) => s.id === verificatorSpace);
-            setSpaceName(selected ? selected.name : t('setup_summary_unknown_space'));
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching summary details:', error);
-        setUserName(t('setup_summary_error'));
-        setSpaceName(t('setup_summary_error'));
-      }
-    };
-
-    fetchDetails();
-  }, [token, isAuthenticated, verificatorSpace]);
+  const { data: spaces = [], isLoading: isSpacesLoading } = useQuery({
+    queryKey: ['userSpaces', token, user?.id],
+    queryFn: () => fetchUserSpaces(token!, user!.id),
+    enabled: !!token && !!user?.id && isAuthenticated,
+    staleTime: 1000 * 60 * 10,
+  });
 
   const getTasksString = () => {
     const selected = [];
-    if (tasks.ai) selected.push(t('setup_summary_task_ai'));
+    if (tasks.aiGenerated) selected.push(t('setup_summary_task_ai'));
     if (tasks.violent) selected.push(t('setup_summary_task_violent'));
     if (tasks.explicit) selected.push(t('setup_summary_task_explicit'));
     return selected.join(', ');
   };
+
+  let userName = '...';
+  let spaceName = '...';
+
+  if (!isAuthenticated || !token) {
+    userName = t('setup_summary_skipped');
+    spaceName = t('setup_summary_skipped');
+  } else if (isUserError) {
+    userName = t('setup_summary_error');
+    spaceName = t('setup_summary_error');
+  } else if (!isUserLoading && !isSpacesLoading) {
+    userName = user?.full_name || 'User';
+
+    if (!verificatorSpace) {
+      spaceName = t('setup_summary_skipped');
+    } else {
+      const selected = spaces.find((s) => s.id === verificatorSpace);
+      spaceName = selected ? selected.name : t('setup_summary_unknown_space');
+    }
+  }
 
   return (
     <div className="animate-in fade-in slide-in-from-right-2 duration-300">
@@ -96,7 +87,6 @@ export function SummaryStep({
         <div className="flex flex-col">
           <span className="text-xs text-gray-500 uppercase tracking-wide">{t('setup_summary_action')}</span>
           <span className="text-sm font-semibold text-gray-900 capitalize">
-            {/* You can add a translation map here later if you have more actions than 'indicate' */}
             {detectionAction}
           </span>
         </div>

@@ -5,10 +5,10 @@ import { findMatchingTerm } from '../textMatch';
 import type { MetadataSignalMatch, RawImageMetadata } from '../types';
 
 /**
- * Detects AI-generation signals in the XMP segment. XMP key casing/namespacing
- * varies a lot between tools, so unlike the EXIF detector this scans the whole
- * segment rather than picking exact field names — the `parameters` listed in
- * the signal catalog describe the fields of interest, not an exhaustive pick-list.
+ * Evaluates the XMP segment for signals indicating AI generation.
+ *
+ * @param metadata - The raw, parsed metadata blocks extracted from the image file
+ * @returns An array of successfully matched metadata signals, populated with specific evidence strings
  */
 export function detectXmpSignals(metadata: RawImageMetadata): MetadataSignalMatch[] {
   const matches: MetadataSignalMatch[] = [];

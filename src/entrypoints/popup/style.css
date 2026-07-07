@@ -1,20 +1,24 @@
-@import "tailwindcss";
+@import "@/assets/tailwind.css";
 
-body {
-  width: max-content;
-  min-width: 360px;
-  margin: 0;
-  padding: 0;
-  background-color: white;
+@layer base {
+  body {
+    width: max-content;
+    min-width: 360px;
+    margin: 0;
+    padding: 0;
+    background-color: white;
+  }
 }
 
-.custom-scrollbar::-webkit-scrollbar {
-  width: 4px;
-}
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background-color: #cbd5e1;
-  border-radius: 20px;
+@layer utilities {
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 20px;
+  }
 }

@@ -1,1 +1,1 @@
-export * from '@/lib/aiSignals/types';
+export * from '@/lib/detection/types';

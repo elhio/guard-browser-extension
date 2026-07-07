@@ -1,20 +1,40 @@
-import type { AiSignal, AiSignalMatch } from '@/lib/aiSignals';
+import type { DetectionSignal, DetectionSignalMatch } from '@/lib/detection/types';
 
-/** Which embedded-metadata format a signal is read from. */
-export type MetadataCategory = 'exif' | 'xmp' | 'iptc' | 'icc' | 'jfif' | 'ihdr';
+/**
+ * Identifies the specific embedded metadata standard or file segment a signal is extracted from
+ */
+export type MetadataStandard = 'exif' | 'xmp' | 'iptc' | 'icc' | 'jfif' | 'ihdr';
 
-export interface MetadataSignal extends AiSignal {
-  category: MetadataCategory;
-  /** The actual field names this signal inspects, for documentation/overview purposes. */
+/**
+ * Represents a specialized detection rule applied to image metadata.
+ *
+ * @property standard - The metadata standard (e.g., 'exif', 'xmp') this signal belongs to
+ * @property parameters - An array of the exact field or tag names this signal inspects, used for documentation and cataloging
+ */
+export interface MetadataSignal extends DetectionSignal {
+  standard: MetadataStandard;
   parameters: readonly string[];
 }
 
-export type MetadataSignalMatch = MetadataSignal & AiSignalMatch;
+/**
+ * Represents a successfully triggered metadata signal
+ */
+export type MetadataSignalMatch = MetadataSignal & DetectionSignalMatch;
 
 /**
- * Raw output of `exifr.parse()` with `mergeOutput: false` — one sub-object
- * per metadata segment instead of a single flattened bag of fields, so each
- * category detector only ever looks at its own slice.
+ * Represents the raw output of `exifr.parse()` when configured with `mergeOutput: false`
+ *
+ * Note: By keeping each metadata segment in its own distinct sub-object (rather than flattening them),
+ * we ensure that each category detector is strictly isolated and only evaluates its intended slice of data.
+ *
+ * @property ifd0 - Primary image file directory data (often contains basic camera make/model).
+ * @property exif - Exchangeable Image File Format data (camera settings, timestamps).
+ * @property gps - Geolocation coordinate data.
+ * @property xmp - Extensible Metadata Platform XML data (commonly holds AI generation tags).
+ * @property icc - Color profile data.
+ * @property iptc - International Press Telecommunications Council data (copyright, creator metadata).
+ * @property jfif - JPEG File Interchange Format data.
+ * @property ihdr - PNG Image Header data.
  */
 export interface RawImageMetadata {
   ifd0?: Record<string, unknown>;
@@ -28,4 +48,10 @@ export interface RawImageMetadata {
   [key: string]: unknown;
 }
 
+/**
+ * A functional signature for a module that evaluates a specific metadata segment
+ *
+ * @param metadata - The full parsed raw image metadata object
+ * @returns An array of successfully matched metadata signals
+ */
 export type MetadataSignalDetector = (metadata: RawImageMetadata) => MetadataSignalMatch[];

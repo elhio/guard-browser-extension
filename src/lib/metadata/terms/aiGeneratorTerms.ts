@@ -1,4 +1,6 @@
-/** Names of AI image generation tools/services, as they tend to appear in software/creator-tool fields. */
+/**
+ * A curated list of known AI image generation models, platforms, and vendors
+ */
 export const AI_GENERATOR_TERMS: readonly string[] = [
   'dall-e',
   'dalle',

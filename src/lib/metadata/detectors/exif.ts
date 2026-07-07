@@ -6,6 +6,13 @@ import { findMatchingTerm } from '../textMatch';
 import { collectCameraEvidence, hasStrongCameraEvidence } from '../cameraEvidence';
 import type { MetadataSignalMatch, RawImageMetadata } from '../types';
 
+/**
+ * Creates a new object containing only the specified keys extracted from the source metadata
+ *
+ * @param metadata - The source metadata record to extract from
+ * @param keys - An array of string keys to pick
+ * @returns A new object containing only the requested key-value pairs that exist in the source
+ */
 function pick(metadata: Record<string, unknown> | undefined, keys: readonly string[]): Record<string, unknown> {
   const result: Record<string, unknown> = {};
   for (const key of keys) {
@@ -14,9 +21,23 @@ function pick(metadata: Record<string, unknown> | undefined, keys: readonly stri
   return result;
 }
 
-/** Detects AI-generation signals in the EXIF/TIFF segment (software tag, comments, dimensions, camera evidence). */
+/**
+ * Evaluates the metadata segments for signals indicating either AI generation or authentic real-world camera capture
+ *
+ * Note: This detector specifically scans for:
+ * - Known AI generator tool names in the `Software` tag
+ * - Diffusion-model generation parameters (e.g., prompts, seeds) embedded in comment tags
+ * - Image resolutions matching default AI model outputs (e.g., 1024x1024)
+ * - Strong counter-evidence like physical lens profiles, exposure settings, or GPS coordinates
+ *
+ * @param metadata - The raw, parsed metadata blocks extracted from the image file
+ * @returns An array of successfully matched metadata signals, populated with specific evidence strings
+ */
 export function detectExifSignals(metadata: RawImageMetadata): MetadataSignalMatch[] {
   const matches: MetadataSignalMatch[] = [];
+
+  // IFD0 (Image File Directory 0) often contains the primary image tags like Make, Model, and Software,
+  // while the EXIF sub-directory holds the specific camera settings. We evaluate them together.
   const exifAndIfd0 = { ...metadata.ifd0, ...metadata.exif };
 
   const softwareFields = pick(exifAndIfd0, METADATA_SIGNALS.exifSoftwareVendor.parameters);

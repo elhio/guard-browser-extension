@@ -1,16 +1,21 @@
 import { getC2pa } from './client';
 import { getManifestChain } from './manifestStore';
 import { detectAiGeneration } from '@/lib/c2pa/aiDetection';
-import { combineAiDetectionResults } from '@/lib/aiSignals';
-import { extractImageMetadata, detectMetadataAiSignals } from '@/lib/metadata';
+import { combineCategoryResults } from '@/lib/detection/combineResults';
+import { extractImageMetadata, detectMetadataSignals } from '@/lib/metadata';
 import type { C2paReadResult } from './types';
 import type { ImageCandidate } from '@/lib/images';
 
 /**
- * Fetches a single image and checks it for AI-generation hints from two
- * independent sources: its C2PA manifest (if any) and its embedded
- * EXIF/XMP/IPTC/ICC/JFIF/IHDR metadata. Both run against the same fetched
- * blob; their signals are merged by taking the strongest match overall.
+ * Fetches a target image and evaluates it for AI-generation signals using a dual-pass approach.
+ *
+ * Note: To minimize network overhead, this function fetches the image blob exactly once and passes the same buffer
+ * to both the raw metadata parser (EXIF/XMP/IPTC) and the WebAssembly C2PA manifest reader. Additionally, it guarantees
+ * that the heavy WASM `reader` instance is freed from memory in a `finally` block to prevent memory leaks, even if
+ * manifest parsing throws an error.
+ *
+ * @param candidate - The image candidate object containing the `src` URL to fetch
+ * @returns A promise resolving to a `C2paReadResult`. On success, it contains the combined detection results.
  */
 export async function readManifestFor(candidate: ImageCandidate): Promise<C2paReadResult> {
   try {
@@ -21,26 +26,29 @@ export async function readManifestFor(candidate: ImageCandidate): Promise<C2paRe
     const blob = await response.blob();
 
     const metadata = await extractImageMetadata(blob);
-    const metadataAiDetection = detectMetadataAiSignals(metadata);
+    const metadataAiDetection = detectMetadataSignals(metadata);
 
     const c2pa = await getC2pa();
     const reader = await c2pa.reader.fromBlob(blob.type, blob);
+
     if (!reader) {
       return {
         status: 'success',
         candidate,
         manifestStore: null,
-        aiDetection: combineAiDetectionResults([detectAiGeneration([]), metadataAiDetection])
+        aiDetection: combineCategoryResults('aiGenerated', [detectAiGeneration([]), metadataAiDetection])
       };
     }
+
     try {
       const manifestStore = await reader.manifestStore();
       const manifestChain = getManifestChain(manifestStore);
+
       return {
         status: 'success',
         candidate,
         manifestStore,
-        aiDetection: combineAiDetectionResults([detectAiGeneration(manifestChain), metadataAiDetection])
+        aiDetection: combineCategoryResults('aiGenerated', [detectAiGeneration(manifestChain), metadataAiDetection])
       };
     } finally {
       await reader.free();

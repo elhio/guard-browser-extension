@@ -2,13 +2,19 @@ import { METADATA_SIGNALS } from '../signals';
 import { looksLikeTypicalAiDimension } from '../terms/aiDimensions';
 import type { MetadataSignalMatch, RawImageMetadata } from '../types';
 
-/** Detects AI-generation signals in the PNG IHDR chunk (width/height only — PNG has no software tag of its own). */
+/**
+ * Evaluates the IHDR chunk for structural signals that may indicate AI generation
+ *
+ * @param metadata - The raw, parsed metadata blocks extracted from the image file
+ * @returns An array of successfully matched metadata signals, populated with specific evidence strings
+ */
 export function detectIhdrSignals(metadata: RawImageMetadata): MetadataSignalMatch[] {
   const ihdr = metadata.ihdr;
   if (!ihdr) return [];
 
   const width = ihdr.ImageWidth as number | undefined;
   const height = ihdr.ImageHeight as number | undefined;
+
   if (!looksLikeTypicalAiDimension(width, height)) return [];
 
   return [

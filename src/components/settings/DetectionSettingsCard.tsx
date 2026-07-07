@@ -1,25 +1,39 @@
 import { useEffect, useState } from 'react';
-import { browser } from 'wxt/browser';
+
 import SettingsSection from '@/components/ui/SettingsSection';
 import SettingsRow from '@/components/ui/SettingsRow';
 import { t } from '@/lib/i18n';
+import { settings } from '@/lib/settings/store';
 
 export function DetectionSettingsCard() {
-  const [lensMobile, setLensMobile] = useState(false);
+  const [useDetectorLocalModel, setUseDetectorLocalModel] = useState(false);
 
   useEffect(() => {
-    // Load the saved Lens Mobile preference from storage
-    browser.storage.local.get('lensMobile').then((res) => {
-      if (res.lensMobile !== undefined) {
-        setLensMobile(res.lensMobile);
+    settings.getValue().then((currentSettings) => {
+      if (currentSettings.useDetectorLocalModel !== undefined) {
+        setUseDetectorLocalModel(currentSettings.useDetectorLocalModel);
       }
     });
+
+    const unwatch = settings.watch((newSettings) => {
+      if (newSettings && newSettings.useDetectorLocalModel !== undefined) {
+        setUseDetectorLocalModel(newSettings.useDetectorLocalModel);
+      }
+    });
+
+    return () => unwatch();
   }, []);
 
-  const handleToggleLensMobile = async () => {
-    const newState = !lensMobile;
-    setLensMobile(newState);
-    await browser.storage.local.set({ lensMobile: newState });
+  const handleToggleLocalModel = async () => {
+    const newState = !useDetectorLocalModel;
+
+    setUseDetectorLocalModel(newState);
+
+    const currentSettings = await settings.getValue();
+    await settings.setValue({
+      ...currentSettings,
+      useDetectorLocalModel: newState
+    });
   };
 
   const checkboxClasses = "h-4 w-4 shrink-0 cursor-pointer rounded border-gray-300 text-teal-600 accent-teal-500 focus:outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed";
@@ -45,14 +59,13 @@ export function DetectionSettingsCard() {
         value={
           <input
             type="checkbox"
-            checked={lensMobile}
-            onChange={handleToggleLensMobile}
+            checked={useDetectorLocalModel}
+            onChange={handleToggleLocalModel}
             className={checkboxClasses}
             aria-label={t('settings_detection_lens_aria')}
           />
         }
       />
-
     </SettingsSection>
   );
 }

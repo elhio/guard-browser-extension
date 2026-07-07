@@ -8,7 +8,7 @@ interface ActionSelectionStepProps {
 
 export function ActionSelectionStep({ action, onSelect }: ActionSelectionStepProps) {
   const options = [
-    { id: 'indicate', title: t('setup_action_indicate_title'), desc: t('setup_action_indicate_desc') },
+    { id: 'mark', title: t('setup_action_mark_title'), desc: t('setup_action_mark_desc') },
     { id: 'blur', title: t('setup_action_blur_title'), desc: t('setup_action_blur_desc') },
     { id: 'hide', title: t('setup_action_hide_title'), desc: t('setup_action_hide_desc') },
   ];

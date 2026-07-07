@@ -59,10 +59,10 @@
   "setup_action_subheading": {
     "message": "Was soll passieren, wenn einer der vorher ausgewählten Inhalt entdeckt wird?"
   },
-  "setup_action_indicate_title": {
+  "setup_action_mark_title": {
     "message": "Markieren"
   },
-  "setup_action_indicate_desc": {
+  "setup_action_mark_desc": {
     "message": "Fügt dem Bild einen dezenten visuellen Hinweis hinzu."
   },
   "setup_action_blur_title": {
@@ -455,16 +455,16 @@
   "popover_handling_hide": {
     "message": "Verbergen"
   },
-  "popover_verification_label": {
-    "message": "Erste Überprüfung"
+  "popover_detection_label": {
+    "message": "Standard Erkennung"
   },
-  "popover_verification_none": {
+  "popover_detection_none": {
     "message": "Keine ausgewählt"
   },
-  "popover_verification_metadata": {
+  "popover_detection_metadata": {
     "message": "Metadaten"
   },
-  "popover_verification_lens_desc": {
+  "popover_detection_lens_desc": {
     "message": " (läuft lokal, verbraucht mehr Energie)"
   },
   "popover_add_exception": {

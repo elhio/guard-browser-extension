@@ -1,74 +1,86 @@
 import { useEffect, useState } from 'react';
-import { browser } from 'wxt/browser';
 import { LuExternalLink } from 'react-icons/lu';
+import { useQuery } from '@tanstack/react-query';
+
 import SettingsSection from '@/components/ui/SettingsSection';
 import SettingsRow from '@/components/ui/SettingsRow';
-import { getAppLocale, t } from '@/lib/i18n';
-import type { SpacePublic } from '@/types/api';
-
-interface TasksState {
-  aiGenerated: boolean;
-  violent: boolean;
-  explicit: boolean;
-}
+import { t } from '@/lib/i18n';
+import { settings } from '@/lib/settings/store';
+import type { TasksState } from '@/components/setup/TaskSelectionStep';
+import { fetchUserProfile, fetchUserSpaces, type SpacePublic } from '@/lib/api';
 
 export function VerificationSettingsCard() {
-  const [spaces, setSpaces] = useState<SpacePublic[]>([]);
-  const [selectedSpace, setSelectedSpace] = useState<string | null>(null);
+  const [verificatorSpace, setVerificatorSpace] = useState<string | null>(null);
   const [tasks, setTasks] = useState<TasksState>({ aiGenerated: true, violent: true, explicit: true });
-  const [isLoading, setIsLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [token, setToken] = useState<string | null | undefined>(undefined);
 
   useEffect(() => {
-    const fetchSpaces = async () => {
-      try {
-        const storage = await browser.storage.local.get(['token', 'selectedSpace', 'tasks']);
+    let isMounted = true;
 
-        if (storage.selectedSpace) setSelectedSpace(storage.selectedSpace);
-        if (storage.tasks) setTasks(storage.tasks);
+    settings.getValue().then((res) => {
+      if (!isMounted) return;
+      setVerificatorSpace(res.verificatorSpace);
+      setTasks(res.tasks);
+      setToken(res.token);
+    });
 
-        const token = storage.token;
-        if (!token) {
-          setIsAuthenticated(false);
-          setIsLoading(false);
-          return;
-        }
+    const unwatch = settings.watch((newSettings) => {
+      if (!newSettings || !isMounted) return;
+      setVerificatorSpace(newSettings.verificatorSpace);
+      setTasks(newSettings.tasks);
+      setToken(newSettings.token);
+    });
 
-        setIsAuthenticated(true);
-        const baseUrl = import.meta.env.VITE_API_URL;
-        const currentLang = getAppLocale();
-
-        const userResponse = await fetch(`${baseUrl}/api/v1/users/me?lang=${currentLang}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        if (!userResponse.ok) throw new Error('Failed to fetch user');
-        const userData = await userResponse.json();
-
-        const spacesResponse = await fetch(`${baseUrl}/api/v1/spaces/?user_id=${userData.id}&lang=${currentLang}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        if (!spacesResponse.ok) throw new Error('Failed to fetch spaces');
-        const spacesJson = await spacesResponse.json();
-
-        setSpaces(spacesJson.data || []);
-      } catch (error) {
-        console.error('Error fetching spaces:', error);
-        setSpaces([]);
-      } finally {
-        setIsLoading(false);
-      }
+    return () => {
+      isMounted = false;
+      unwatch();
     };
-
-    fetchSpaces();
   }, []);
 
-  const handleSelectSpace = async (spaceId: string) => {
-    const newSelection = selectedSpace === spaceId ? null : spaceId;
-    setSelectedSpace(newSelection);
-    await browser.storage.local.set({ selectedSpace: newSelection });
-  };
+  const { data: user, isLoading: isUserLoading } = useQuery({
+    queryKey: ['userProfile', token],
+    queryFn: () => fetchUserProfile(token!),
+    enabled: !!token,
+    staleTime: 1000 * 60 * 10,
+  });
+
+  const { data: spaces = [], isLoading: isSpacesLoading } = useQuery({
+    queryKey: ['userSpaces', token, user?.id],
+    queryFn: () => fetchUserSpaces(token!, user!.id),
+    enabled: !!token && !!user?.id,
+    staleTime: 1000 * 60 * 10,
+  });
+
+  const isAuthenticated = !!token;
+  const isLoading = token === undefined || isUserLoading || isSpacesLoading;
+
+  const handleSelectSpace = useCallback(async (spaceId: string) => {
+    const currentSettings = await settings.getValue();
+    const newSelection = currentSettings.verificatorSpace === spaceId ? null : spaceId;
+
+    setVerificatorSpace(newSelection);
+    await settings.setValue({ ...currentSettings, verificatorSpace: newSelection });
+  }, []);
+
+  const checkSpaceEligibility = useCallback((space: SpacePublic): { eligible: boolean; reason?: string } => {
+    if (!space.enabled_media?.includes('image')) {
+      return { eligible: false, reason: t('settings_verification_error_media') };
+    }
+
+    const enabledTasks = space.enabled_task_names || [];
+
+    if (tasks.aiGenerated && !enabledTasks.some(t => ['AI-Generated', 'AI-Generiert'].includes(t))) {
+      return { eligible: false, reason: t('settings_verification_error_task_ai') };
+    }
+    if (tasks.violent && !enabledTasks.some(t => ['Violent', 'Gewalttätig'].includes(t))) {
+      return { eligible: false, reason: t('settings_verification_error_task_violent') };
+    }
+    if (tasks.explicit && !enabledTasks.some(t => ['Explicit', 'Explizit'].includes(t))) {
+      return { eligible: false, reason: t('settings_verification_error_task_explicit') };
+    }
+
+    return { eligible: true };
+  }, [tasks]);
 
   const generateDynamicDescription = (space: SpacePublic) => {
     const andStr = t('settings_verification_conj_and');
@@ -110,26 +122,19 @@ export function VerificationSettingsCard() {
       .replace('{predictor}', predictor);
   };
 
-  // Adapted eligibility checker using local TasksState structure
-  const checkSpaceEligibility = (space: SpacePublic): { eligible: boolean; reason?: string } => {
-    if (!space.enabled_media?.includes('image')) {
-      return { eligible: false, reason: t('settings_verification_error_media') };
+  useEffect(() => {
+    if (verificatorSpace && spaces.length > 0) {
+      const activeSpace = spaces.find(s => s.id === verificatorSpace);
+      if (activeSpace) {
+        const { eligible } = checkSpaceEligibility(activeSpace);
+        if (!eligible) {
+          queueMicrotask(() => {
+            handleSelectSpace(activeSpace.id);
+          });
+        }
+      }
     }
-
-    const enabledTasks = space.enabled_task_names || [];
-
-    if (tasks.aiGenerated && !enabledTasks.some(t => ['AI-Generated', 'AI-Generiert'].includes(t))) {
-      return { eligible: false, reason: t('settings_verification_error_task_ai') };
-    }
-    if (tasks.violent && !enabledTasks.some(t => ['Violent', 'Gewalttätig'].includes(t))) {
-      return { eligible: false, reason: t('settings_verification_error_task_violent') };
-    }
-    if (tasks.explicit && !enabledTasks.some(t => ['Explicit', 'Explizit'].includes(t))) {
-      return { eligible: false, reason: t('settings_verification_error_task_explicit') };
-    }
-
-    return { eligible: true };
-  };
+  }, [spaces, verificatorSpace, checkSpaceEligibility, handleSelectSpace]);
 
   const baseCheckboxClasses = "h-4 w-4 shrink-0 rounded border-gray-300 text-teal-600 accent-teal-500 focus:outline-none transition-all";
 
@@ -176,10 +181,6 @@ export function VerificationSettingsCard() {
         spaces.map((space) => {
           const { eligible, reason } = checkSpaceEligibility(space);
 
-          if (!eligible && selectedSpace === space.id) {
-            handleSelectSpace(space.id);
-          }
-
           return (
             <SettingsRow
               key={space.id}
@@ -189,7 +190,7 @@ export function VerificationSettingsCard() {
                 <div className="relative group flex items-center">
                   <input
                     type="checkbox"
-                    checked={selectedSpace === space.id}
+                    checked={verificatorSpace === space.id}
                     onChange={() => handleSelectSpace(space.id)}
                     disabled={!eligible}
                     className={`${baseCheckboxClasses} ${
@@ -201,7 +202,7 @@ export function VerificationSettingsCard() {
                   />
 
                   {!eligible && reason && (
-                    <div className="pointer-events-none absolute bottom-full right-0 z-10 mb-2 w-max max-w-[250px] sm:max-w-xs opacity-0 transition-opacity duration-200 group-hover:opacity-100 bg-gray-900 text-white text-xs rounded py-1.5 px-3 shadow-lg text-left sm:text-center">
+                    <div className="pointer-events-none absolute bottom-full right-0 z-10 mb-2 w-max max-w-62.5 sm:max-w-xs opacity-0 transition-opacity duration-200 group-hover:opacity-100 bg-gray-900 text-white text-xs rounded py-1.5 px-3 shadow-lg text-left sm:text-center">
                       {reason}
                       <div className="absolute top-full right-1.5 -mt-px border-4 border-transparent border-t-gray-900" />
                     </div>

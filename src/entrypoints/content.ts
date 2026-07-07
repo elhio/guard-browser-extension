@@ -20,34 +20,23 @@ import {
 } from '@/lib/messaging/apiMessages';
 
 import {
-  applyAiBlur,
+  applyBlur,
   clearAllBadges,
   clearAllBlurredImages,
   clearModelFallback,
   setBlurActive,
   setHoverUnblurActive,
-  showAiBadges,
+  showBadges,
   showModelFallback,
-//  showExternalScanButton
+  //showExternalScanButton
 } from '@/lib/overlay';
-import {
-  getWhitelist,
-  isAiCheckEnabled,
-  isBlurEnabled,
-  isGuardEnabled,
-  isHostWhitelisted,
-  isHoverUnblurEnabled,
-  onAiCheckEnabledChange,
-  onBlurEnabledChange,
-  onGuardEnabledChange,
-  onHoverUnblurEnabledChange,
-  onWhitelistChange
-} from '@/lib/settings';
+
+import { settings } from '@/lib/settings/store';
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
+      staleTime: 1000 * 60 * 10,
     },
   },
 });
@@ -73,12 +62,12 @@ async function processCandidates(candidates: ImageCandidate[]): Promise<void> {
   }
 
   const elementsBySrc = new Map(candidates.map((candidate) => [candidate.src, candidate.element]));
-  showAiBadges(response.results, elementsBySrc);
-  applyAiBlur(response.results, elementsBySrc);
+  showBadges(response.results, elementsBySrc);
+  applyBlur(response.results, elementsBySrc);
 
   if (aiCheckActive) {
     showModelFallback(response.results, elementsBySrc, classifyImage);
-    showExternalScanButton(response.results, elementsBySrc, verifyWithExternalApi);
+    //showExternalScanButton(response.results, elementsBySrc, verifyWithExternalApi);
   }
 }
 
@@ -148,45 +137,51 @@ export default defineContentScript({
       clearAllBlurredImages();
     }
 
-    async function shouldRunHere(): Promise<boolean> {
-      if (!(await isGuardEnabled())) return false;
-      return !isHostWhitelisted(location.hostname, await getWhitelist());
-    }
+    const isHostWhitelisted = (host: string, whitelist: string[]) => whitelist.includes(host);
 
-    if (await shouldRunHere()) {
+    const shouldRun = (state: any) => {
+      return state.isActive !== false && !isHostWhitelisted(location.hostname, state.exceptionSites || []);
+    };
+
+    let currentSettings = await settings.getValue();
+
+    setBlurActive(currentSettings.detectionAction === 'blur');
+    setHoverUnblurActive(currentSettings.detectionAction === 'blur');
+    aiCheckActive = currentSettings.tasks?.aiGenerated ?? true;
+
+    if (shouldRun(currentSettings)) {
       start();
     }
 
-    setBlurActive(await isBlurEnabled());
-    setHoverUnblurActive(await isHoverUnblurEnabled());
-    aiCheckActive = await isAiCheckEnabled();
+    settings.watch((newSettings) => {
+      if (!newSettings) return;
 
-    onGuardEnabledChange((enabled: boolean) => {
-      if (!enabled) {
+      const wasRunning = shouldRun(currentSettings);
+      const nowRunning = shouldRun(newSettings);
+
+      if (wasRunning && !nowRunning) {
         stop();
-        return;
+      } else if (!wasRunning && nowRunning) {
+        start();
       }
-      void getWhitelist().then((whitelist: string[]) => {
-        if (!isHostWhitelisted(location.hostname, whitelist)) start();
-      });
-    });
 
-    onBlurEnabledChange(setBlurActive);
-    onHoverUnblurEnabledChange(setHoverUnblurActive);
-
-    onAiCheckEnabledChange((enabled: boolean) => {
-      aiCheckActive = enabled;
-      if (!enabled) clearModelFallback();
-    });
-
-    onWhitelistChange((whitelist: string[]) => {
-      if (isHostWhitelisted(location.hostname, whitelist)) {
-        stop();
-        return;
+      if (currentSettings.detectionAction !== newSettings.detectionAction) {
+        setBlurActive(newSettings.detectionAction === 'blur');
+        setHoverUnblurActive(newSettings.detectionAction === 'blur');
       }
-      void isGuardEnabled().then((enabled: boolean) => {
-        if (enabled) start();
-      });
+
+      const wasAiActive = currentSettings.tasks?.aiGenerated ?? true;
+      const nowAiActive = newSettings.tasks?.aiGenerated ?? true;
+
+      if (wasAiActive !== nowAiActive) {
+        aiCheckActive = nowAiActive;
+        if (!nowAiActive) {
+          clearModelFallback();
+        }
+      }
+
+      // Update local reference for the next change comparison
+      currentSettings = newSettings;
     });
   },
 });

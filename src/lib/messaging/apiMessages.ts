@@ -1,27 +1,34 @@
+/**
+ * The unique identifier used to route API verification messages through the extension's messaging system
+ */
 export const EXTERNAL_API_VERIFY_MESSAGE = 'EXTERNAL_API_VERIFY_MESSAGE';
 
 /**
- * The payload sent from the Content Script (or Popup) to the Background Script.
+ * The payload sent from the Content Script (or Popup) to the Background Script
+ *
+ * @property type - The unique routing identifier for this message (`EXTERNAL_API_VERIFY_MESSAGE`)
+ * @property src - The absolute URL of the image that needs to be verified by the external API
  */
 export interface ExternalApiVerifyRequest {
   type: typeof EXTERNAL_API_VERIFY_MESSAGE;
-  src: string; // The URL of the image to verify
+  src: string;
 }
 
 /**
- * The shape of the data returned by your external API.
- * Update these fields to match exactly what your backend returns!
+ * The shape of the data returned by your external API
+
+ * @property probability - The confidence score indicating how likely the content is AI-generated or matches a specific classification
+ * @property isLikelyAiGenerated - A boolean flag confirming if the probability meets the API's internal threshold for AI generation
  */
 export interface ExternalApiData {
   probability?: number;
   isLikelyAiGenerated?: boolean;
-  // Add any other metadata your API provides
   [key: string]: any;
 }
 
 /**
- * The response sent back from the Background Script to the Content Script.
- * Uses a discriminated union to guarantee type safety for error handling.
+ * The response sent back from the background script to the content script, which uses a discriminated union to
+ * guarantee type safety for error handling
  */
 export type ExternalApiVerifyResponse =
   | {
@@ -34,8 +41,11 @@ export type ExternalApiVerifyResponse =
     };
 
 /**
- * Type Guard: Used by the background script to safely check if an incoming
- * generic message is actually an ExternalApiVerifyRequest.
+ * Type Guard: Used by the background script to safely check if an incoming generic message is specifically an
+ * `ExternalApiVerifyRequest`
+ *
+ * @param message - The unknown message payload received by the background script listener
+ * @returns True if the message matches the `ExternalApiVerifyRequest` shape, narrowing the type for TypeScript
  */
 export function isExternalApiVerifyRequest(
   message: unknown

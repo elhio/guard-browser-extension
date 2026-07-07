@@ -1,15 +1,22 @@
 import { useEffect, useState } from 'react';
-import { browser } from 'wxt/browser';
+
 import OnboardingWizard from '@/components/setup/OnboardingWizard';
 import SettingsDashboard from './SettingsDashboard';
+import { settings } from '@/lib/settings/store';
 
 export default function OptionsApp() {
   const [isSetupComplete, setIsSetupComplete] = useState<boolean | null>(null);
 
   useEffect(() => {
-    browser.storage.local.get('hasCompletedSetup').then((res) => {
-      setIsSetupComplete(!!res.hasCompletedSetup);
+    settings.getValue().then((currentSettings) => {
+      setIsSetupComplete(currentSettings.hasCompletedSetup);
     });
+
+    const unwatch = settings.watch((newSettings) => {
+      if (newSettings) setIsSetupComplete(newSettings.hasCompletedSetup);
+    });
+
+    return () => unwatch();
   }, []);
 
   if (isSetupComplete === null) {
@@ -21,7 +28,7 @@ export default function OptionsApp() {
   }
 
   return isSetupComplete ? (
-    <SettingsDashboard onReset={() => setIsSetupComplete(false)} />
+    <SettingsDashboard/>
   ) : (
     <OnboardingWizard onComplete={() => setIsSetupComplete(true)} />
   );

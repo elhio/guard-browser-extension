@@ -1,8 +1,9 @@
-import { forwardRef, useState } from 'react';
-import { Input } from './Input';
+import { forwardRef, useState, type ComponentProps } from 'react';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
 
-type PasswordInputProps = React.ComponentProps<typeof Input>;
+import { Input } from './Input';
+
+type PasswordInputProps = ComponentProps<typeof Input>;
 
 export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
   (props, ref) => {
@@ -14,7 +15,7 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
           ref={ref}
           type={showPassword ? 'text' : 'password'}
           {...props}
-          className="pr-10" // Make room for the toggle icon
+          className="pr-10"
         />
         <button
           type="button"

@@ -3,7 +3,12 @@ import { AI_GENERATOR_TERMS } from '../terms/aiGeneratorTerms';
 import { findMatchingTerm } from '../textMatch';
 import type { MetadataSignalMatch, RawImageMetadata } from '../types';
 
-/** Detects AI-generation signals in the ICC color profile segment (rare, but some exporters embed tool names). */
+/**
+ * Evaluates the ICC (International Color Consortium) color profile segment for signals indicating AI generation
+ *
+ * @param metadata - The raw, parsed metadata blocks extracted from the image file
+ * @returns An array of successfully matched metadata signals, populated with specific evidence strings
+ */
 export function detectIccSignals(metadata: RawImageMetadata): MetadataSignalMatch[] {
   const matches: MetadataSignalMatch[] = [];
   if (!metadata.icc) return matches;

@@ -5,6 +5,17 @@ import { getAppLocale, t } from '@/lib/i18n';
 import ElhioLogo from '@/assets/elhio.svg?react';
 import { Button } from '@/components/ui/Button';
 
+interface TokenMessage {
+  type: string;
+  token?: string;
+}
+
+interface MessageSender {
+  tab?: {
+    id?: number;
+  };
+}
+
 interface LoginFormProps {
   onSuccess: (token: string) => void;
   onSkip: () => void;
@@ -20,7 +31,7 @@ export function LoginForm({ onSuccess, onSkip }: LoginFormProps) {
   const signupUrl = `${websiteUrl}/${locale}/signup?source=extension`;
 
   useEffect(() => {
-    const handleMessage = (message: any, sender: any) => {
+    const handleMessage = (message: TokenMessage, sender: MessageSender) => {
       if (message.type === 'TOKEN_RECEIVED' && message.token) {
         if (sender.tab?.id) {
           browser.tabs.remove(sender.tab.id).catch(console.error);

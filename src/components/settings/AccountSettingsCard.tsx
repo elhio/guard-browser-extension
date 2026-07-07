@@ -1,19 +1,26 @@
 import { useEffect, useState } from 'react';
 import { browser } from 'wxt/browser';
 import { LuExternalLink, LuLogOut, LuLogIn } from 'react-icons/lu';
+import { useQuery } from '@tanstack/react-query';
+
 import SettingsSection from '@/components/ui/SettingsSection';
 import { getAppLocale, t } from '@/lib/i18n';
+import { settings } from '@/lib/settings/store';
+import { fetchUserProfile } from '@/lib/api';
 
-interface UserData {
-  full_name: string;
-  avatar_url?: string | null;
-  active_plan_name: string;
+interface TokenMessage {
+  type: string;
+  token?: string;
+}
+
+interface MessageSender {
+  tab?: {
+    id?: number;
+  };
 }
 
 export function AccountSettingsCard() {
-  const [userData, setUserData] = useState<UserData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [token, setToken] = useState<string | null | undefined>(undefined);
   const [isWaitingAuth, setIsWaitingAuth] = useState(false);
 
   const websiteUrl = import.meta.env.VITE_WEBSITE_URL || '';
@@ -30,49 +37,50 @@ export function AccountSettingsCard() {
       .toUpperCase();
   };
 
-  const fetchUser = async () => {
-    try {
-      const storage = await browser.storage.local.get(['token']);
-      const token = storage.token;
+  useEffect(() => {
+    let isMounted = true;
 
-      if (!token) {
-        setIsAuthenticated(false);
-        setUserData(null);
-        setIsLoading(false);
-        return;
-      }
+    settings.getValue().then((res) => {
+      if (!isMounted) return;
+      setToken(res.token);
+    });
 
-      setIsAuthenticated(true);
-      const baseUrl = import.meta.env.VITE_API_URL;
+    const unwatch = settings.watch((newSettings) => {
+      if (!newSettings || !isMounted) return;
+      setToken(newSettings.token);
+    });
 
-      const userResponse = await fetch(`${baseUrl}/api/v1/users/me?lang=${locale}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+    return () => {
+      isMounted = false;
+      unwatch();
+    };
+  }, []);
 
-      if (!userResponse.ok) throw new Error('Failed to fetch user');
+  const { data: userData, isLoading: isUserLoading } = useQuery({
+    queryKey: ['userProfile', token],
+    queryFn: () => fetchUserProfile(token!),
+    enabled: !!token,
+    staleTime: 1000 * 60 * 5,
+  });
 
-      const data = await userResponse.json();
-      setUserData(data);
-    } catch (error) {
-      console.error('Error fetching user:', error);
-      setIsAuthenticated(false);
-      setUserData(null);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const isAuthenticated = !!token;
+  const isLoading = token === undefined || isUserLoading;
 
   useEffect(() => {
-    const handleMessage = async (message: any, sender: any) => {
+    const handleMessage = async (message: TokenMessage, sender: MessageSender) => {
       if (message.type === 'TOKEN_RECEIVED' && message.token) {
         if (sender.tab?.id) {
           browser.tabs.remove(sender.tab.id).catch(console.error);
         }
 
-        await browser.storage.local.set({ token: message.token });
+        const currentSettings = await settings.getValue();
+        await settings.setValue({
+          ...currentSettings,
+          token: message.token,
+          isLoggedIn: true,
+        });
 
         setIsWaitingAuth(false);
-        fetchUser();
       }
     };
 
@@ -86,15 +94,15 @@ export function AccountSettingsCard() {
     setTimeout(() => setIsWaitingAuth(false), 10000);
   };
 
-  useEffect(() => {
-    fetchUser();
-  }, []);
-
   const handleLogout = async () => {
-    // Clear the token and selected space from local storage
-    await browser.storage.local.remove(['token', 'selectedSpace']);
-    setIsAuthenticated(false);
-    setUserData(null);
+    const currentSettings = await settings.getValue();
+
+    await settings.setValue({
+      ...currentSettings,
+      token: null,
+      isLoggedIn: false,
+      verificatorSpace: null,
+    });
   };
 
   const profileAction = (
@@ -134,7 +142,6 @@ export function AccountSettingsCard() {
         </div>
 
       ) : !isAuthenticated ? (
-        // --- UNAUTHENTICATED STATE ---
         <button
           onClick={handleLoginClick}
           disabled={isWaitingAuth}
@@ -165,7 +172,7 @@ export function AccountSettingsCard() {
             </div>
             <div className="flex flex-col justify-center">
               <div className="flex mb-1">
-                <span className="inline-flex items-center rounded bg-gray-100 px-1.5 py-[1px] text-[8px] font-semibold tracking-wider text-gray-500 ring-1 ring-inset ring-gray-500/10">
+                <span className="inline-flex items-center rounded bg-gray-100 px-1.5 py-px text-[8px] font-semibold tracking-wider text-gray-500 ring-1 ring-inset ring-gray-500/10">
                   {userData?.active_plan_name || t('settings_account_free_plan')}
                 </span>
               </div>

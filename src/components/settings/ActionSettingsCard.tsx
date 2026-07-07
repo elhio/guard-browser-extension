@@ -1,28 +1,42 @@
 import { useEffect, useState } from 'react';
-import { browser } from 'wxt/browser';
 import SettingsSection from '@/components/ui/SettingsSection';
 import SettingsRow from '@/components/ui/SettingsRow';
 import { t } from '@/lib/i18n';
+import { settings } from '@/lib/settings/store';
 
 export function ActionSettingsCard() {
   const [detectionAction, setDetectionAction] = useState('mark');
 
   useEffect(() => {
-    browser.storage.local.get(['detectionAction']).then((res) => {
-      if (res.detectionAction) setDetectionAction(res.detectionAction);
+    settings.getValue().then((currentSettings) => {
+      if (currentSettings.detectionAction) {
+        setDetectionAction(currentSettings.detectionAction);
+      }
     });
+
+    const unwatch = settings.watch((newSettings) => {
+      if (newSettings && newSettings.detectionAction) {
+        setDetectionAction(newSettings.detectionAction);
+      }
+    });
+
+    return () => unwatch();
   }, []);
 
   const handleSelectAction = async (action: string) => {
     setDetectionAction(action);
-    await browser.storage.local.set({ detectionAction: action });
+
+    const currentSettings = await settings.getValue();
+    await settings.setValue({
+      ...currentSettings,
+      detectionAction: action
+    });
   };
 
   const checkboxClasses = "h-4 w-4 shrink-0 cursor-pointer rounded border-gray-300 text-teal-600 accent-teal-500 focus:outline-none transition-all";
 
   return (
     <SettingsSection title={t('settings_action_title')}>
-
       {/* Mark Row */}
       <SettingsRow
         label={t('settings_action_mark_label')}
@@ -37,7 +51,6 @@ export function ActionSettingsCard() {
           />
         }
       />
-
       {/* Blur Row */}
       <SettingsRow
         label={t('settings_action_blur_label')}
@@ -52,7 +65,6 @@ export function ActionSettingsCard() {
           />
         }
       />
-
       {/* Hide Row */}
       <SettingsRow
         label={t('settings_action_hide_label')}

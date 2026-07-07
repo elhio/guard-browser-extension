@@ -2,7 +2,7 @@ import { CheckboxCard } from '@/components/ui/CheckboxCard';
 import { t } from '@/lib/i18n';
 
 export interface TasksState {
-  ai: boolean;
+  aiGenerated: boolean;
   violent: boolean;
   explicit: boolean;
 }
@@ -15,7 +15,7 @@ interface TaskSelectionStepProps {
 export function TaskSelectionStep({ tasks, onToggle }: TaskSelectionStepProps) {
   const availableTasks = [
     {
-      id: 'ai',
+      id: 'aiGenerated',
       title: t('setup_task_ai_title'),
       desc: t('setup_task_ai_desc')
     },

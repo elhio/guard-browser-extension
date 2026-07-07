@@ -1,23 +1,29 @@
 import { scanPageImages, type ScanPageImagesOptions } from './scanPageImages';
 import type { ImageCandidate } from './types';
 
+/**
+ * Configuration options for continuously monitoring a web page for new images
+ *
+ * @property onNewCandidates - Callback fired once for the initial scan, and subsequently for every batch of newly discovered image candidates
+ * @property debounceMs - Delay (in milliseconds) to wait after the last DOM mutation before triggering a re-scan. Defaults to 500ms.
+ */
 export interface WatchPageImagesOptions extends ScanPageImagesOptions {
-  /** Called once for the initial scan, then again for every batch of newly discovered candidates. */
   onNewCandidates: (candidates: ImageCandidate[]) => void;
-  /** Delay (ms) after the last DOM change before re-scanning. */
   debounceMs?: number;
 }
 
 /**
- * Scans the page for images, then keeps re-scanning whenever the DOM changes.
+ * Scans the page for images, then continuously re-scans whenever the DOM changes
  *
- * Many pages (image search results, infinite-scroll feeds, social timelines)
- * render most of their images well after the initial page load — via
- * client-side JS, lazy-loading on scroll, or swapping a placeholder `src` for
- * the real one. A single one-shot scan misses all of that, so this observes
- * the DOM and re-scans, reporting only candidates not already reported.
+ * Many modern web pages (e.g., image search results, infinite-scroll feeds, social timelines)
+ * render most of their images well after the initial page load via client-side JavaScript,
+ * lazy-loading on scroll, or by swapping a placeholder `src` for the real URL.
+ * A single one-shot scan misses all of these late additions, so this function sets up a
+ * `MutationObserver` to watch the DOM and re-scan, reporting only unique candidates
+ * that haven't been processed yet.
  *
- * Returns a function that stops watching.
+ * @param options - Configuration object containing scan filters, the reporting callback, and debounce timing
+ * @returns A cleanup function that, when called, disconnects the observer and halts all further scanning
  */
 export function watchPageImages(options: WatchPageImagesOptions): () => void {
   const { onNewCandidates, debounceMs = 500, ...scanOptions } = options;
@@ -35,6 +41,7 @@ export function watchPageImages(options: WatchPageImagesOptions): () => void {
   scanAndReportNew();
 
   let debounceTimer: ReturnType<typeof setTimeout> | undefined;
+
   const observer = new MutationObserver(() => {
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(scanAndReportNew, debounceMs);

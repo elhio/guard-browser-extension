@@ -1,7 +1,5 @@
-export * from './attachAiBadge';
-export * from './showAiBadges';
-export * from './applyAiBlur';
+export * from './attachBadge.ts';
+export * from './showBadges.ts';
+export * from './applyBlur.ts';
 export * from './showModelFallback';
-export { clearModelFallback } from './attachModelFallback';
-export { setBlurActive, setHoverUnblurActive, clearAllBlurredImages } from './aiImageBlur';
 export { clearAllBadges } from './badgeLifecycle';

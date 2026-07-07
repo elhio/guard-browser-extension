@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { browser } from 'wxt/browser';
+
 import SettingsSection from '@/components/ui/SettingsSection';
 import SettingsRow from '@/components/ui/SettingsRow';
 import { t } from '@/lib/i18n';
+import { settings } from '@/lib/settings/store';
 
 export function GeneralSettingsCard() {
   const [isActive, setIsActive] = useState(true);
@@ -10,15 +12,27 @@ export function GeneralSettingsCard() {
   const version = `v${browser.runtime.getManifest().version}`;
 
   useEffect(() => {
-    browser.storage.local.get('isActive').then((res) => {
-      setIsActive(res.isActive !== false);
+    settings.getValue().then((settings) => {
+      setIsActive(settings.isActive);
     });
+
+    const unwatch = settings.watch((newSettings) => {
+      if (newSettings) setIsActive(newSettings.isActive);
+    });
+
+    return () => unwatch();
   }, []);
 
   const handleToggleStatus = async () => {
+    const currentSettings = await settings.getValue();
     const newState = !isActive;
+
     setIsActive(newState);
-    await browser.storage.local.set({ isActive: newState });
+
+    await settings.setValue({
+      ...currentSettings,
+      isActive: newState,
+    });
   };
 
   const handleUpdateCheck = async () => {

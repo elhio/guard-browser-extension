@@ -1,28 +1,46 @@
 import { useEffect, useState } from 'react';
-import { browser } from 'wxt/browser';
+
 import SettingsSection from '@/components/ui/SettingsSection';
 import SettingsRow from '@/components/ui/SettingsRow';
 import { t } from '@/lib/i18n';
+import { settings } from '@/lib/settings/store';
+import type { TasksState } from '@/components/setup/TaskSelectionStep';
 
 export function TasksSettingsCard() {
-  const [tasks, setTasks] = useState({
+  const [tasks, setTasks] = useState<TasksState>({
     aiGenerated: true,
     violent: true,
     explicit: true,
   });
 
   useEffect(() => {
-    browser.storage.local.get('tasks').then((res) => {
-      if (res.tasks) {
-        setTasks(res.tasks);
-      }
+    settings.getValue().then((currentSettings) => {
+      setTasks(currentSettings.tasks);
     });
+
+    const unwatch = settings.watch((newSettings) => {
+      if (newSettings) setTasks(newSettings.tasks);
+    });
+
+    return () => unwatch();
   }, []);
 
-  const handleToggle = async (key: keyof typeof tasks) => {
+  const handleToggle = async (key: keyof TasksState) => {
+    const activeTaskCount = Object.values(tasks).filter(Boolean).length;
+
+    if (tasks[key] && activeTaskCount === 1) {
+      return;
+    }
+
+    const currentSettings = await settings.getValue();
     const newTasks = { ...tasks, [key]: !tasks[key] };
+
     setTasks(newTasks);
-    await browser.storage.local.set({ tasks: newTasks });
+
+    await settings.setValue({
+      ...currentSettings,
+      tasks: newTasks,
+    });
   };
 
   const checkboxClasses = "h-4 w-4 shrink-0 cursor-pointer rounded border-gray-300 text-teal-600 accent-teal-500 focus:outline-none transition-all";
@@ -71,7 +89,6 @@ export function TasksSettingsCard() {
           />
         }
       />
-
     </SettingsSection>
   );
 }

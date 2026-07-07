@@ -1,33 +1,40 @@
 import { useEffect, useState } from 'react';
-import { browser } from 'wxt/browser';
 import { LuTrash2 } from 'react-icons/lu';
+
 import SettingsSection from '@/components/ui/SettingsSection';
 import SettingsRow from '@/components/ui/SettingsRow';
 import { t } from '@/lib/i18n';
+import { settings } from '@/lib/settings/store';
 
 export function ExceptionSiteListCard() {
   const [sites, setSites] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchSites = async () => {
-      try {
-        const storage = await browser.storage.local.get(['exceptionSites']);
-        setSites(storage.exceptionSites || []);
-      } catch (error) {
-        console.error('Error fetching exception sites:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    settings.getValue().then((currentSettings) => {
+      setSites(currentSettings.exceptionSites || []);
+      setIsLoading(false);
+    });
 
-    fetchSites();
+    const unwatch = settings.watch((newSettings) => {
+      if (newSettings && newSettings.exceptionSites) {
+        setSites(newSettings.exceptionSites);
+      }
+    });
+
+    return () => unwatch();
   }, []);
 
   const handleRemove = async (siteToRemove: string) => {
     const updatedSites = sites.filter((site) => site !== siteToRemove);
+
     setSites(updatedSites);
-    await browser.storage.local.set({ exceptionSites: updatedSites });
+
+    const currentSettings = await settings.getValue();
+    await settings.setValue({
+      ...currentSettings,
+      exceptionSites: updatedSites,
+    });
   };
 
   return (
@@ -66,7 +73,6 @@ export function ExceptionSiteListCard() {
           ))}
         </div>
       )}
-
     </SettingsSection>
   );
 }

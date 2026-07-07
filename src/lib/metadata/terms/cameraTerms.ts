@@ -1,4 +1,6 @@
-/** Camera/phone manufacturer names, as they appear in EXIF Make/Model fields. */
+/**
+ * A curated list of major digital camera and smartphone manufacturers
+ */
 export const CAMERA_MAKE_MODEL_TERMS: readonly string[] = [
   'apple',
   'iphone',
@@ -26,10 +28,19 @@ export const CAMERA_MAKE_MODEL_TERMS: readonly string[] = [
   'gopro'
 ];
 
-/** EXIF field names that indicate lens information (real optics, not a generator). */
-export const LENS_FIELD_NAMES: readonly string[] = ['lensmodel', 'lensmake', 'lens', 'focallength'];
+/**
+ * EXIF field names that explicitly define physical camera lens properties
+ */
+export const LENS_FIELD_NAMES: readonly string[] = [
+  'lensmodel',
+  'lensmake',
+  'lens',
+  'focallength'
+];
 
-/** EXIF field names that indicate real capture settings (exposure, ISO, etc.). */
+/**
+ * EXIF field names that describe physical exposure mechanics and camera settings
+ */
 export const CAPTURE_SETTING_FIELD_NAMES: readonly string[] = [
   'exposuretime',
   'fnumber',
@@ -41,5 +52,13 @@ export const CAPTURE_SETTING_FIELD_NAMES: readonly string[] = [
   'meteringmode'
 ];
 
-/** EXIF/GPS field names that indicate the asset carries real-world location data. */
-export const GPS_FIELD_NAMES: readonly string[] = ['gps', 'latitude', 'longitude', 'gpslatitude', 'gpslongitude'];
+/**
+ * EXIF and GPS-segment field names that denote real-world geographic coordinates
+ */
+export const GPS_FIELD_NAMES: readonly string[] = [
+  'gps',
+  'latitude',
+  'longitude',
+  'gpslatitude',
+  'gpslongitude'
+];

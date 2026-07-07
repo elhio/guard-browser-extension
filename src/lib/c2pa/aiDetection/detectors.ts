@@ -1,18 +1,33 @@
 import type { Manifest } from '@contentauth/c2pa-types';
 import { AI_SIGNALS } from './signals';
-import type { AiSignalMatch } from './types';
+import type { DetectionSignalMatch } from './types';
 import { matchesKnownAiVendor } from './vendors';
 import { isAiDigitalSourceType } from '@/lib/c2pa';
 import { containsGenerativeAiMarker } from './metadataMarkers';
 import { getActions, getSoftwareAgentName } from './manifestActions';
 
-export type AiSignalDetector = (manifest: Manifest) => AiSignalMatch | null;
+/**
+ * Defines the standard signature for an AI signal detector
+ */
+export type AiSignalDetector = (manifest: Manifest) => DetectionSignalMatch | null;
 
+/**
+ * Helper utility to extract a readable reference name for a manifest
+ *
+ * @param manifest - The C2PA manifest being evaluated
+ * @returns The manifest label, or a fallback string if unlabeled
+ */
 function manifestRef(manifest: Manifest): string {
   return manifest.label ?? '(unlabeled manifest)';
 }
 
-export function detectGenerativeInfoAssertion(manifest: Manifest): AiSignalMatch | null {
+/**
+ * Detects explicit C2PA assertions indicating generative AI usage
+ *
+ * @param manifest - The C2PA manifest to evaluate
+ * @returns A signal match if the assertion is present, otherwise null
+ */
+export function detectGenerativeInfoAssertion(manifest: Manifest): DetectionSignalMatch | null {
   const assertion = (manifest.assertions ?? []).find((a) => a.label.startsWith('c2pa.ai.generative_info'));
   if (!assertion) return null;
   return {
@@ -21,7 +36,13 @@ export function detectGenerativeInfoAssertion(manifest: Manifest): AiSignalMatch
   };
 }
 
-export function detectAiGeneratedAction(manifest: Manifest): AiSignalMatch | null {
+/**
+ * Detects C2PA actions explicitly tagged as AI-generated
+ *
+ * @param manifest - The C2PA manifest to evaluate
+ * @returns A signal match if an AI-generated action is found, otherwise null
+ */
+export function detectAiGeneratedAction(manifest: Manifest): DetectionSignalMatch | null {
   const action = getActions(manifest).find((a) => a.action.endsWith('ai_generated'));
   if (!action) return null;
   return {
@@ -30,7 +51,13 @@ export function detectAiGeneratedAction(manifest: Manifest): AiSignalMatch | nul
   };
 }
 
-export function detectAiDigitalSourceType(manifest: Manifest): AiSignalMatch | null {
+/**
+ * Detects if the source of the asset is flagged as an AI digital source
+ *
+ * @param manifest - The C2PA manifest to evaluate
+ * @returns A signal match if a synthetic digital source type is found, otherwise null
+ */
+export function detectAiDigitalSourceType(manifest: Manifest): DetectionSignalMatch | null {
   const action = getActions(manifest).find((a) => isAiDigitalSourceType(a.digitalSourceType));
   if (!action) return null;
   return {
@@ -39,7 +66,13 @@ export function detectAiDigitalSourceType(manifest: Manifest): AiSignalMatch | n
   };
 }
 
-export function detectAiSoftwareAgent(manifest: Manifest): AiSignalMatch | null {
+/**
+ * Detects if the software agent that performed an action is a known AI vendor
+ *
+ * @param manifest - The C2PA manifest to evaluate
+ * @returns A signal match if the software agent matches a known AI tool, otherwise null
+ */
+export function detectAiSoftwareAgent(manifest: Manifest): DetectionSignalMatch | null {
   for (const action of getActions(manifest)) {
     const name = getSoftwareAgentName(action.softwareAgent);
     const vendor = matchesKnownAiVendor(name);
@@ -54,11 +87,12 @@ export function detectAiSoftwareAgent(manifest: Manifest): AiSignalMatch | null 
 }
 
 /**
- * Some vendors (e.g. Google's Gemini/SynthID) don't set softwareAgent at all —
- * they identify themselves only in an action's free-text `description`
- * (e.g. "Created by Google Generative AI", "Applied imperceptible SynthID watermark.").
+ * Evaluates free-text action descriptions for known AI vendor names
+ *
+ * @param manifest - The C2PA manifest to evaluate
+ * @returns A signal match if the description text matches a known AI vendor, otherwise null
  */
-export function detectAiActionDescription(manifest: Manifest): AiSignalMatch | null {
+export function detectAiActionDescription(manifest: Manifest): DetectionSignalMatch | null {
   for (const action of getActions(manifest)) {
     const vendor = matchesKnownAiVendor(action.description);
     if (vendor) {
@@ -71,7 +105,13 @@ export function detectAiActionDescription(manifest: Manifest): AiSignalMatch | n
   return null;
 }
 
-export function detectGenerativeAiMetadataMarker(manifest: Manifest): AiSignalMatch | null {
+/**
+ * Scans raw assertion data for embedded metadata markers that indicate generative AI
+ *
+ * @param manifest - The C2PA manifest to evaluate
+ * @returns A signal match if a generative AI metadata marker is embedded in the assertion data, otherwise null
+ */
+export function detectGenerativeAiMetadataMarker(manifest: Manifest): DetectionSignalMatch | null {
   const assertion = (manifest.assertions ?? []).find((a) => containsGenerativeAiMarker(a.data));
   if (!assertion) return null;
   return {
@@ -80,7 +120,13 @@ export function detectGenerativeAiMetadataMarker(manifest: Manifest): AiSignalMa
   };
 }
 
-export function detectAiClaimGenerator(manifest: Manifest): AiSignalMatch | null {
+/**
+ * Detects if the software that originally generated the C2PA claim is a known AI tool
+ *
+ * @param manifest - The C2PA manifest to evaluate
+ * @returns A signal match if the claim generator is flagged as an AI vendor, otherwise null
+ */
+export function detectAiClaimGenerator(manifest: Manifest): DetectionSignalMatch | null {
   const candidates = [manifest.claim_generator, ...(manifest.claim_generator_info ?? []).map((info) => info.name)];
   for (const candidate of candidates) {
     const vendor = matchesKnownAiVendor(candidate);
@@ -94,7 +140,13 @@ export function detectAiClaimGenerator(manifest: Manifest): AiSignalMatch | null
   return null;
 }
 
-export function detectTrainingOrMiningAssertion(manifest: Manifest): AiSignalMatch | null {
+/**
+ * Detects assertions related to AI training or data mining operations
+ *
+ * @param manifest - The C2PA manifest to evaluate
+ * @returns A signal match if a training/mining assertion is present, otherwise null
+ */
+export function detectTrainingOrMiningAssertion(manifest: Manifest): DetectionSignalMatch | null {
   const assertion = (manifest.assertions ?? []).find((a) => a.label.startsWith('c2pa.ai.training_mining'));
   if (!assertion) return null;
   return {
@@ -103,6 +155,9 @@ export function detectTrainingOrMiningAssertion(manifest: Manifest): AiSignalMat
   };
 }
 
+/**
+ * The aggregated pipeline of all available AI signal detectors
+ */
 export const AI_SIGNAL_DETECTORS: readonly AiSignalDetector[] = [
   detectGenerativeInfoAssertion,
   detectAiGeneratedAction,

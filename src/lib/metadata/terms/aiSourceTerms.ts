@@ -1,7 +1,5 @@
 /**
- * Terms that describe an asset's origin as synthetic/generated, or that are
- * generation parameters specific to diffusion-model tools (img2img UIs like
- * Automatic1111/ComfyUI commonly embed these directly into image metadata).
+ * A curated list of terms and parameters that strongly indicate an asset was synthetically generated or modified by AI
  */
 export const AI_SOURCE_TERMS: readonly string[] = [
   'trainedalgorithmicmedia',
@@ -22,7 +20,10 @@ export const AI_SOURCE_TERMS: readonly string[] = [
   'denoising strength'
 ];
 
-/** Terms that describe a genuine camera/digital capture (the opposite signal). */
+/**
+ * A curated list of terms that strongly indicate an image is an authentic, real-world photograph captured by a physical
+ * camera
+ */
 export const CAMERA_SOURCE_TERMS: readonly string[] = [
   'digitalcapture',
   'digital capture',

@@ -4,7 +4,12 @@ import { CAMERA_SOURCE_TERMS } from '../terms/aiSourceTerms';
 import { findMatchingTerm } from '../textMatch';
 import type { MetadataSignalMatch, RawImageMetadata } from '../types';
 
-/** Detects AI-generation (and camera-capture counter-) signals in the IPTC segment. */
+/**
+ * Evaluates the IPTC metadata segment for signals indicating either AI generation or authentic camera capture
+ *
+ * @param metadata - The raw, parsed metadata blocks extracted from the image file
+ * @returns An array of successfully matched metadata signals, populated with specific evidence strings
+ */
 export function detectIptcSignals(metadata: RawImageMetadata): MetadataSignalMatch[] {
   const matches: MetadataSignalMatch[] = [];
   if (!metadata.iptc) return matches;

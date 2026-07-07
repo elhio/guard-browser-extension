@@ -59,10 +59,10 @@
   "setup_action_subheading": {
     "message": "What should happen when the previously selected content is detected?"
   },
-  "setup_action_indicate_title": {
+  "setup_action_mark_title": {
     "message": "Mark"
   },
-  "setup_action_indicate_desc": {
+  "setup_action_mark_desc": {
     "message": "Adds a subtle visual indicator to the image."
   },
   "setup_action_blur_title": {
@@ -455,16 +455,16 @@
   "popover_handling_hide": {
     "message": "Hide"
   },
-  "popover_verification_label": {
-    "message": "First Check"
+  "popover_detection_label": {
+    "message": "Default Detector"
   },
-  "popover_verification_none": {
+  "popover_detection_none": {
     "message": "None selected"
   },
-  "popover_verification_metadata": {
+  "popover_detection_metadata": {
     "message": "Metadata"
   },
-  "popover_verification_lens_desc": {
+  "popover_detection_lens_desc": {
     "message": " (runs locally, uses more energy)"
   },
   "popover_add_exception": {

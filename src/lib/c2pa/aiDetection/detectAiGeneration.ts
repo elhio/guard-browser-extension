@@ -1,24 +1,29 @@
 import type { Manifest } from '@contentauth/c2pa-types';
 import { AI_SIGNAL_DETECTORS } from './detectors';
 import { AI_DETECTION_CONFIDENCE_THRESHOLD } from './signals';
-import type { AiDetectionResult, AiSignalMatch } from './types';
+import type { CategoryDetectionResult, DetectionSignalMatch } from './types';
 
 /**
- * Runs every AI-generation signal detector against a chain of manifests
- * (the active manifest plus its ingredient chain — see getManifestChain)
- * and summarizes the result. Checking the whole chain matters because the
- * strongest signal (e.g. "created by an AI tool") often lives on an early
- * ingredient rather than the final, most-edited manifest.
+ * Evaluates a chain of C2PA manifests for signals indicating AI generation
+ *
+ * NOte: This function runs every registered AI-generation signal detector against both the active manifest and its
+ * historical ingredient chain. This deep traversal is critical because the strongest indicators of AI origin
+ * (e.g., a "created by an AI tool" action) are often recorded in the initial creation ingredient rather than the final,
+ * post-edited manifest.
+ *
+ * @param manifests - An array of C2PA manifests representing the asset's history
+ * @returns A summarized detection result containing a boolean flag indicating if AI was detected, the highest
+ * confidence score, and a sorted array of all matched signals
  */
-export function detectAiGeneration(manifests: readonly Manifest[]): AiDetectionResult {
-  const matches: AiSignalMatch[] = manifests
+export function detectAiGeneration(manifests: readonly Manifest[]): CategoryDetectionResult {
+  const matches: DetectionSignalMatch[] = manifests
     .flatMap((manifest) => AI_SIGNAL_DETECTORS.map((detect) => detect(manifest)))
-    .filter((match): match is AiSignalMatch => match !== null)
+    .filter((match): match is DetectionSignalMatch => match !== null)
     .sort((a, b) => b.confidence - a.confidence);
 
   const confidence = matches[0]?.confidence ?? 0;
   return {
-    isLikelyAiGenerated: confidence >= AI_DETECTION_CONFIDENCE_THRESHOLD,
+    detected: confidence >= AI_DETECTION_CONFIDENCE_THRESHOLD,
     confidence,
     matches
   };

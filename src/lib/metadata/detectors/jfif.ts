@@ -2,9 +2,10 @@ import { METADATA_SIGNALS } from '../signals';
 import type { MetadataSignalMatch, RawImageMetadata } from '../types';
 
 /**
- * JFIF (the JPEG APP0 segment) carries no AI-relevant information by itself —
- * it's present in most baseline JPEGs regardless of origin. Its only modest
- * use here is as a very weak "looks like a standard JPEG encoder" data point.
+ * Evaluates the presence of the JFIF segment
+ *
+ * @param metadata - The raw, parsed metadata blocks extracted from the image file
+ * @returns An array containing the JFIF-present signal if the segment exists, or an empty array if not
  */
 export function detectJfifSignals(metadata: RawImageMetadata): MetadataSignalMatch[] {
   if (!metadata.jfif) return [];
