@@ -1,6 +1,5 @@
 import type { SerializableImageCandidate } from '@/lib/images';
-import type { TasksState } from '@/components/setup/TaskSelectionStep';
-import type { ImageAnalysisResult } from '@/lib/detection/types';
+import type { TasksState, ImageAnalysisResult } from '@/lib/detection';
 
 /**
  * The unique identifier used by content scripts to request image classification

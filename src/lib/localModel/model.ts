@@ -24,5 +24,5 @@ export const DEFAULT_MODEL: LocalModel = {
   name: 'ViT AI-Image Detector',
   repo: 'onnx-community/ai-image-detection-ONNX',
   description:
-    'Vision Transformer (ViT-Base, CIFAKE) zur Erkennung KI-generierter Bilder (Stable Diffusion, DALL-E, Midjourney). Apache 2.0.'
+    'Vision Transformer (ViT-Base, CIFAKE) for detecting AI-generated images (Stable Diffusion, DALL-E, Midjourney). Apache 2.0.'
 };

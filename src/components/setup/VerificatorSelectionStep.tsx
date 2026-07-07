@@ -1,10 +1,22 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 
 import { RadioCard } from '@/components/ui/RadioCard';
-import { t } from '@/lib/i18n';
-import { fetchUserProfile, fetchUserSpaces, type SpacePublic } from '@/lib/api';
-import type { TasksState } from '@/components/setup/TaskSelectionStep';
+import { t, type MessageKey } from '@/lib/i18n';
+import { fetchUserProfile, fetchUserSpaces } from '@/lib/api';
+import type { TasksState } from '@/lib/detection';
+import {
+  checkSpaceEligibility,
+  formatSpaceDescription,
+  type EligibilityReason,
+} from '@/lib/verification/eligibility';
+
+const REASON_KEYS: Record<EligibilityReason, MessageKey> = {
+  media: 'setup_verificator_error_media',
+  aiGenerated: 'setup_verificator_error_task_ai',
+  violent: 'setup_verificator_error_task_violent',
+  explicit: 'setup_verificator_error_task_explicit',
+};
 
 interface VerificatorSelectionStepProps {
   token: string | null;
@@ -37,71 +49,20 @@ export function VerificatorSelectionStep({
 
   const isLoading = isUserLoading || isSpacesLoading;
 
-  const generateDynamicDescription = (space: SpacePublic) => {
-    const andStr = t('space_conj_and');
-
-    const tasksList = space.enabled_task_names || [];
-    let formattedTasks = '';
-    if (tasksList.length === 1) formattedTasks = tasksList[0];
-    else if (tasksList.length > 1) {
-      const last = tasksList[tasksList.length - 1];
-      const rest = tasksList.slice(0, -1);
-      formattedTasks = rest.join(', ') + andStr + last;
-    }
-
-    const mediaList = space.enabled_media || [];
-    const mediaMapped = mediaList.map((m) => {
-      if (m === 'image') return t('space_media_image');
-      if (m === 'video') return t('space_media_video');
-      return m;
-    });
-
-    let formattedMedia = '';
-    if (mediaMapped.length === 1) formattedMedia = mediaMapped[0];
-    else if (mediaMapped.length > 1) {
-      const last = mediaMapped[mediaMapped.length - 1];
-      const rest = mediaMapped.slice(0, -1);
-      formattedMedia = rest.join(', ') + andStr + last;
-    }
-
-    const predictor = space.predictor_name || t('space_fallback_model');
-    const template = t('space_desc_template');
-
-    if (!formattedTasks || !formattedMedia) {
-      return space.description || t('setup_verificator_no_desc_fallback');
-    }
-
-    return template
-      .replace('{tasks}', formattedTasks)
-      .replace('{media}', formattedMedia)
-      .replace('{predictor}', predictor);
+  const descriptionLabels = {
+    and: t('space_conj_and'),
+    mediaImage: t('space_media_image'),
+    mediaVideo: t('space_media_video'),
+    fallbackModel: t('space_fallback_model'),
+    template: t('space_desc_template'),
+    noDescFallback: t('setup_verificator_no_desc_fallback'),
   };
-
-  const checkSpaceEligibility = useCallback((space: SpacePublic): { eligible: boolean; reason?: string } => {
-    if (!space.enabled_media?.includes('image')) {
-      return { eligible: false, reason: t('setup_verificator_error_media') };
-    }
-
-    const enabledTasks = space.enabled_task_names || [];
-
-    if (tasks.aiGenerated && !enabledTasks.some(t => ['AI-Generated', 'AI-Generiert'].includes(t))) {
-      return { eligible: false, reason: t('setup_verificator_error_task_ai') };
-    }
-    if (tasks.violent && !enabledTasks.some(t => ['Violent', 'Gewalttätig'].includes(t))) {
-      return { eligible: false, reason: t('setup_verificator_error_task_violent') };
-    }
-    if (tasks.explicit && !enabledTasks.some(t => ['Explicit', 'Explizit'].includes(t))) {
-      return { eligible: false, reason: t('setup_verificator_error_task_explicit') };
-    }
-
-    return { eligible: true };
-  }, [tasks]);
 
   useEffect(() => {
     if (selectedSpace && spaces.length > 0) {
       const activeSpace = spaces.find(s => s.id === selectedSpace);
       if (activeSpace) {
-        const { eligible } = checkSpaceEligibility(activeSpace);
+        const { eligible } = checkSpaceEligibility(activeSpace, tasks);
         if (!eligible) {
           queueMicrotask(() => {
             onSelect('');
@@ -109,7 +70,7 @@ export function VerificatorSelectionStep({
         }
       }
     }
-  }, [selectedSpace, spaces, checkSpaceEligibility, onSelect]);
+  }, [selectedSpace, spaces, tasks, onSelect]);
 
   return (
     <div className="animate-in fade-in slide-in-from-right-2 duration-300">
@@ -128,7 +89,7 @@ export function VerificatorSelectionStep({
             </div>
           ) : spaces.length > 0 ? (
             spaces.map((space) => {
-              const { eligible, reason } = checkSpaceEligibility(space);
+              const { eligible, reason } = checkSpaceEligibility(space, tasks);
 
               return (
                 <RadioCard
@@ -136,36 +97,17 @@ export function VerificatorSelectionStep({
                   id={space.id}
                   name="advancedSpace"
                   title={space.name}
-                  description={generateDynamicDescription(space)}
+                  description={formatSpaceDescription(space, descriptionLabels)}
                   checked={selectedSpace === space.id}
                   disabled={!eligible}
-                  disabledReason={reason}
+                  disabledReason={reason ? t(REASON_KEYS[reason]) : undefined}
                   onChange={onSelect}
                 />
               );
             })
-          ) : isAuthenticated && !isLoading ? (
+          ) : isAuthenticated ? (
             <p className="text-sm text-gray-500">{t('setup_verificator_no_workspaces')}</p>
-          ) : (
-            <>
-              <RadioCard
-                id="mock1"
-                name="mock"
-                title={t('setup_verificator_mock_personal_title')}
-                description={t('setup_verificator_mock_personal_desc')}
-                checked={false}
-                onChange={() => {}}
-              />
-              <RadioCard
-                id="mock2"
-                name="mock"
-                title={t('setup_verificator_mock_team_title')}
-                description={t('setup_verificator_mock_team_desc')}
-                checked={false}
-                onChange={() => {}}
-              />
-            </>
-          )}
+          ) : null}
         </div>
       </div>
     </div>

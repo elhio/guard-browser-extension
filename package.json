@@ -1,8 +1,8 @@
 {
-  "name": "wxt-react-starter",
-  "description": "manifest.json description",
+  "name": "guard-browser-extension",
+  "description": "Browser extension that detects AI-generated, violent, or explicit images on web pages",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.0.1",
   "type": "module",
   "scripts": {
     "dev": "wxt",
@@ -24,7 +24,6 @@
     "exifr": "^7.1.3",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
-    "react-hook-form": "^7.80.0",
     "react-icons": "^5.7.0",
     "tailwindcss": "^4.3.2"
   },

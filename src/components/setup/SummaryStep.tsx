@@ -1,14 +1,15 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { t } from '@/lib/i18n';
-import type { TasksState } from '@/components/setup/TaskSelectionStep';
+import type { TasksState } from '@/lib/detection';
+import type { DetectionAction } from '@/lib/settings';
 import { fetchUserProfile, fetchUserSpaces } from '@/lib/api';
 
 interface SummaryStepProps {
   token: string | null | undefined;
   isAuthenticated: boolean;
   tasks: TasksState;
-  detectionAction: string;
+  detectionAction: DetectionAction;
   useDetectorLocalModel: boolean;
   verificatorSpace: string | null;
 }

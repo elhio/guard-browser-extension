@@ -1,11 +1,6 @@
 import { CheckboxCard } from '@/components/ui/CheckboxCard';
 import { t } from '@/lib/i18n';
-
-export interface TasksState {
-  aiGenerated: boolean;
-  violent: boolean;
-  explicit: boolean;
-}
+import type { TasksState } from '@/lib/detection';
 
 interface TaskSelectionStepProps {
   tasks: TasksState;

@@ -3,14 +3,14 @@ import { browser } from 'wxt/browser';
 import { LuListPlus, LuSettings } from 'react-icons/lu';
 
 import GuardLogo from '@/assets/guard.svg?react';
-import { settings } from '@/lib/settings/store';
-import { formatNumber, t } from '@/lib/i18n';
-import type { TasksState } from '@/components/setup/TaskSelectionStep';
+import { settings, type DetectionAction } from '@/lib/settings';
+import { t } from '@/lib/i18n';
+import type { TasksState } from '@/lib/detection';
 
 function App() {
   const [isActive, setIsActive] = useState<boolean | null>(null);
   const [tasks, setTasks] = useState<TasksState>({ aiGenerated: true, violent: true, explicit: true });
-  const [detectionAction, setDetectionAction] = useState('blur');
+  const [detectionAction, setDetectionAction] = useState<DetectionAction>('blur');
   const [useDetectorLocalModel, setUseDetectorLocalModel] = useState(false);
   const [exceptionSites, setExceptionSites] = useState<string[]>([]);
 
@@ -76,7 +76,7 @@ function App() {
     await settings.setValue({ ...current, tasks: nextTasks });
   };
 
-  const handleSetAction = async (action: string) => {
+  const handleSetAction = async (action: DetectionAction) => {
     setDetectionAction(action);
     setIsHandlingOpen(false);
     const current = await settings.getValue();
@@ -103,15 +103,15 @@ function App() {
     { id: 'explicit', label: t('popover_task_nsfw') }
   ];
 
-  const handlingOptions = [
-    { id: 'mark', label: t('settings_action_mark_label') || 'Mark' },
+  const handlingOptions: { id: DetectionAction; label: string }[] = [
+    { id: 'mark', label: t('settings_action_mark_label') },
     { id: 'blur', label: t('popover_handling_blur') },
     { id: 'hide', label: t('popover_handling_hide') }
   ];
 
   const detectionOptions = [
     { id: 'metadata', label: t('popover_detection_metadata'), desc: '' },
-    { id: 'lens', label: 'Lens Mobile', desc: t('popover_detection_lens_desc') }
+    { id: 'lens', label: t('popover_detection_lens'), desc: t('popover_detection_lens_desc') }
   ];
 
   // Helper for Tasks Summary text
@@ -289,9 +289,6 @@ function App() {
             </span>
           </button>
         </div>
-        <p className="text-[10px] text-center text-gray-400 mt-4 mb-1 tracking-wide">
-          {t('popover_stats_part1')}{formatNumber(0)}{t('popover_stats_part2')}{formatNumber(0)}{t('popover_stats_part3')}
-        </p>
       </div>
 
     </div>

@@ -1,12 +1,12 @@
 import type { Manifest } from '@contentauth/c2pa-types';
 import { AI_SIGNAL_DETECTORS } from './detectors';
-import { DETECTION_THRESHOLDS } from './signals';
+import { passesThreshold } from '@/lib/detection';
 import type { CategoryDetectionResult, DetectionSignalMatch } from './types';
 
 /**
  * Evaluates a chain of C2PA manifests for signals indicating AI generation
  *
- * NOte: This function runs every registered AI-generation signal detector against both the active manifest and its
+ * Note: This function runs every registered AI-generation signal detector against both the active manifest and its
  * historical ingredient chain. This deep traversal is critical because the strongest indicators of AI origin
  * (e.g., a "created by an AI tool" action) are often recorded in the initial creation ingredient rather than the final,
  * post-edited manifest.
@@ -23,7 +23,7 @@ export function detectAiGeneration(manifests: readonly Manifest[]): CategoryDete
 
   const confidence = matches[0]?.confidence ?? 0;
   return {
-    detected: confidence >= DETECTION_THRESHOLDS.aiGenerated,
+    detected: passesThreshold('aiGenerated', confidence),
     confidence,
     matches
   };

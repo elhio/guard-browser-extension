@@ -104,18 +104,6 @@
   "setup_verificator_no_workspaces": {
     "message": "No workspaces found."
   },
-  "setup_verificator_mock_personal_title": {
-    "message": "Demo Space"
-  },
-  "setup_verificator_mock_personal_desc": {
-    "message": "Example for a personal space by the user."
-  },
-  "setup_verificator_mock_team_title": {
-    "message": "Pro Space"
-  },
-  "setup_verificator_mock_team_desc": {
-    "message": "Example for a demo space with an advanced model."
-  },
   "setup_verificator_no_desc_fallback": {
     "message": "No description available."
   },
@@ -473,13 +461,40 @@
   "popover_settings": {
     "message": "Settings"
   },
-  "popover_stats_part1": {
-    "message": "On this page "
+  "popover_detection_lens": {
+    "message": "On-Device AI Model"
   },
-  "popover_stats_part2": {
-    "message": " images were checked and "
+  "badge_btn_verify": {
+    "message": "Verify with Advanced Model"
   },
-  "popover_stats_part3": {
-    "message": " were detected."
+  "badge_btn_reveal": {
+    "message": "Unblur / Reveal Image"
+  },
+  "badge_category_ai": {
+    "message": "AI Generated"
+  },
+  "badge_category_violent": {
+    "message": "Violent"
+  },
+  "badge_category_explicit": {
+    "message": "Explicit"
+  },
+  "badge_external_results": {
+    "message": "External API Results:"
+  },
+  "badge_verifying": {
+    "message": "Analyzing..."
+  },
+  "badge_processing": {
+    "message": "Analyzing image..."
+  },
+  "badge_error_analyze": {
+    "message": "Failed to analyze image"
+  },
+  "badge_error_verify": {
+    "message": "Verification failed"
+  },
+  "badge_error_background": {
+    "message": "Extension background task failed"
   }
 }

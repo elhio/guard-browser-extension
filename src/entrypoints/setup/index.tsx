@@ -1,19 +1,13 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { browser } from 'wxt/browser';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 
 import '@/assets/tailwind.css';
+import { createQueryClient } from '@/lib/queryClient';
 import OnboardingWizard from '@/components/setup/OnboardingWizard';
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      retry: 1,
-    },
-  },
-});
+const queryClient = createQueryClient();
 
 const root = document.getElementById('root');
 

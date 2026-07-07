@@ -36,7 +36,7 @@ choose how the extension reacts to flagged content (mark, blur, or hide), or whi
 
 If you want to install the latest version manually or test it locally:
 
-1. Download the latest release from the [Releases page](https://github.com/yourusername/yourrepo/releases) or build it from source (see below).
+1. Download the latest release from the [Releases page](https://github.com/elhio/guard-browser-extension/releases) or build it from source (see below).
 2. **Chrome/Edge/Brave:**
    * Go to `chrome://extensions/`
    * Enable **Developer mode** in the top right corner.

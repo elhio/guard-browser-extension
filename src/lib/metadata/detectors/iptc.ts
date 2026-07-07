@@ -1,5 +1,5 @@
 import { METADATA_SIGNALS } from '../signals';
-import { AI_GENERATOR_TERMS } from '../terms/aiGeneratorTerms';
+import { AI_GENERATOR_VENDORS } from '@/lib/detection';
 import { CAMERA_SOURCE_TERMS } from '../terms/aiSourceTerms';
 import { findMatchingTerm } from '../textMatch';
 import type { MetadataSignalMatch, RawImageMetadata } from '../types';
@@ -14,7 +14,7 @@ export function detectIptcSignals(metadata: RawImageMetadata): MetadataSignalMat
   const matches: MetadataSignalMatch[] = [];
   if (!metadata.iptc) return matches;
 
-  const generatorVendor = findMatchingTerm(metadata.iptc, AI_GENERATOR_TERMS);
+  const generatorVendor = findMatchingTerm(metadata.iptc, AI_GENERATOR_VENDORS);
   if (generatorVendor) {
     matches.push({
       ...METADATA_SIGNALS.iptcGeneratorVendor,

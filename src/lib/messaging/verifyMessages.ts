@@ -25,7 +25,6 @@ export interface VerifyImageData {
   aiGenerated?: number;
   violent?: number;
   explicit?: number;
-  [key: string]: any;
 }
 
 /**

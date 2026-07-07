@@ -15,7 +15,7 @@ import type { ImageAnalysisResult } from '@/lib/detection/types';
  * manifest parsing throws an error.
  *
  * @param candidate - The image candidate object containing the `src` URL to fetch
- * @returns A promise resolving to a `C2paReadResult`. On success, it contains the combined detection results.
+ * @returns A promise resolving to an `ImageAnalysisResult` containing the combined detection results.
  */
 export async function readManifestFor(candidate: SerializableImageCandidate): Promise<ImageAnalysisResult> {
   try {

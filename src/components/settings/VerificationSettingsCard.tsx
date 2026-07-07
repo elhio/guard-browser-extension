@@ -4,10 +4,22 @@ import { useQuery } from '@tanstack/react-query';
 
 import SettingsSection from '@/components/ui/SettingsSection';
 import SettingsRow from '@/components/ui/SettingsRow';
-import { t } from '@/lib/i18n';
-import { settings } from '@/lib/settings/store';
-import type { TasksState } from '@/components/setup/TaskSelectionStep';
-import { fetchUserProfile, fetchUserSpaces, type SpacePublic } from '@/lib/api';
+import { t, type MessageKey } from '@/lib/i18n';
+import { settings } from '@/lib/settings';
+import type { TasksState } from '@/lib/detection';
+import { fetchUserProfile, fetchUserSpaces } from '@/lib/api';
+import {
+  checkSpaceEligibility,
+  formatSpaceDescription,
+  type EligibilityReason,
+} from '@/lib/verification/eligibility';
+
+const REASON_KEYS: Record<EligibilityReason, MessageKey> = {
+  media: 'settings_verification_error_media',
+  aiGenerated: 'settings_verification_error_task_ai',
+  violent: 'settings_verification_error_task_violent',
+  explicit: 'settings_verification_error_task_explicit',
+};
 
 export function VerificationSettingsCard() {
   const [verificatorSpace, setVerificatorSpace] = useState<string | null>(null);
@@ -62,71 +74,20 @@ export function VerificationSettingsCard() {
     await settings.setValue({ ...currentSettings, verificatorSpace: newSelection });
   }, []);
 
-  const checkSpaceEligibility = useCallback((space: SpacePublic): { eligible: boolean; reason?: string } => {
-    if (!space.enabled_media?.includes('image')) {
-      return { eligible: false, reason: t('settings_verification_error_media') };
-    }
-
-    const enabledTasks = space.enabled_task_names || [];
-
-    if (tasks.aiGenerated && !enabledTasks.some(t => ['AI-Generated', 'AI-Generiert'].includes(t))) {
-      return { eligible: false, reason: t('settings_verification_error_task_ai') };
-    }
-    if (tasks.violent && !enabledTasks.some(t => ['Violent', 'Gewalttätig'].includes(t))) {
-      return { eligible: false, reason: t('settings_verification_error_task_violent') };
-    }
-    if (tasks.explicit && !enabledTasks.some(t => ['Explicit', 'Explizit'].includes(t))) {
-      return { eligible: false, reason: t('settings_verification_error_task_explicit') };
-    }
-
-    return { eligible: true };
-  }, [tasks]);
-
-  const generateDynamicDescription = (space: SpacePublic) => {
-    const andStr = t('settings_verification_conj_and');
-    const tasksList = space.enabled_task_names || [];
-    let formattedTasks = '';
-
-    if (tasksList.length === 1) formattedTasks = tasksList[0];
-    else if (tasksList.length > 1) {
-      const last = tasksList[tasksList.length - 1];
-      const rest = tasksList.slice(0, -1);
-      formattedTasks = rest.join(', ') + andStr + last;
-    }
-
-    const mediaList = space.enabled_media || [];
-    const mediaMapped = mediaList.map((m) => {
-      if (m === 'image') return t('settings_verification_media_image');
-      if (m === 'video') return t('settings_verification_media_video');
-      return m;
-    });
-
-    let formattedMedia = '';
-    if (mediaMapped.length === 1) formattedMedia = mediaMapped[0];
-    else if (mediaMapped.length > 1) {
-      const last = mediaMapped[mediaMapped.length - 1];
-      const rest = mediaMapped.slice(0, -1);
-      formattedMedia = rest.join(', ') + andStr + last;
-    }
-
-    const predictor = space.predictor_name || t('settings_verification_fallback_model');
-    const template = t('settings_verification_desc_template');
-
-    if (!formattedTasks || !formattedMedia) {
-      return space.description || t('settings_verification_no_desc_fallback');
-    }
-
-    return template
-      .replace('{tasks}', formattedTasks)
-      .replace('{media}', formattedMedia)
-      .replace('{predictor}', predictor);
+  const descriptionLabels = {
+    and: t('settings_verification_conj_and'),
+    mediaImage: t('settings_verification_media_image'),
+    mediaVideo: t('settings_verification_media_video'),
+    fallbackModel: t('settings_verification_fallback_model'),
+    template: t('settings_verification_desc_template'),
+    noDescFallback: t('settings_verification_no_desc_fallback'),
   };
 
   useEffect(() => {
     if (verificatorSpace && spaces.length > 0) {
       const activeSpace = spaces.find(s => s.id === verificatorSpace);
       if (activeSpace) {
-        const { eligible } = checkSpaceEligibility(activeSpace);
+        const { eligible } = checkSpaceEligibility(activeSpace, tasks);
         if (!eligible) {
           queueMicrotask(() => {
             handleSelectSpace(activeSpace.id);
@@ -134,7 +95,7 @@ export function VerificationSettingsCard() {
         }
       }
     }
-  }, [spaces, verificatorSpace, checkSpaceEligibility, handleSelectSpace]);
+  }, [spaces, verificatorSpace, tasks, handleSelectSpace]);
 
   const baseCheckboxClasses = "h-4 w-4 shrink-0 rounded border-gray-300 text-teal-600 accent-teal-500 focus:outline-none transition-all";
 
@@ -179,13 +140,14 @@ export function VerificationSettingsCard() {
         </p>
       ) : (
         spaces.map((space) => {
-          const { eligible, reason } = checkSpaceEligibility(space);
+          const { eligible, reason } = checkSpaceEligibility(space, tasks);
+          const reasonText = reason ? t(REASON_KEYS[reason]) : undefined;
 
           return (
             <SettingsRow
               key={space.id}
               label={<span className={!eligible ? "opacity-60" : ""}>{space.name}</span>}
-              description={<span className={!eligible ? "opacity-60" : ""}>{generateDynamicDescription(space)}</span>}
+              description={<span className={!eligible ? "opacity-60" : ""}>{formatSpaceDescription(space, descriptionLabels)}</span>}
               value={
                 <div className="relative group flex items-center">
                   <input
@@ -201,9 +163,9 @@ export function VerificationSettingsCard() {
                     aria-label={`${t('settings_verification_select_aria')} ${space.name}`}
                   />
 
-                  {!eligible && reason && (
+                  {!eligible && reasonText && (
                     <div className="pointer-events-none absolute bottom-full right-0 z-10 mb-2 w-max max-w-62.5 sm:max-w-xs opacity-0 transition-opacity duration-200 group-hover:opacity-100 bg-gray-900 text-white text-xs rounded py-1.5 px-3 shadow-lg text-left sm:text-center">
-                      {reason}
+                      {reasonText}
                       <div className="absolute top-full right-1.5 -mt-px border-4 border-transparent border-t-gray-900" />
                     </div>
                   )}

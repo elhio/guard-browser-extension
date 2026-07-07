@@ -1,6 +1,8 @@
 import type { ClassifyImageResult } from '@/lib/messaging/classifyMessages';
 import type { VerifyImageResponse } from '@/lib/messaging/verifyMessages';
 import type { ImageCandidate } from '@/lib/images';
+import { isImageFlagged } from '@/lib/detection';
+import { t } from '@/lib/i18n';
 import { attachBadge } from './attachBadge';
 import { revealImage } from './applyAction';
 
@@ -15,7 +17,7 @@ export function markBadgesProcessing(
     const element = elementsBySrc.get(candidate.src);
     if (element) {
       const badge = attachBadge(element);
-      badge.setProcessing('Analyzing image...');
+      badge.setProcessing(t('badge_processing'));
     }
   }
 }
@@ -35,14 +37,11 @@ export function updateBadges(
     const badge = attachBadge(element);
 
     if (result.status === 'error') {
-      badge.setError(result.error || 'Failed to analyze image');
+      badge.setError(result.error || t('badge_error_analyze'));
       continue;
     }
 
-    const isAlert =
-      (result.categories.aiGenerated?.confidence ?? 0) > 50 ||
-      (result.categories.violent?.confidence ?? 0) > 50 ||
-      (result.categories.explicit?.confidence ?? 0) > 50;
+    const isAlert = isImageFlagged(result.categories);
 
     function runVerification(): void {
       if (!verifyApiCallback) return;
@@ -53,7 +52,7 @@ export function updateBadges(
           if (res.success) badge.setVerificationResult(res.data);
           else badge.setError(res.error);
         })
-        .catch((err) => badge.setError(err.message || 'Verification failed'));
+        .catch((err) => badge.setError(err.message || t('badge_error_verify')));
     }
 
     badge.setResult({

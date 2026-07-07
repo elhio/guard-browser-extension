@@ -1,37 +1,12 @@
-import { useEffect, useState } from 'react';
 import SettingsSection from '@/components/ui/SettingsSection';
 import SettingsRow from '@/components/ui/SettingsRow';
 import { t } from '@/lib/i18n';
-import { settings } from '@/lib/settings/store';
+import { useSetting, type DetectionAction } from '@/lib/settings';
 
 export function ActionSettingsCard() {
-  const [detectionAction, setDetectionAction] = useState('mark');
+  const [detectionAction, setDetectionAction] = useSetting('detectionAction');
 
-  useEffect(() => {
-    settings.getValue().then((currentSettings) => {
-      if (currentSettings.detectionAction) {
-        setDetectionAction(currentSettings.detectionAction);
-      }
-    });
-
-    const unwatch = settings.watch((newSettings) => {
-      if (newSettings && newSettings.detectionAction) {
-        setDetectionAction(newSettings.detectionAction);
-      }
-    });
-
-    return () => unwatch();
-  }, []);
-
-  const handleSelectAction = async (action: string) => {
-    setDetectionAction(action);
-
-    const currentSettings = await settings.getValue();
-    await settings.setValue({
-      ...currentSettings,
-      detectionAction: action
-    });
-  };
+  const handleSelectAction = (action: DetectionAction) => setDetectionAction(action);
 
   const checkboxClasses = "h-4 w-4 shrink-0 cursor-pointer rounded border-gray-300 text-teal-600 accent-teal-500 focus:outline-none transition-all";
 

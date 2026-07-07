@@ -104,18 +104,6 @@
   "setup_verificator_no_workspaces": {
     "message": "Keine Workspaces gefunden."
   },
-  "setup_verificator_mock_personal_title": {
-    "message": "Demo Space"
-  },
-  "setup_verificator_mock_personal_desc": {
-    "message": "Beispiel für einen persönlichen Space des Nutzers."
-  },
-  "setup_verificator_mock_team_title": {
-    "message": "Pro Space"
-  },
-  "setup_verificator_mock_team_desc": {
-    "message": "Beispiel für einen Demo Space mit einem fortschrittlichen Modell."
-  },
   "setup_verificator_no_desc_fallback": {
     "message": "Keine Beschreibung verfügbar."
   },
@@ -473,13 +461,40 @@
   "popover_settings": {
     "message": "Einstellungen"
   },
-  "popover_stats_part1": {
-    "message": "Auf dieser Seite wurden "
+  "popover_detection_lens": {
+    "message": "KI-Modell auf dem Gerät"
   },
-  "popover_stats_part2": {
-    "message": " Bilder überprüft und "
+  "badge_btn_verify": {
+    "message": "Mit erweitertem Modell prüfen"
   },
-  "popover_stats_part3": {
-    "message": " erkannt."
+  "badge_btn_reveal": {
+    "message": "Bild einblenden / anzeigen"
+  },
+  "badge_category_ai": {
+    "message": "KI-generiert"
+  },
+  "badge_category_violent": {
+    "message": "Gewalttätig"
+  },
+  "badge_category_explicit": {
+    "message": "Explizit"
+  },
+  "badge_external_results": {
+    "message": "Ergebnisse der externen API:"
+  },
+  "badge_verifying": {
+    "message": "Wird analysiert…"
+  },
+  "badge_processing": {
+    "message": "Bild wird analysiert…"
+  },
+  "badge_error_analyze": {
+    "message": "Bild konnte nicht analysiert werden"
+  },
+  "badge_error_verify": {
+    "message": "Überprüfung fehlgeschlagen"
+  },
+  "badge_error_background": {
+    "message": "Hintergrundaufgabe der Erweiterung fehlgeschlagen"
   }
 }

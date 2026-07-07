@@ -31,7 +31,7 @@ export default defineConfig({
     },
     host_permissions: [
       '<all_urls>',
-      `${process.env.WXT_API_URL}/*`
+      `${process.env.VITE_API_URL}/*`
     ],
     web_accessible_resources: [
       {

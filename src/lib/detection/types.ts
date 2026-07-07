@@ -4,6 +4,12 @@
 export type DetectionCategory = 'aiGenerated' | 'violent' | 'explicit';
 
 /**
+ * Which detection categories the user has enabled. Keyed by `DetectionCategory`,
+ * so tasks and categories can never drift apart.
+ */
+export type TasksState = Record<DetectionCategory, boolean>;
+
+/**
  * Indicates the specific conclusion or evidence direction a signal provides
  *
  * - For AI generation: `aiGenerated` (synthetic) vs. `authentic` (real-world capture)

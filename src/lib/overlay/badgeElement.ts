@@ -1,5 +1,6 @@
-import type { ImageAnalysisResult } from '@/lib/detection/types';
+import type { ImageAnalysisResult } from '@/lib/detection';
 import type { VerifyImageData } from '@/lib/messaging/verifyMessages';
+import { t } from '@/lib/i18n';
 
 /**
  * Isolated CSS styles for the badge component.
@@ -12,7 +13,7 @@ const BADGE_STYLES = `
     all: initial;
     position: absolute;
     top: 8px;
-    right: 8px; /* <-- CHANGED: Moves the badge to the top right */
+    right: 8px;
     z-index: 2147483647;
     font-family: system-ui, -apple-system, sans-serif;
   }
@@ -56,7 +57,7 @@ const BADGE_STYLES = `
   .tooltip {
     position: absolute; 
     top: 100%; 
-    right: 0; /* <-- CHANGED: Anchors tooltip to the right so it doesn't overflow off-screen */
+    right: 0; /* Anchored to the right so the tooltip doesn't overflow off-screen */
     margin-top: 8px;
     background: rgba(17, 19, 28, 0.95); border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 8px; padding: 12px; width: 220px; color: #fff; font-size: 13px;
@@ -92,10 +93,11 @@ const BADGE_STYLES = `
  * Represents the interface for interacting with the encapsulated badge DOM element
  *
  * @property host - The DOM node that should be inserted into the image wrapper on the host page
- * @property showInitialState - Sets the initial visual state based on the local metadata scan
- * @property showPending - Transitions the badge to a loading state
- * @property showResult - Sets the final verdict state based on the external model's response
- * @property showError - Transitions the badge to an error state if the external API call fails, times out, or returns invalid data
+ * @property setProcessing - Transitions the badge to a loading/spinner state with a message
+ * @property setResult - Sets the verdict state from the local metadata/model scan
+ * @property setVerificationPending - Marks the external verification request as in-flight
+ * @property setVerificationResult - Appends the external API's scores to the tooltip
+ * @property setError - Transitions the badge to an error state
  */
 export interface UnifiedBadge {
   host: HTMLElement;
@@ -120,10 +122,8 @@ function buildScoreRow(label: string, score: number, isScale0To1 = false): strin
 }
 
 /**
- * Compiles a multiline tooltip string containing the detailed evidence from the metadata scan
- *
- * @param aiDetection - The summarized results containing matched signals
- * @returns A formatted string listing each triggered rule, its confidence, and specific evidence
+ * Builds an encapsulated (Shadow DOM) badge element and returns a controller for
+ * driving its visual state (processing, result, verification, error).
  */
 export function createBadgeElement(): UnifiedBadge {
   const host = document.createElement('div');
@@ -143,11 +143,11 @@ export function createBadgeElement(): UnifiedBadge {
 
   const verifyBtn = document.createElement('button');
   verifyBtn.className = 'btn verify-btn';
-  verifyBtn.textContent = 'Verify with Advanced Model';
+  verifyBtn.textContent = t('badge_btn_verify');
 
   const revealBtn = document.createElement('button');
   revealBtn.className = 'btn reveal-btn';
-  revealBtn.textContent = '👁 Unblur / Reveal Image';
+  revealBtn.textContent = `👁 ${t('badge_btn_reveal')}`;
 
   tooltip.append(detailsContainer, verifyBtn, revealBtn);
   wrapper.append(ring, tooltip);
@@ -186,24 +186,24 @@ export function createBadgeElement(): UnifiedBadge {
       revealBtn.style.display = (isAlert && onReveal) ? 'block' : 'none'; // Only show reveal if there's an active alert action
 
       detailsContainer.innerHTML = `
-        ${buildScoreRow('AI Generated', result.categories.aiGenerated?.confidence ?? 0)}
-        ${buildScoreRow('Violent', result.categories.violent?.confidence ?? 0)}
-        ${buildScoreRow('Explicit', result.categories.explicit?.confidence ?? 0)}
+        ${buildScoreRow(t('badge_category_ai'), result.categories.aiGenerated?.confidence ?? 0)}
+        ${buildScoreRow(t('badge_category_violent'), result.categories.violent?.confidence ?? 0)}
+        ${buildScoreRow(t('badge_category_explicit'), result.categories.explicit?.confidence ?? 0)}
       `;
     },
     setVerificationPending: () => {
       verifyBtn.disabled = true;
-      verifyBtn.textContent = '⏳ Analyzing...';
+      verifyBtn.textContent = `⏳ ${t('badge_verifying')}`;
       verifyBtn.classList.remove('error');
     },
     setVerificationResult: (data) => {
       verifyBtn.style.display = 'none';
       detailsContainer.innerHTML += `
         <div class="divider" style="grid-column: 1 / -1;"></div>
-        <div class="category-label" style="grid-column: 1 / -1; font-weight: bold; color: #fff;">External API Results:</div>
-        ${buildScoreRow('AI Generated', data.aiGenerated ?? 0, true)}
-        ${buildScoreRow('Violent', data.violent ?? 0, true)}
-        ${buildScoreRow('Explicit', data.explicit ?? 0, true)}
+        <div class="category-label" style="grid-column: 1 / -1; font-weight: bold; color: #fff;">${t('badge_external_results')}</div>
+        ${buildScoreRow(t('badge_category_ai'), data.aiGenerated ?? 0, true)}
+        ${buildScoreRow(t('badge_category_violent'), data.violent ?? 0, true)}
+        ${buildScoreRow(t('badge_category_explicit'), data.explicit ?? 0, true)}
       `;
       const isAdvancedAlert = (data.aiGenerated ?? 0) > 0.50 || (data.violent ?? 0) > 0.50 || (data.explicit ?? 0) > 0.50;
       ring.className = isAdvancedAlert ? 'ring alert' : 'ring idle';

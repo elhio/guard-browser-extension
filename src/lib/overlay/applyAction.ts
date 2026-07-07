@@ -1,4 +1,6 @@
 import type { ClassifyImageResult } from '@/lib/messaging/classifyMessages';
+import { isImageFlagged } from '@/lib/detection';
+import type { DetectionAction } from '@/lib/settings';
 
 const BLUR_CLASS = 'guard-action-blur';
 const HIDE_CLASS = 'guard-action-hide';
@@ -10,7 +12,7 @@ const STYLE_ELEMENT_ID = 'guard-action-style';
 const flaggedImages = new Set<HTMLElement>();
 const explicitlyRevealed = new WeakSet<HTMLElement>();
 
-let currentAction = 'mark';
+let currentAction: DetectionAction = 'mark';
 
 /**
  * Dynamically injects the CSS required for blurring into the host page's `<head>`
@@ -42,7 +44,7 @@ function stripActionClasses(element: HTMLElement): void {
  *
  * @param action - The visual action to take ('mark', 'blur', 'hide')
  */
-export function setAction(action: string): void {
+export function setAction(action: DetectionAction): void {
   currentAction = action;
 
   if (action === 'blur' || action === 'hide') {
@@ -107,13 +109,8 @@ export function applyAction(
   for (const result of results) {
     if (result.status !== 'success') continue;
 
-    // Trigger the action if ANY category exceeds the 50% threshold
-    const isAlert =
-      (result.categories.aiGenerated?.confidence ?? 0) > 50 ||
-      (result.categories.violent?.confidence ?? 0) > 50 ||
-      (result.categories.explicit?.confidence ?? 0) > 50;
-
-    if (!isAlert) continue;
+    // Trigger the action if any category crossed its detection threshold.
+    if (!isImageFlagged(result.categories)) continue;
 
     const element = elementsBySrc.get(result.src);
     if (element) {

@@ -1,4 +1,4 @@
-export * from './attachBadge.ts';
-export * from './showBadges.ts';
-export * from './applyAction.ts';
+export * from './attachBadge';
+export * from './showBadges';
+export * from './applyAction';
 export { clearAllBadges } from './badgeLifecycle';

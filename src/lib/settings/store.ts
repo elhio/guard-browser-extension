@@ -1,4 +1,9 @@
-import type { TasksState } from '@/components/setup/TaskSelectionStep';
+import type { TasksState } from '@/lib/detection';
+
+/**
+ * The visual action taken when content is flagged
+ */
+export type DetectionAction = 'mark' | 'blur' | 'hide';
 
 /**
  * The unified configuration state for the entire extension
@@ -6,7 +11,7 @@ import type { TasksState } from '@/components/setup/TaskSelectionStep';
  * @property token - The authentication token for the external API, if the user is logged in
  * @property isLoggedIn - True if the user has successfully authenticated
  * @property tasks - Defines which specific moderation checks (AI, Violence, Explicit) are currently active
- * @property detectionAction - The visual action to take when content is flagged (e.g., 'mark', 'blur', 'hide')
+ * @property detectionAction - The visual action to take when content is flagged ('mark', 'blur', 'hide')
  * @property useDetectorLocalModel - True if the extension should run inference also on local model
  * @property verificatorSpace - The ID of the selected workspace/environment used for API verification
  * @property hasCompletedSetup - True if the user has finished the initial onboarding wizard
@@ -17,7 +22,7 @@ export interface Settings {
   token: string | null;
   isLoggedIn: boolean;
   tasks: TasksState;
-  detectionAction: string;
+  detectionAction: DetectionAction;
   useDetectorLocalModel: boolean;
   verificatorSpace: string | null;
   hasCompletedSetup: boolean;

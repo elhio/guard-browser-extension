@@ -1,7 +1,4 @@
 import type { DetectionSignal } from './types';
-import { DETECTION_THRESHOLDS } from '@/lib/detection/thresholds';
-
-export { DETECTION_THRESHOLDS };
 
 /**
  * A centralized catalog of known AI-generation signals, organized by detection confidence.

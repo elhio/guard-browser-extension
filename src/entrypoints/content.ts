@@ -16,6 +16,7 @@ import {
 
 import {
   applyAction,
+  attachBadge,
   clearAllBadges,
   clearAllActions,
   setAction,
@@ -23,7 +24,8 @@ import {
   updateBadges,
 } from '@/lib/overlay';
 
-import { settings } from '@/lib/settings/store';
+import { settings, type Settings } from '@/lib/settings';
+import { t } from '@/lib/i18n';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -74,9 +76,7 @@ async function processCandidates(candidates: ImageCandidate[]): Promise<void> {
        const element = elementsBySrc.get(candidate.src);
        if (!element) continue;
 
-       import('@/lib/overlay').then(({ attachBadge }) => {
-           attachBadge(element).setError('Extension background task failed');
-       });
+       attachBadge(element).setError(t('badge_error_background'));
     }
   }
 }
@@ -139,8 +139,8 @@ export default defineContentScript({
 
     const isHostWhitelisted = (host: string, whitelist: string[]) => whitelist.includes(host);
 
-    const shouldRun = (state: any) => {
-      return state.isActive !== false && !isHostWhitelisted(location.hostname, state.exceptionSites || []);
+    const shouldRun = (state: Settings) => {
+      return state.isActive !== false && !isHostWhitelisted(location.hostname, state.exceptionSites);
     };
 
     let currentSettings = await settings.getValue();

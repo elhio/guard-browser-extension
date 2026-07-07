@@ -9,13 +9,14 @@ import {
   isVerifyImageRequest,
   type VerifyImageResponse
 } from '@/lib/messaging/verifyMessages';
+import { settings } from '@/lib/settings';
 
 export default defineBackground(() => {
   browser.runtime.onInstalled.addListener(async (details) => {
     if (details.reason === 'install') {
-      const storage = await browser.storage.local.get('hasCompletedSetup');
+      const { hasCompletedSetup } = await settings.getValue();
 
-      if (!storage.hasCompletedSetup) {
+      if (!hasCompletedSetup) {
         browser.tabs.create({
           url: browser.runtime.getURL('/setup.html')
         });
@@ -59,7 +60,7 @@ export default defineBackground(() => {
     if (isVerifyImageRequest(message)) {
       (async () => {
         try {
-          const baseUrl = import.meta.env.WXT_API_URL;
+          const baseUrl = import.meta.env.VITE_API_URL;
 
           const res = await fetch(`${baseUrl}/verify`, {
             method: 'POST',

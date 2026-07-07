@@ -1,13 +1,14 @@
 import { RadioCard } from '@/components/ui/RadioCard';
 import { t } from '@/lib/i18n';
+import type { DetectionAction } from '@/lib/settings';
 
 interface ActionSelectionStepProps {
-  action: string;
-  onSelect: (action: string) => void;
+  action: DetectionAction;
+  onSelect: (action: DetectionAction) => void;
 }
 
 export function ActionSelectionStep({ action, onSelect }: ActionSelectionStepProps) {
-  const options = [
+  const options: { id: DetectionAction; title: string; desc: string }[] = [
     { id: 'mark', title: t('setup_action_mark_title'), desc: t('setup_action_mark_desc') },
     { id: 'blur', title: t('setup_action_blur_title'), desc: t('setup_action_blur_desc') },
     { id: 'hide', title: t('setup_action_hide_title'), desc: t('setup_action_hide_desc') },
@@ -31,7 +32,7 @@ export function ActionSelectionStep({ action, onSelect }: ActionSelectionStepPro
             title={opt.title}
             description={opt.desc}
             checked={action === opt.id}
-            onChange={onSelect}
+            onChange={(id) => onSelect(id as DetectionAction)}
           />
         ))}
       </div>

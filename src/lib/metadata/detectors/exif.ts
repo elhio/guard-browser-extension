@@ -1,5 +1,5 @@
 import { METADATA_SIGNALS } from '../signals';
-import { AI_GENERATOR_TERMS } from '../terms/aiGeneratorTerms';
+import { AI_GENERATOR_VENDORS } from '@/lib/detection';
 import { AI_SOURCE_TERMS } from '../terms/aiSourceTerms';
 import { looksLikeTypicalAiDimension } from '../terms/aiDimensions';
 import { findMatchingTerm } from '../textMatch';
@@ -41,7 +41,7 @@ export function detectExifSignals(metadata: RawImageMetadata): MetadataSignalMat
   const exifAndIfd0 = { ...metadata.ifd0, ...metadata.exif };
 
   const softwareFields = pick(exifAndIfd0, METADATA_SIGNALS.exifSoftwareVendor.parameters);
-  const softwareVendor = findMatchingTerm(softwareFields, AI_GENERATOR_TERMS);
+  const softwareVendor = findMatchingTerm(softwareFields, AI_GENERATOR_VENDORS);
   if (softwareVendor) {
     matches.push({
       ...METADATA_SIGNALS.exifSoftwareVendor,

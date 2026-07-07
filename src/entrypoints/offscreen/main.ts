@@ -5,7 +5,7 @@ import {
   type ClassifyImageResponse,
   type ClassifyImageResult
 } from '@/lib/messaging/classifyMessages';
-import type { ImageAnalysisResult } from '@/lib/detection/types';
+import { passesThreshold, type ImageAnalysisResult } from '@/lib/detection';
 
 browser.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (isOffscreenClassifyImageRequest(message)) {
@@ -14,7 +14,6 @@ browser.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         const { candidates, tasks, useDetectorLocalModel } = message;
 
         // 1. Run Metadata / C2PA Extraction
-        // Assuming readManifests has been updated to return an array of ImageAnalysisResult
         const baseResults: ImageAnalysisResult[] = await readManifests(candidates);
 
         // Map results by source URL for easy lookup
@@ -61,7 +60,7 @@ browser.runtime.onMessage.addListener((message, _sender, sendResponse) => {
                 // Ensure the overall confidence reflects the highest signal found
                 if (modelPercent > analysis.categories.aiGenerated.confidence) {
                   analysis.categories.aiGenerated.confidence = modelPercent;
-                  analysis.categories.aiGenerated.detected = modelPercent > 50;
+                  analysis.categories.aiGenerated.detected = passesThreshold('aiGenerated', modelPercent);
                 }
               }
             }

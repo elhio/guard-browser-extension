@@ -1,55 +1,19 @@
-import { useEffect, useState } from 'react';
 import { LuTrash2 } from 'react-icons/lu';
 
 import SettingsSection from '@/components/ui/SettingsSection';
 import SettingsRow from '@/components/ui/SettingsRow';
 import { t } from '@/lib/i18n';
-import { settings } from '@/lib/settings/store';
+import { useSetting } from '@/lib/settings';
 
 export function ExceptionSiteListCard() {
-  const [sites, setSites] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [sites, setSites] = useSetting('exceptionSites');
 
-  useEffect(() => {
-    settings.getValue().then((currentSettings) => {
-      setSites(currentSettings.exceptionSites || []);
-      setIsLoading(false);
-    });
-
-    const unwatch = settings.watch((newSettings) => {
-      if (newSettings && newSettings.exceptionSites) {
-        setSites(newSettings.exceptionSites);
-      }
-    });
-
-    return () => unwatch();
-  }, []);
-
-  const handleRemove = async (siteToRemove: string) => {
-    const updatedSites = sites.filter((site) => site !== siteToRemove);
-
-    setSites(updatedSites);
-
-    const currentSettings = await settings.getValue();
-    await settings.setValue({
-      ...currentSettings,
-      exceptionSites: updatedSites,
-    });
-  };
+  const handleRemove = (siteToRemove: string) =>
+    setSites(sites.filter((site) => site !== siteToRemove));
 
   return (
     <SettingsSection title={t('settings_exception_title')}>
-      {isLoading ? (
-        <div className="flex flex-col animate-pulse">
-          {[1, 2].map((i) => (
-            <SettingsRow
-              key={`skeleton-${i}`}
-              label={<div className="h-4 w-48 bg-gray-200 rounded" />}
-              value={<div className="h-5 w-5 bg-gray-200 rounded" />}
-            />
-          ))}
-        </div>
-      ) : sites.length === 0 ? (
+      {sites.length === 0 ? (
         <p className="text-sm text-gray-500 py-3">
           {t('settings_exception_empty')}
         </p>

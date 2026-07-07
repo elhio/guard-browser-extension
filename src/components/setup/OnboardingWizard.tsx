@@ -1,9 +1,10 @@
 import { useState } from 'react';
 
 import { t } from '@/lib/i18n';
-import { settings } from '@/lib/settings/store';
+import { settings, type DetectionAction } from '@/lib/settings';
+import type { TasksState } from '@/lib/detection';
 import { LoginForm } from '@/components/auth/LoginForm';
-import { TaskSelectionStep, type TasksState } from '@/components/setup/TaskSelectionStep';
+import { TaskSelectionStep } from '@/components/setup/TaskSelectionStep';
 import { ActionSelectionStep } from '@/components/setup/ActionSelectionStep';
 import { DetectorSelectionStep } from '@/components/setup/DetectorSelectionStep';
 import { VerificatorSelectionStep } from '@/components/setup/VerificatorSelectionStep';
@@ -19,7 +20,7 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
   const [token, setToken] = useState<string | null>(null);
   const [hasSkippedAuth, setHasSkippedAuth] = useState(false);
   const [tasks, setTasks] = useState<TasksState>({ aiGenerated: true, violent: true, explicit: true});
-  const [detectionAction, setDetectionAction] = useState('mark');
+  const [detectionAction, setDetectionAction] = useState<DetectionAction>('mark');
   const [useDetectorLocalModel, setUseDetectorLocalModel] = useState(false);
   const [verificatorSpace, setVerificatorSpace] = useState<string | null>(null);
 
