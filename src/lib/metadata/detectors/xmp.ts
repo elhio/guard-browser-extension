@@ -2,6 +2,7 @@ import { METADATA_SIGNALS } from '../signals';
 import { AI_GENERATOR_VENDORS } from '@/lib/detection';
 import { AI_SOURCE_TERMS } from '../terms/aiSourceTerms';
 import { findMatchingTerm } from '../textMatch';
+import { scanContentTerms } from './contentScan';
 import type { MetadataSignalMatch, RawImageMetadata } from '../types';
 
 /**
@@ -29,6 +30,8 @@ export function detectXmpSignals(metadata: RawImageMetadata): MetadataSignalMatc
       evidence: `XMP metadata contains AI source/generation term "${sourceTerm}"`
     });
   }
+
+  matches.push(...scanContentTerms(metadata.xmp, METADATA_SIGNALS.xmpViolentContent, METADATA_SIGNALS.xmpExplicitContent));
 
   return matches;
 }

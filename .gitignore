@@ -4,6 +4,7 @@
 stats.html
 stats-*.json
 web-ext.config.ts
+public/wasm/
 
 # dependencies
 node_modules

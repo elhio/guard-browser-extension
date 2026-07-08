@@ -3,6 +3,7 @@ import { AI_GENERATOR_VENDORS } from '@/lib/detection';
 import { AI_SOURCE_TERMS } from '../terms/aiSourceTerms';
 import { looksLikeTypicalAiDimension } from '../terms/aiDimensions';
 import { findMatchingTerm } from '../textMatch';
+import { scanContentTerms } from './contentScan';
 import { collectCameraEvidence, hasStrongCameraEvidence } from '../cameraEvidence';
 import type { MetadataSignalMatch, RawImageMetadata } from '../types';
 
@@ -81,6 +82,8 @@ export function detectExifSignals(metadata: RawImageMetadata): MetadataSignalMat
       evidence: 'GPS coordinates present in EXIF/GPS segment'
     });
   }
+
+  matches.push(...scanContentTerms(exifAndIfd0, METADATA_SIGNALS.exifViolentContent, METADATA_SIGNALS.exifExplicitContent));
 
   return matches;
 }

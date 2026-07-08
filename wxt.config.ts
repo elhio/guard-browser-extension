@@ -1,4 +1,6 @@
 import { defineConfig } from 'wxt';
+import fs from 'node:fs';
+import path from 'node:path';
 import tailwindcss from '@tailwindcss/vite';
 import svgr from 'vite-plugin-svgr';
 
@@ -12,7 +14,32 @@ export default defineConfig({
   vite: () => ({
     plugins: [
       tailwindcss(),
-      svgr()
+      svgr(),
+      {
+        name: 'copy-onnx-wasm-files',
+        buildStart() {
+          const srcDir = path.resolve(process.cwd(), 'node_modules/onnxruntime-web/dist');
+          const destDir = path.resolve(process.cwd(), 'public/wasm');
+
+          if (!fs.existsSync(destDir)) {
+            fs.mkdirSync(destDir, { recursive: true });
+          }
+
+          const filesToCopy = [
+            'ort-wasm-simd-threaded.asyncify.wasm',
+            'ort-wasm-simd-threaded.asyncify.mjs'
+          ];
+
+          for (const file of filesToCopy) {
+            const srcPath = path.join(srcDir, file);
+            const destPath = path.join(destDir, file);
+
+            if (fs.existsSync(srcPath)) {
+              fs.copyFileSync(srcPath, destPath);
+            }
+          }
+        }
+      }
     ],
   }),
   manifest: {

@@ -35,50 +35,83 @@ const queryClient = new QueryClient({
   },
 });
 
+/** Max images classified in parallel (bounds concurrent fetch/metadata/C2PA work). */
+const CLASSIFY_CONCURRENCY = 4;
+/** Give up on a single image's classification after this long and mark it failed. */
+const CLASSIFY_TIMEOUT_MS = 20_000;
+
 async function processCandidates(candidates: ImageCandidate[]): Promise<void> {
   const currentSettings = await settings.getValue();
   const elementsBySrc = new Map(candidates.map((candidate) => [candidate.src, candidate.element]));
 
   markBadgesProcessing(candidates, elementsBySrc);
 
-  try {
-    const response = await queryClient.fetchQuery({
-      queryKey: [
-        'classifyImages',
-        candidates.map(c => c.src),
-        currentSettings.tasks,
-        currentSettings.useDetectorLocalModel
-      ],
-      queryFn: async () => {
-        const request: ClassifyImageRequest = {
-          type: CLASSIFY_IMAGE_MESSAGE,
-          candidates: candidates.map(toSerializableCandidate),
-          tasks: currentSettings.tasks,
-          useDetectorLocalModel: currentSettings.useDetectorLocalModel
-        };
-        return browser.runtime.sendMessage(request) as Promise<ClassifyImageResponse>;
-      }
-    });
+  // Classify each image independently so every badge updates as soon as its own result
+  // arrives, and one slow/failed image never blocks or fails the others.
+  await runWithConcurrency(candidates, CLASSIFY_CONCURRENCY, (candidate) =>
+    classifyCandidate(candidate, currentSettings, elementsBySrc)
+  );
+}
 
-    if (!response || !response.results) {
-      console.warn('[Guard] Classification skipped: Background script returned null or no results.');
+async function classifyCandidate(
+  candidate: ImageCandidate,
+  currentSettings: Settings,
+  elementsBySrc: ReadonlyMap<string, HTMLImageElement | undefined>
+): Promise<void> {
+  const element = elementsBySrc.get(candidate.src);
+
+  try {
+    const request: ClassifyImageRequest = {
+      type: CLASSIFY_IMAGE_MESSAGE,
+      candidates: [toSerializableCandidate(candidate)],
+      tasks: currentSettings.tasks,
+      useDetectorLocalModel: currentSettings.useDetectorLocalModel
+    };
+
+    const response = await withTimeout(
+      browser.runtime.sendMessage(request) as Promise<ClassifyImageResponse>,
+      CLASSIFY_TIMEOUT_MS
+    );
+
+    const result = response?.results?.[0];
+    if (!result) {
+      if (element) attachBadge(element).setError(t('badge_error_analyze'));
       return;
     }
 
-    updateBadges(response.results, elementsBySrc, verifyWithExternalApi);
-
-    applyAction(response.results, elementsBySrc);
-
+    // updateBadges/applyAction handle a per-image error result (gray badge) on their own.
+    updateBadges([result], elementsBySrc, verifyWithExternalApi);
+    applyAction([result], elementsBySrc);
   } catch (error) {
-    console.error('[Guard] Error processing image candidates:', error);
-
-    for (const candidate of candidates) {
-       const element = elementsBySrc.get(candidate.src);
-       if (!element) continue;
-
-       attachBadge(element).setError(t('badge_error_background'));
-    }
+    const timedOut = error instanceof Error && error.message === 'timeout';
+    if (element) attachBadge(element).setError(timedOut ? t('badge_error_timeout') : t('badge_error_analyze'));
   }
+}
+
+/** Rejects with `Error('timeout')` if `promise` doesn't settle within `ms`. */
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('timeout')), ms);
+    promise.then(
+      (value) => { clearTimeout(timer); resolve(value); },
+      (err) => { clearTimeout(timer); reject(err); }
+    );
+  });
+}
+
+/** Runs `worker` over `items` with at most `limit` executing at any one time. */
+async function runWithConcurrency<T>(
+  items: readonly T[],
+  limit: number,
+  worker: (item: T) => Promise<void>
+): Promise<void> {
+  let cursor = 0;
+  const runners = Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while (cursor < items.length) {
+      await worker(items[cursor++]);
+    }
+  });
+  await Promise.all(runners);
 }
 
 function verifyWithExternalApi(src: string): Promise<VerifyImageResponse> {

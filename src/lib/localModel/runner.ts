@@ -1,7 +1,11 @@
 import { env, pipeline } from '@huggingface/transformers';
 import { DEFAULT_MODEL } from './model';
+import { fetchWithTimeout } from '@/lib/net/fetchWithTimeout';
 
 declare const chrome: { runtime: { getURL: (path: string) => string } };
+
+/** How long to wait for the model's image download before treating it as failed. */
+const MODEL_FETCH_TIMEOUT_MS = 10_000;
 
 /**
  * Environment configuration for transformers.js within a Chrome Extension (Manifest V3).
@@ -46,6 +50,19 @@ function getClassifier() {
   return pipelinePromise;
 }
 
+/**
+ * Serializes access to the single shared model. onnxruntime-web cannot run multiple
+ * inferences concurrently on one session, so queued calls execute one-at-a-time on the
+ * single `getClassifier()` pipeline instead of overlapping.
+ */
+let inferenceChain: Promise<unknown> = Promise.resolve();
+function runSerialized<T>(task: () => Promise<T>): Promise<T> {
+  const result = inferenceChain.then(task, task);
+  // Keep the chain alive regardless of this task's outcome.
+  inferenceChain = result.catch(() => {});
+  return result;
+}
+
 const AI_LABEL = /fake|artificial|generated|synthetic|\bai\b/i;
 const REAL_LABEL = /real|human|authentic|natural|photo/i;
 
@@ -78,7 +95,7 @@ function toAiScore(results: ClassificationResult[]): number | null {
  * @throws {Error} If the image network fetch fails prior to classification
  */
 export async function classifyImageAiScore(src: string): Promise<number | null> {
-  const response = await fetch(src);
+  const response = await fetchWithTimeout(src, MODEL_FETCH_TIMEOUT_MS);
   if (!response.ok) {
     throw new Error(`Failed to fetch image: HTTP ${response.status}`);
   }
@@ -87,8 +104,9 @@ export async function classifyImageAiScore(src: string): Promise<number | null> 
 
   try {
     const classify = await getClassifier();
-    // Retrieve the top 5 most confident labels to ensure we catch our regex matches
-    const results = await classify(blobUrl, { top_k: 5 });
+    // Retrieve the top 5 most confident labels to ensure we catch our regex matches.
+    // Inference is serialized so concurrent images share the one model without overlapping.
+    const results = await runSerialized(() => classify(blobUrl, { top_k: 5 }));
     return toAiScore(results);
   } finally {
     // Always clean up the object URL to prevent memory leaks in the extension background

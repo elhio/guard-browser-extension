@@ -1,25 +1,17 @@
 import { browser } from 'wxt/browser';
-import { readManifests } from '@/lib/c2pa';
+import { readManifestFor } from '@/lib/c2pa';
 import {
   isOffscreenClassifyImageRequest,
   type ClassifyImageResponse,
   type ClassifyImageResult
 } from '@/lib/messaging/classifyMessages';
-import { passesThreshold, type ImageAnalysisResult } from '@/lib/detection';
+import { passesThreshold, type DetectionCategory, type ImageAnalysisResult } from '@/lib/detection';
 
 browser.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (isOffscreenClassifyImageRequest(message)) {
     (async () => {
       try {
         const { candidates, tasks, useDetectorLocalModel } = message;
-
-        // 1. Run Metadata / C2PA Extraction
-        const baseResults: ImageAnalysisResult[] = await readManifests(candidates);
-
-        // Map results by source URL for easy lookup
-        const resultsMap = new Map<string, ImageAnalysisResult>(
-          baseResults.map((res) => [res.src, res])
-        );
 
         const finalResults: ClassifyImageResult[] = [];
 
@@ -31,10 +23,9 @@ browser.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
         for (const candidate of candidates) {
           try {
-            const analysis = resultsMap.get(candidate.src) || {
-              src: candidate.src,
-              categories: {}
-            };
+            // Each candidate is analyzed independently: a fetch failure/timeout throws
+            // and becomes this candidate's error result, without blocking the others.
+            const analysis = await readManifestFor(candidate);
 
             if (classifyImageAiScore) {
               const score = await classifyImageAiScore(candidate.src);
@@ -65,9 +56,16 @@ browser.runtime.onMessage.addListener((message, _sender, sendResponse) => {
               }
             }
 
+            // Only surface categories the user still has enabled.
+            const categories: ImageAnalysisResult['categories'] = {};
+            for (const category of Object.keys(analysis.categories) as DetectionCategory[]) {
+              if (tasks[category]) categories[category] = analysis.categories[category];
+            }
+
             finalResults.push({
               status: 'success',
-              ...analysis
+              src: analysis.src,
+              categories
             });
 
           } catch (error) {

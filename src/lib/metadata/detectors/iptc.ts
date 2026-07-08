@@ -2,6 +2,7 @@ import { METADATA_SIGNALS } from '../signals';
 import { AI_GENERATOR_VENDORS } from '@/lib/detection';
 import { CAMERA_SOURCE_TERMS } from '../terms/aiSourceTerms';
 import { findMatchingTerm } from '../textMatch';
+import { scanContentTerms } from './contentScan';
 import type { MetadataSignalMatch, RawImageMetadata } from '../types';
 
 /**
@@ -29,6 +30,8 @@ export function detectIptcSignals(metadata: RawImageMetadata): MetadataSignalMat
       evidence: `IPTC source/credit field contains camera-capture wording "${cameraTerm}"`
     });
   }
+
+  matches.push(...scanContentTerms(metadata.iptc, METADATA_SIGNALS.iptcViolentContent, METADATA_SIGNALS.iptcExplicitContent));
 
   return matches;
 }

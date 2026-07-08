@@ -494,7 +494,7 @@
   "badge_error_verify": {
     "message": "Überprüfung fehlgeschlagen"
   },
-  "badge_error_background": {
-    "message": "Hintergrundaufgabe der Erweiterung fehlgeschlagen"
+  "badge_error_timeout": {
+    "message": "Analyse-Zeitüberschreitung"
   }
 }

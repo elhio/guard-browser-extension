@@ -494,7 +494,7 @@
   "badge_error_verify": {
     "message": "Verification failed"
   },
-  "badge_error_background": {
-    "message": "Extension background task failed"
+  "badge_error_timeout": {
+    "message": "Analysis timed out"
   }
 }

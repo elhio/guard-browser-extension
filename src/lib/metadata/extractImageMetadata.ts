@@ -24,10 +24,19 @@ const PARSE_OPTIONS = {
 /**
  * Extracts and parses various raw metadata segments out of a given image file
  *
+ * Resilient by design: exifr throws `Unknown file format` for containers it can't read
+ * (notably WebP, which it doesn't support). Rather than fail the whole image, we treat
+ * an unreadable/unsupported file as simply having no metadata and return an empty object.
+ *
  * @param blob - The binary image data (Blob or File) to be parsed
  * @returns A promise that resolves to a structured `RawImageMetadata` object containing the isolated metadata blocks
  */
 export async function extractImageMetadata(blob: Blob): Promise<RawImageMetadata> {
-  const parsed = await exifr.parse(blob, PARSE_OPTIONS);
-  return (parsed ?? {}) as RawImageMetadata;
+  try {
+    const parsed = await exifr.parse(blob, PARSE_OPTIONS);
+    return (parsed ?? {}) as RawImageMetadata;
+  } catch {
+    // Unsupported/unparseable format (e.g. WebP) — no metadata available.
+    return {};
+  }
 }

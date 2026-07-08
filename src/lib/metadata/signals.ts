@@ -119,5 +119,65 @@ export const METADATA_SIGNALS = {
     confidence: 25,
     standard: 'ihdr',
     parameters: ['ImageWidth', 'ImageHeight', 'BitDepth', 'ColorType']
+  },
+  iptcViolentContent: {
+    id: 'iptc.content.violent',
+    category: 'violent',
+    label: 'Violent content wording in IPTC',
+    description: 'IPTC keywords/caption/category fields describe violent or graphic content',
+    confidence: 70,
+    kind: 'violence',
+    standard: 'iptc',
+    parameters: ['Keywords', 'Caption', 'Category', 'SupplementalCategories', 'Headline']
+  },
+  iptcExplicitContent: {
+    id: 'iptc.content.explicit',
+    category: 'explicit',
+    label: 'Explicit content wording in IPTC',
+    description: 'IPTC keywords/caption/category fields describe sexually explicit or adult content',
+    confidence: 80,
+    kind: 'explicit',
+    standard: 'iptc',
+    parameters: ['Keywords', 'Caption', 'Category', 'SupplementalCategories', 'Headline']
+  },
+  xmpViolentContent: {
+    id: 'xmp.content.violent',
+    category: 'violent',
+    label: 'Violent content wording in XMP',
+    description: 'XMP subject/description/title fields describe violent or graphic content',
+    confidence: 70,
+    kind: 'violence',
+    standard: 'xmp',
+    parameters: ['dc:subject', 'dc:description', 'dc:title', 'Rating']
+  },
+  xmpExplicitContent: {
+    id: 'xmp.content.explicit',
+    category: 'explicit',
+    label: 'Explicit content wording in XMP',
+    description: 'XMP subject/description/title fields describe sexually explicit or adult content',
+    confidence: 80,
+    kind: 'explicit',
+    standard: 'xmp',
+    parameters: ['dc:subject', 'dc:description', 'dc:title', 'Rating']
+  },
+  exifViolentContent: {
+    id: 'exif.content.violent',
+    category: 'violent',
+    label: 'Violent content wording in EXIF description',
+    description: 'EXIF description/comment/keyword fields describe violent or graphic content',
+    confidence: 70,
+    kind: 'violence',
+    standard: 'exif',
+    parameters: ['ImageDescription', 'UserComment', 'XPComment', 'XPKeywords', 'XPSubject']
+  },
+  exifExplicitContent: {
+    id: 'exif.content.explicit',
+    category: 'explicit',
+    label: 'Explicit content wording in EXIF description',
+    description: 'EXIF description/comment/keyword fields describe sexually explicit or adult content',
+    confidence: 80,
+    kind: 'explicit',
+    standard: 'exif',
+    parameters: ['ImageDescription', 'UserComment', 'XPComment', 'XPKeywords', 'XPSubject']
   }
 } as const satisfies Record<string, MetadataSignal>;
