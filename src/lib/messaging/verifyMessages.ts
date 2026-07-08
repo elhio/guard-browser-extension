@@ -1,3 +1,5 @@
+import type { DetectionCategory } from '@/lib/detection';
+
 /**
  * The unique identifier used to route API verification messages through the extension's messaging system
  */
@@ -15,16 +17,29 @@ export interface VerifyImageRequest {
 }
 
 /**
- * The shape of the data returned by your external API
+ * A single scored result from the external verification API
  *
- * @property aiGenerated - The confidence score indicating how likely the content is AI-generated or matches a specific classification
- * @property violent - The confidence score indicating how likely the content is violent
- * @property explicit -The confidence score indicating how likely the content is sexually explicit
+ * @property taskId - The id of the detection task this score belongs to
+ * @property category - The detection category this task maps to, resolved from the space's
+ *   task list (null when the task doesn't correspond to a known category)
+ * @property label - The human-readable, already-localized outcome label (e.g. "No signs of AI generation")
+ * @property score - The confidence score for this task, 0-100
+ * @property description - An optional localized explanation of the result
+ */
+export interface VerifyResultItem {
+  taskId: string;
+  category: DetectionCategory | null;
+  label: string;
+  score: number;
+  description?: string;
+}
+
+/**
+ * The data returned by the external verification API: one scored item per detection
+ * task the verifying space runs (the set of tasks is space-specific, not a fixed trio).
  */
 export interface VerifyImageData {
-  aiGenerated?: number;
-  violent?: number;
-  explicit?: number;
+  results: VerifyResultItem[];
 }
 
 /**

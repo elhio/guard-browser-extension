@@ -1,13 +1,18 @@
 import type { ClassifyImageResult } from '@/lib/messaging/classifyMessages';
-import type { VerifyImageResponse } from '@/lib/messaging/verifyMessages';
 import type { ImageCandidate } from '@/lib/images';
 import { isImageFlagged } from '@/lib/detection';
 import { t } from '@/lib/i18n';
 import { attachBadge } from './attachBadge';
-import { revealImage } from './applyAction';
+import { markProcessing, setResult, setErrorState } from './store';
+
+/** Marks a single image's ring + menu state as failed (transport/timeout errors). */
+export function showBadgeError(src: string, element: HTMLImageElement, message: string): void {
+  attachBadge(element, src).setStatus('error');
+  setErrorState(src, element, message);
+}
 
 /**
- * Immediately attaches a spinning badge to newly discovered images
+ * Immediately attaches a spinning ring to newly discovered images and marks them processing.
  */
 export function markBadgesProcessing(
   candidates: readonly ImageCandidate[],
@@ -15,51 +20,34 @@ export function markBadgesProcessing(
 ): void {
   for (const candidate of candidates) {
     const element = elementsBySrc.get(candidate.src);
-    if (element) {
-      const badge = attachBadge(element);
-      badge.setProcessing(t('badge_processing'));
-    }
+    if (!element) continue;
+    attachBadge(element, candidate.src).setStatus('processing');
+    markProcessing(candidate.src, element);
   }
 }
 
 /**
- * Updates existing spinning badges with the final classification results
+ * Applies a finished classification result to an image's ring and the shared menu store.
+ * Verification is no longer triggered here — the menu starts it on demand.
  */
 export function updateBadges(
   results: readonly ClassifyImageResult[],
-  elementsBySrc: ReadonlyMap<string, HTMLImageElement | undefined>,
-  verifyApiCallback?: (src: string) => Promise<VerifyImageResponse>
+  elementsBySrc: ReadonlyMap<string, HTMLImageElement | undefined>
 ): void {
   for (const result of results) {
     const element = elementsBySrc.get(result.src);
     if (!element) continue;
 
-    const badge = attachBadge(element);
+    const badge = attachBadge(element, result.src);
 
     if (result.status === 'error') {
-      badge.setError(result.error || t('badge_error_analyze'));
+      badge.setStatus('error');
+      setErrorState(result.src, element, result.error || t('badge_error_analyze'));
       continue;
     }
 
     const isAlert = isImageFlagged(result.categories);
-
-    function runVerification(): void {
-      if (!verifyApiCallback) return;
-      badge.setVerificationPending();
-
-      verifyApiCallback(result.src)
-        .then((res) => {
-          if (res.success) badge.setVerificationResult(res.data);
-          else badge.setError(res.error);
-        })
-        .catch((err) => badge.setError(err.message || t('badge_error_verify')));
-    }
-
-    badge.setResult({
-      result,
-      isAlert,
-      onVerify: verifyApiCallback ? runVerification : undefined,
-      onReveal: () => revealImage(element)
-    });
+    badge.setStatus(isAlert ? 'alert' : 'idle');
+    setResult(result.src, element, result, isAlert);
   }
 }

@@ -1,4 +1,6 @@
 import { fetchWithAuth } from './client';
+import { categoryForTaskLabel } from '@/lib/verification/eligibility';
+import type { DetectionCategory } from '@/lib/detection';
 
 /**
  * Represents a workspace or environment configured for content verification
@@ -62,4 +64,49 @@ export interface SpacesPublic {
 export async function fetchUserSpaces(token: string, userId: string): Promise<SpacePublic[]> {
   const res = await fetchWithAuth<SpacesPublic>('/api/v1/spaces/', token, { user_id: userId });
   return res.data || [];
+}
+
+/** A single detection task enabled on a space (name localized to the request locale). */
+export interface TaskPublic {
+  id: string;
+  name: string;
+  description?: string;
+}
+
+/** Detailed space, including the concrete task list needed to resolve verification results. */
+export interface SpaceDetailPublic {
+  id: string;
+  name: string;
+  enabled_tasks: TaskPublic[];
+}
+
+const SPACE_DETAIL_TTL_MS = 10 * 60 * 1000;
+const spaceDetailCache = new Map<string, { expires: number; detail: SpaceDetailPublic }>();
+
+/** Fetches a space's detail, memoized per space id for {@link SPACE_DETAIL_TTL_MS}. */
+export async function fetchSpaceDetail(token: string, spaceId: string): Promise<SpaceDetailPublic> {
+  const cached = spaceDetailCache.get(spaceId);
+  if (cached && cached.expires > Date.now()) return cached.detail;
+
+  const detail = await fetchWithAuth<SpaceDetailPublic>(`/api/v1/spaces/${spaceId}`, token);
+  spaceDetailCache.set(spaceId, { expires: Date.now() + SPACE_DETAIL_TTL_MS, detail });
+  return detail;
+}
+
+/**
+ * Builds a `task_id → detection category` map for a space by matching each enabled task's
+ * (localized) name against the known category names. Used to place a verification result item
+ * on the correct tab, since result items carry only a `task_id` and an outcome `label`.
+ */
+export async function getSpaceTaskCategoryMap(
+  token: string,
+  spaceId: string
+): Promise<Record<string, DetectionCategory>> {
+  const detail = await fetchSpaceDetail(token, spaceId);
+  const map: Record<string, DetectionCategory> = {};
+  for (const task of detail.enabled_tasks ?? []) {
+    const category = categoryForTaskLabel(task.name);
+    if (category) map[task.id] = category;
+  }
+  return map;
 }

@@ -464,12 +464,6 @@
   "popover_detection_lens": {
     "message": "KI-Modell auf dem Gerät"
   },
-  "badge_btn_verify": {
-    "message": "Mit erweitertem Modell prüfen"
-  },
-  "badge_btn_reveal": {
-    "message": "Bild einblenden / anzeigen"
-  },
   "badge_category_ai": {
     "message": "KI-generiert"
   },
@@ -479,15 +473,6 @@
   "badge_category_explicit": {
     "message": "Explizit"
   },
-  "badge_external_results": {
-    "message": "Ergebnisse der externen API:"
-  },
-  "badge_verifying": {
-    "message": "Wird analysiert…"
-  },
-  "badge_processing": {
-    "message": "Bild wird analysiert…"
-  },
   "badge_error_analyze": {
     "message": "Bild konnte nicht analysiert werden"
   },
@@ -496,5 +481,36 @@
   },
   "badge_error_timeout": {
     "message": "Analyse-Zeitüberschreitung"
-  }
+  },
+  "verify_error_not_signed_in": {
+    "message": "Zum Verifizieren anmelden"
+  },
+  "verify_error_no_space": {
+    "message": "Verifizierungs-Space in den Einstellungen wählen"
+  },
+  "verify_error_unsupported_media": {
+    "message": "Dieser Medientyp kann nicht verifiziert werden"
+  },
+  "verify_error_timeout": {
+    "message": "Verifizierung fehlgeschlagen (Zeitüberschreitung)"
+  },
+  "menu_signal_none_ai": { "message": "Keine Anzeichen für KI-Generierung" },
+  "menu_signal_possible_ai": { "message": "Mögliche Anzeichen für KI-Generierung" },
+  "menu_signal_strong_ai": { "message": "Deutliche Anzeichen für KI-Generierung" },
+  "menu_signal_none_violent": { "message": "Keine Anzeichen für Gewalt" },
+  "menu_signal_possible_violent": { "message": "Mögliche Anzeichen für Gewalt" },
+  "menu_signal_strong_violent": { "message": "Deutliche Anzeichen für Gewalt" },
+  "menu_signal_none_explicit": { "message": "Keine Anzeichen für explizite Inhalte" },
+  "menu_signal_possible_explicit": { "message": "Mögliche Anzeichen für explizite Inhalte" },
+  "menu_signal_strong_explicit": { "message": "Deutliche Anzeichen für explizite Inhalte" },
+  "menu_action_verify": { "message": "Verifizieren" },
+  "menu_action_verifying": { "message": "Wird verifiziert…" },
+  "menu_action_reveal": { "message": "Bild anzeigen" },
+  "menu_action_hide": { "message": "Wieder ausblenden" },
+  "menu_action_signin": { "message": "Zum Verifizieren anmelden" },
+  "menu_action_choose_space": { "message": "Space auswählen" },
+  "menu_close": { "message": "Schließen" },
+  "menu_scroll_left": { "message": "Aufgaben nach links scrollen" },
+  "menu_scroll_right": { "message": "Aufgaben nach rechts scrollen" },
+  "menu_more_actions": { "message": "Weitere Aktionen" }
 }

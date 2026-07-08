@@ -7,9 +7,26 @@ import {
 } from '@/lib/messaging/classifyMessages';
 import {
   isVerifyImageRequest,
+  type VerifyImageData,
   type VerifyImageResponse
 } from '@/lib/messaging/verifyMessages';
+import { isOpenTabRequest } from '@/lib/messaging/openTab';
 import { settings } from '@/lib/settings';
+import { getUserId, getSpaceTaskCategoryMap, runImageVerification } from '@/lib/api';
+import type { DetectionCategory } from '@/lib/detection';
+import { fetchWithTimeout } from '@/lib/net/fetchWithTimeout';
+import { t } from '@/lib/i18n';
+
+/** How long to wait for the source image download during verification. */
+const VERIFY_IMAGE_FETCH_TIMEOUT_MS = 10_000;
+
+/** Maps internal error codes from the verification flow to user-facing messages. */
+function toVerifyErrorMessage(error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error);
+  if (message === 'unsupported-media') return t('verify_error_unsupported_media');
+  if (message === 'timeout') return t('verify_error_timeout');
+  return message;
+}
 
 export default defineBackground(() => {
   browser.runtime.onInstalled.addListener(async (details) => {
@@ -56,33 +73,56 @@ export default defineBackground(() => {
       return true;
     }
 
-    // PATH 2: external verification
+    // PATH 2: external verification — full activity lifecycle
     if (isVerifyImageRequest(message)) {
       (async () => {
         try {
-          const baseUrl = import.meta.env.VITE_API_URL;
+          const { token, verificatorSpace } = await settings.getValue();
+          if (!token) throw new Error(t('verify_error_not_signed_in'));
+          if (!verificatorSpace) throw new Error(t('verify_error_no_space'));
 
-          const res = await fetch(`${baseUrl}/verify`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ src: message.src })
+          const userId = await getUserId(token);
+
+          // Download the image bytes to upload for verification.
+          const imageResponse = await fetchWithTimeout(message.src, VERIFY_IMAGE_FETCH_TIMEOUT_MS);
+          if (!imageResponse.ok) {
+            throw new Error(`Failed to fetch image: HTTP ${imageResponse.status}`);
+          }
+          const blob = await imageResponse.blob();
+
+          const result = await runImageVerification(token, {
+            spaceId: verificatorSpace,
+            userId,
+            blob
           });
 
-          if (!res.ok) throw new Error(`API returned status: ${res.status}`);
+          // Result items only carry a task_id + outcome label, so resolve which detection
+          // category each task belongs to via the space's (cached) task list.
+          const taskCategories: Record<string, DetectionCategory> =
+            await getSpaceTaskCategoryMap(token, verificatorSpace).catch(() => ({}));
 
-          const data = await res.json();
-
-          const response: VerifyImageResponse = { success: true, data };
-          sendResponse(response);
-        } catch (error) {
-          const fallbackResponse: VerifyImageResponse = {
-            success: false,
-            error: String(error)
+          const data: VerifyImageData = {
+            results: result.results.map((item) => ({
+              taskId: item.task_id,
+              category: taskCategories[item.task_id] ?? null,
+              label: item.label,
+              score: item.score,
+              description: item.description ?? undefined
+            }))
           };
-          sendResponse(fallbackResponse);
+
+          sendResponse({ success: true, data } satisfies VerifyImageResponse);
+        } catch (error) {
+          sendResponse({ success: false, error: toVerifyErrorMessage(error) } satisfies VerifyImageResponse);
         }
       })();
       return true;
+    }
+
+    // PATH 3: open a URL in a new tab (menu "Sign in" / "Choose a space")
+    if (isOpenTabRequest(message)) {
+      void browser.tabs.create({ url: message.url });
+      return undefined;
     }
 
     return undefined;

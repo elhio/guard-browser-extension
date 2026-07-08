@@ -1,6 +1,9 @@
 import { browser } from 'wxt/browser';
-import { QueryClient } from '@tanstack/react-query';
+import { createElement } from 'react';
+import ReactDOM from 'react-dom/client';
 
+import '@/assets/tailwind.css';
+import { BadgeMenu } from '@/components/overlay/BadgeMenu';
 import { byHttpSource, toSerializableCandidate, watchPageImages } from '@/lib/images';
 import type { ImageCandidate } from '@/lib/images';
 import {
@@ -16,24 +19,20 @@ import {
 
 import {
   applyAction,
-  attachBadge,
   clearAllBadges,
   clearAllActions,
+  clearOverlayState,
   setAction,
+  setVerifyTransport,
+  updateSettings,
   markBadgesProcessing,
+  showBadgeError,
   updateBadges,
+  type OverlaySettings,
 } from '@/lib/overlay';
 
 import { settings, type Settings } from '@/lib/settings';
 import { t } from '@/lib/i18n';
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 1000 * 60 * 10,
-    },
-  },
-});
 
 /** Max images classified in parallel (bounds concurrent fetch/metadata/C2PA work). */
 const CLASSIFY_CONCURRENCY = 4;
@@ -75,17 +74,28 @@ async function classifyCandidate(
 
     const result = response?.results?.[0];
     if (!result) {
-      if (element) attachBadge(element).setError(t('badge_error_analyze'));
+      if (element) showBadgeError(candidate.src, element, t('badge_error_analyze'));
       return;
     }
 
-    // updateBadges/applyAction handle a per-image error result (gray badge) on their own.
-    updateBadges([result], elementsBySrc, verifyWithExternalApi);
+    // updateBadges handles a per-image error result (gray ring) itself; the menu decides
+    // whether to offer Verify from the settings snapshot pushed to the store.
+    updateBadges([result], elementsBySrc);
     applyAction([result], elementsBySrc);
   } catch (error) {
     const timedOut = error instanceof Error && error.message === 'timeout';
-    if (element) attachBadge(element).setError(timedOut ? t('badge_error_timeout') : t('badge_error_analyze'));
+    if (element) showBadgeError(candidate.src, element, timedOut ? t('badge_error_timeout') : t('badge_error_analyze'));
   }
+}
+
+/** Projects the full settings object down to what the menu store needs. */
+function toOverlaySettings(state: Settings): OverlaySettings {
+  return {
+    tasks: state.tasks,
+    token: state.token,
+    verificatorSpace: state.verificatorSpace,
+    detectionAction: state.detectionAction,
+  };
 }
 
 /** Rejects with `Error('timeout')` if `promise` doesn't settle within `ms`. */
@@ -114,25 +124,31 @@ async function runWithConcurrency<T>(
   await Promise.all(runners);
 }
 
-function verifyWithExternalApi(src: string): Promise<VerifyImageResponse> {
-  return queryClient.fetchQuery({
-    queryKey: ['verifyImages', src],
-    queryFn: async () => {
-      const request: VerifyImageRequest = { type: VERIFY_IMAGE_MESSAGE, src };
-      const res = (await browser.runtime.sendMessage(request)) as VerifyImageResponse;
-
-      if (!res.success) {
-        throw new Error(res.error);
-      }
-      return res;
-    }
-  });
+async function verifyWithExternalApi(src: string): Promise<VerifyImageResponse> {
+  const request: VerifyImageRequest = { type: VERIFY_IMAGE_MESSAGE, src };
+  // The background runs the full activity lifecycle; it must not be retried (that would
+  // create duplicate activities), so this is a plain one-shot message, not a react-query.
+  return (await browser.runtime.sendMessage(request)) as VerifyImageResponse;
 }
 
 export default defineContentScript({
   matches: ['*://*/*'],
   runAt: 'document_start',
-  async main() {
+  cssInjectionMode: 'ui',
+  async main(ctx) {
+    const menuUi = await createShadowRootUi(ctx, {
+      name: 'guard-menu',
+      position: 'inline',
+      anchor: 'body',
+      onMount: (container) => {
+        const root = ReactDOM.createRoot(container);
+        root.render(createElement(BadgeMenu));
+        return root;
+      },
+      onRemove: (root) => root?.unmount()
+    });
+    menuUi.mount();
+
     window.addEventListener('message', (event) => {
       if (event.source !== window) return;
 
@@ -168,6 +184,7 @@ export default defineContentScript({
       stopWatching = undefined;
       clearAllBadges();
       clearAllActions();
+      clearOverlayState();
     }
 
     const isHostWhitelisted = (host: string, whitelist: string[]) => whitelist.includes(host);
@@ -178,6 +195,9 @@ export default defineContentScript({
 
     let currentSettings = await settings.getValue();
 
+    // The menu runs verification directly through the background; give the store the transport.
+    setVerifyTransport(verifyWithExternalApi);
+    updateSettings(toOverlaySettings(currentSettings));
     setAction(currentSettings.detectionAction);
 
     if (shouldRun(currentSettings)) {
@@ -186,6 +206,8 @@ export default defineContentScript({
 
     settings.watch((newSettings) => {
       if (!newSettings) return;
+
+      updateSettings(toOverlaySettings(newSettings));
 
       const wasRunning = shouldRun(currentSettings);
       const nowRunning = shouldRun(newSettings);

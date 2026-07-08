@@ -464,12 +464,6 @@
   "popover_detection_lens": {
     "message": "On-Device AI Model"
   },
-  "badge_btn_verify": {
-    "message": "Verify with Advanced Model"
-  },
-  "badge_btn_reveal": {
-    "message": "Unblur / Reveal Image"
-  },
   "badge_category_ai": {
     "message": "AI Generated"
   },
@@ -479,15 +473,6 @@
   "badge_category_explicit": {
     "message": "Explicit"
   },
-  "badge_external_results": {
-    "message": "External API Results:"
-  },
-  "badge_verifying": {
-    "message": "Analyzing..."
-  },
-  "badge_processing": {
-    "message": "Analyzing image..."
-  },
   "badge_error_analyze": {
     "message": "Failed to analyze image"
   },
@@ -496,5 +481,36 @@
   },
   "badge_error_timeout": {
     "message": "Analysis timed out"
-  }
+  },
+  "verify_error_not_signed_in": {
+    "message": "Sign in to verify images"
+  },
+  "verify_error_no_space": {
+    "message": "Select a verification space in settings"
+  },
+  "verify_error_unsupported_media": {
+    "message": "This media type can't be verified"
+  },
+  "verify_error_timeout": {
+    "message": "Verification timed out"
+  },
+  "menu_signal_none_ai": { "message": "No signs of AI generation" },
+  "menu_signal_possible_ai": { "message": "Possible signs of AI generation" },
+  "menu_signal_strong_ai": { "message": "Strong signs of AI generation" },
+  "menu_signal_none_violent": { "message": "No signs of violence" },
+  "menu_signal_possible_violent": { "message": "Possible signs of violence" },
+  "menu_signal_strong_violent": { "message": "Strong signs of violence" },
+  "menu_signal_none_explicit": { "message": "No signs of explicit content" },
+  "menu_signal_possible_explicit": { "message": "Possible signs of explicit content" },
+  "menu_signal_strong_explicit": { "message": "Strong signs of explicit content" },
+  "menu_action_verify": { "message": "Verify" },
+  "menu_action_verifying": { "message": "Verifying…" },
+  "menu_action_reveal": { "message": "Show image" },
+  "menu_action_hide": { "message": "Hide again" },
+  "menu_action_signin": { "message": "Sign in to verify" },
+  "menu_action_choose_space": { "message": "Choose a space" },
+  "menu_close": { "message": "Close" },
+  "menu_scroll_left": { "message": "Scroll tasks left" },
+  "menu_scroll_right": { "message": "Scroll tasks right" },
+  "menu_more_actions": { "message": "More actions" }
 }

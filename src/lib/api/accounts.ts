@@ -24,3 +24,19 @@ export interface UserProfile {
 export async function fetchUserProfile(token: string): Promise<UserProfile> {
   return fetchWithAuth<UserProfile>('/api/v1/users/me', token);
 }
+
+let cachedUserId: { token: string; id: string } | undefined;
+
+/**
+ * Resolves the authenticated user's id, memoized per token so repeated calls
+ * (e.g. one per image verification) don't refetch the profile.
+ *
+ * @param token - A valid authentication token
+ * @returns The user's unique id
+ */
+export async function getUserId(token: string): Promise<string> {
+  if (cachedUserId?.token === token) return cachedUserId.id;
+  const { id } = await fetchUserProfile(token);
+  cachedUserId = { token, id };
+  return id;
+}

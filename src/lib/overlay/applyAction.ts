@@ -87,6 +87,29 @@ export function revealImage(element: HTMLElement): void {
 }
 
 /**
+ * Re-applies the current action to a previously revealed image (the "Hide again" menu action)
+ */
+export function hideImage(element: HTMLElement): void {
+  explicitlyRevealed.delete(element);
+  applyCurrentActionToElement(element);
+}
+
+/** The action currently applied to flagged images ('mark' | 'blur' | 'hide'). */
+export function getCurrentAction(): DetectionAction {
+  return currentAction;
+}
+
+/** Whether an image is currently flagged (and thus subject to the blur/hide action). */
+export function isImageFlaggedForAction(element: HTMLElement): boolean {
+  return flaggedImages.has(element);
+}
+
+/** Whether the user has explicitly revealed a flagged image. */
+export function isImageRevealed(element: HTMLElement): boolean {
+  return explicitlyRevealed.has(element);
+}
+
+/**
  * Strips all action-related CSS classes from tracked images and clears the registry
  */
 export function clearAllActions(): void {

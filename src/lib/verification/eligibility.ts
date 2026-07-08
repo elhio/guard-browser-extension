@@ -13,6 +13,20 @@ const SPACE_TASK_NAMES: Record<DetectionCategory, string[]> = {
 };
 
 /**
+ * Maps an external verification task label (e.g. "AI-Generated", "Gewalttätig") back
+ * to the detection category it covers, or `null` if it matches no known category.
+ */
+export function categoryForTaskLabel(label: string): DetectionCategory | null {
+  const normalized = label.trim().toLowerCase();
+  for (const category of Object.keys(SPACE_TASK_NAMES) as DetectionCategory[]) {
+    if (SPACE_TASK_NAMES[category].some((name) => name.toLowerCase() === normalized)) {
+      return category;
+    }
+  }
+  return null;
+}
+
+/**
  * Why a space is not usable: either it doesn't support images, or it is missing
  * one of the user's enabled detection categories.
  */
