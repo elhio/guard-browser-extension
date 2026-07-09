@@ -133,6 +133,11 @@ export interface RunImageVerificationInput {
   blob: Blob;
 }
 
+export interface ImageVerificationResult {
+  activityId: string;
+  results: ActivityResultItemPublic[];
+}
+
 /**
  * Runs the full external verification lifecycle for one image:
  * create activity → upload media → confirm → poll until done → fetch the result.
@@ -142,7 +147,7 @@ export interface RunImageVerificationInput {
 export async function runImageVerification(
   token: string,
   { spaceId, userId, blob }: RunImageVerificationInput
-): Promise<ActivityResultPublic> {
+): Promise<ImageVerificationResult> {
   const mediaType = blob.type as MediaType;
   if (!SUPPORTED_MEDIA_TYPES.includes(mediaType)) {
     throw new Error('unsupported-media');
@@ -163,5 +168,32 @@ export async function runImageVerification(
   if (!detail.result_payload) {
     throw new Error('No verification result available');
   }
-  return detail.result_payload;
+  return { activityId: activity.id, results: detail.result_payload.results };
+}
+
+/** Descriptor of a created share link (only the fields the extension uses). */
+export interface ActivitySharePublic {
+  id: string;
+  share_url: string;
+  expired_at: string;
+  task_name: string;
+}
+
+export interface CreateActivityShareInput {
+  activityId: string;
+  taskId: string;
+  /** Days the link stays valid (1-7). */
+  expiresIn: number;
+}
+
+/** Creates a shareable link for one task's result of an activity. */
+export function createActivityShare(
+  token: string,
+  input: CreateActivityShareInput
+): Promise<ActivitySharePublic> {
+  return postWithAuth<ActivitySharePublic>('/api/v1/activities/shares/', token, {
+    activity_id: input.activityId,
+    task_id: input.taskId,
+    expires_in: input.expiresIn,
+  });
 }

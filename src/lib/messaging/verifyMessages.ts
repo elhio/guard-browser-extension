@@ -32,13 +32,18 @@ export interface VerifyResultItem {
   label: string;
   score: number;
   description?: string;
+  /** Predefined "expected result" reactions for this task: integer key → label. */
+  reactions?: Record<number, string>;
 }
 
 /**
  * The data returned by the external verification API: one scored item per detection
  * task the verifying space runs (the set of tasks is space-specific, not a fixed trio).
+ *
+ * @property activityId - The created activity's id, needed to submit feedback / create a share
  */
 export interface VerifyImageData {
+  activityId: string;
   results: VerifyResultItem[];
 }
 

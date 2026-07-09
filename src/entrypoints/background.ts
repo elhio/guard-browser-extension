@@ -11,9 +11,17 @@ import {
   type VerifyImageResponse
 } from '@/lib/messaging/verifyMessages';
 import { isOpenTabRequest } from '@/lib/messaging/openTab';
+import { isSubmitReactionRequest } from '@/lib/messaging/reactionMessages';
+import { isCreateShareRequest, type CreateShareResponse } from '@/lib/messaging/shareMessages';
 import { settings } from '@/lib/settings';
-import { getUserId, getSpaceTaskCategoryMap, runImageVerification } from '@/lib/api';
-import type { DetectionCategory } from '@/lib/detection';
+import {
+  getUserId,
+  getSpaceTaskMeta,
+  runImageVerification,
+  createReaction,
+  createActivityShare,
+  type SpaceTaskMeta
+} from '@/lib/api';
 import { fetchWithTimeout } from '@/lib/net/fetchWithTimeout';
 import { t } from '@/lib/i18n';
 
@@ -96,15 +104,17 @@ export default defineBackground(() => {
             blob
           });
 
-          // Result items only carry a task_id + outcome label, so resolve which detection
-          // category each task belongs to via the space's (cached) task list.
-          const taskCategories: Record<string, DetectionCategory> =
-            await getSpaceTaskCategoryMap(token, verificatorSpace).catch(() => ({}));
+          // Result items only carry a task_id + outcome label, so resolve each task's
+          // detection category and feedback reactions via the space's (cached) task list.
+          const taskMeta: Record<string, SpaceTaskMeta> =
+            await getSpaceTaskMeta(token, verificatorSpace).catch(() => ({}));
 
           const data: VerifyImageData = {
+            activityId: result.activityId,
             results: result.results.map((item) => ({
               taskId: item.task_id,
-              category: taskCategories[item.task_id] ?? null,
+              category: taskMeta[item.task_id]?.category ?? null,
+              reactions: taskMeta[item.task_id]?.reactions ?? {},
               label: item.label,
               score: item.score,
               description: item.description ?? undefined
@@ -123,6 +133,51 @@ export default defineBackground(() => {
     if (isOpenTabRequest(message)) {
       void browser.tabs.create({ url: message.url });
       return undefined;
+    }
+
+    // PATH 4: submit a feedback reaction (fire-and-forget; response only keeps the worker alive)
+    if (isSubmitReactionRequest(message)) {
+      (async () => {
+        try {
+          const { token } = await settings.getValue();
+          if (token) {
+            await createReaction(token, {
+              activityId: message.activityId,
+              taskId: message.taskId,
+              isPositive: message.isPositive,
+              keyValue: message.keyValue,
+              description: message.description
+            });
+          }
+        } catch (error) {
+          console.warn('[Guard] Failed to submit reaction:', error);
+        } finally {
+          sendResponse(undefined);
+        }
+      })();
+      return true;
+    }
+
+    // PATH 5: create a shareable result link
+    if (isCreateShareRequest(message)) {
+      (async () => {
+        try {
+          const { token } = await settings.getValue();
+          if (!token) throw new Error(t('verify_error_not_signed_in'));
+          const share = await createActivityShare(token, {
+            activityId: message.activityId,
+            taskId: message.taskId,
+            expiresIn: message.expiresIn
+          });
+          sendResponse({ success: true, shareUrl: share.share_url } satisfies CreateShareResponse);
+        } catch (error) {
+          sendResponse({
+            success: false,
+            error: error instanceof Error ? error.message : String(error)
+          } satisfies CreateShareResponse);
+        }
+      })();
+      return true;
     }
 
     return undefined;

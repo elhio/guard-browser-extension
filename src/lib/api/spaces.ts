@@ -71,6 +71,14 @@ export interface TaskPublic {
   id: string;
   name: string;
   description?: string;
+  /** Predefined "expected result" reactions: integer key → localized label. */
+  reactions?: Record<number, string>;
+}
+
+/** Resolved per-task metadata used to interpret verification results and offer feedback. */
+export interface SpaceTaskMeta {
+  category: DetectionCategory | null;
+  reactions: Record<number, string>;
 }
 
 /** Detailed space, including the concrete task list needed to resolve verification results. */
@@ -94,19 +102,20 @@ export async function fetchSpaceDetail(token: string, spaceId: string): Promise<
 }
 
 /**
- * Builds a `task_id → detection category` map for a space by matching each enabled task's
- * (localized) name against the known category names. Used to place a verification result item
- * on the correct tab, since result items carry only a `task_id` and an outcome `label`.
+ * Builds a `task_id → { category, reactions }` map for a space, used to place verification
+ * results on the right tab and to offer per-task "expected result" reactions in feedback.
  */
-export async function getSpaceTaskCategoryMap(
+export async function getSpaceTaskMeta(
   token: string,
   spaceId: string
-): Promise<Record<string, DetectionCategory>> {
+): Promise<Record<string, SpaceTaskMeta>> {
   const detail = await fetchSpaceDetail(token, spaceId);
-  const map: Record<string, DetectionCategory> = {};
+  const map: Record<string, SpaceTaskMeta> = {};
   for (const task of detail.enabled_tasks ?? []) {
-    const category = categoryForTaskLabel(task.name);
-    if (category) map[task.id] = category;
+    map[task.id] = {
+      category: categoryForTaskLabel(task.name),
+      reactions: task.reactions ?? {},
+    };
   }
   return map;
 }

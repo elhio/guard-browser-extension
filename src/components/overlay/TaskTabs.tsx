@@ -1,14 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { LuChevronLeft, LuChevronRight, LuX } from 'react-icons/lu';
 
-import { t, type MessageKey } from '@/lib/i18n';
+import { t } from '@/lib/i18n';
 import type { DetectionCategory } from '@/lib/detection';
-
-const TAB_LABEL_KEYS: Record<DetectionCategory, MessageKey> = {
-  aiGenerated: 'badge_category_ai',
-  violent: 'badge_category_violent',
-  explicit: 'badge_category_explicit',
-};
+import { TAB_LABEL_KEYS } from './taskLabels';
 
 interface TaskTabsProps {
   tabs: DetectionCategory[];
@@ -53,7 +48,7 @@ export function TaskTabs({ tabs, active, onSelect, onClose }: TaskTabsProps) {
           type="button"
           aria-label={t('menu_scroll_left')}
           onClick={() => scrollByDir(-1)}
-          className="shrink-0 px-1.5 py-2 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+          className="shrink-0 cursor-pointer px-1.5 py-2 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
         >
           <LuChevronLeft size={16} />
         </button>
@@ -71,7 +66,7 @@ export function TaskTabs({ tabs, active, onSelect, onClose }: TaskTabsProps) {
               key={tab}
               type="button"
               onClick={() => onSelect(tab)}
-              className={`shrink-0 whitespace-nowrap border-b-2 px-3 py-2 text-xs text-gray-600 transition-colors dark:text-gray-300 ${
+              className={`shrink-0 cursor-pointer whitespace-nowrap border-b-2 px-3 py-2 text-xs text-gray-600 transition-colors dark:text-gray-300 ${
                 isActive ? 'border-current font-bold' : 'border-transparent font-medium'
               }`}
             >
@@ -86,7 +81,7 @@ export function TaskTabs({ tabs, active, onSelect, onClose }: TaskTabsProps) {
           type="button"
           aria-label={t('menu_scroll_right')}
           onClick={() => scrollByDir(1)}
-          className="shrink-0 px-1.5 py-2 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+          className="shrink-0 cursor-pointer px-1.5 py-2 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
         >
           <LuChevronRight size={16} />
         </button>
@@ -96,7 +91,7 @@ export function TaskTabs({ tabs, active, onSelect, onClose }: TaskTabsProps) {
         type="button"
         aria-label={t('menu_close')}
         onClick={onClose}
-        className="shrink-0 px-2 py-2 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+        className="shrink-0 cursor-pointer px-2 py-2 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
       >
         <LuX size={16} />
       </button>

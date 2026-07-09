@@ -23,10 +23,14 @@ interface MenuAction {
 interface MenuFooterProps {
   entry: OverlayEntry;
   settings: OverlaySettings;
+  /** Whether feedback/share actions can be offered (a verified task is on the active tab). */
+  canFeedback: boolean;
+  onFeedback: (isPositive: boolean) => void;
+  onShare: () => void;
 }
 
 /** The teal split-button: a context-dependent primary action + a dropdown of the rest. */
-export function MenuFooter({ entry, settings }: MenuFooterProps) {
+export function MenuFooter({ entry, settings, canFeedback, onFeedback, onShare }: MenuFooterProps) {
   const [, force] = useReducer((n: number) => n + 1, 0);
   const [open, setOpen] = useState(false);
 
@@ -82,6 +86,13 @@ export function MenuFooter({ entry, settings }: MenuFooterProps) {
   if (rehidable) secondaries.push(hideAction);
   if (!signedIn && primary.kind !== 'signin') secondaries.push(signinAction);
 
+  // Post-verification feedback + share (only when the active tab has a verified task).
+  if (canFeedback) {
+    secondaries.push({ kind: 'mark_correct', label: t('menu_action_mark_correct'), run: () => onFeedback(true) });
+    secondaries.push({ kind: 'mark_incorrect', label: t('menu_action_mark_incorrect'), run: () => onFeedback(false) });
+    secondaries.push({ kind: 'share', label: t('menu_action_share'), run: () => onShare() });
+  }
+
   const hasSecondary = secondaries.length > 0;
 
   return (
@@ -90,7 +101,7 @@ export function MenuFooter({ entry, settings }: MenuFooterProps) {
         type="button"
         onClick={primary.run}
         disabled={primary.disabled}
-        className={`flex flex-1 items-center justify-center bg-teal-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-teal-700 focus:outline-none disabled:cursor-default disabled:opacity-70 ${
+        className={`flex flex-1 cursor-pointer items-center justify-center bg-teal-600 px-4 py-2 text-sm font-medium text-white transition-colors enabled:hover:bg-teal-700 focus:outline-none disabled:cursor-not-allowed disabled:opacity-70 ${
           hasSecondary ? 'rounded-l-md' : 'rounded-md'
         }`}
       >
@@ -103,19 +114,22 @@ export function MenuFooter({ entry, settings }: MenuFooterProps) {
             type="button"
             aria-label={t('menu_more_actions')}
             onClick={() => setOpen((value) => !value)}
-            className="flex items-center rounded-r-md border-l border-teal-500 bg-teal-600 px-2 text-white transition-colors hover:bg-teal-700 focus:outline-none"
+            className="flex cursor-pointer items-center rounded-r-md border-l border-teal-500 bg-teal-600 px-2 text-white transition-colors hover:bg-teal-700 focus:outline-none"
           >
             <LuChevronDown size={16} />
           </button>
 
           {open && (
-            <div className="absolute left-0 right-0 top-full z-10 mt-1 overflow-hidden rounded-md border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-[#111111]">
+            <div
+              data-menu-dropdown
+              className="absolute left-0 right-0 top-full z-10 mt-1 overflow-hidden rounded-md border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-[#111111]"
+            >
               {secondaries.map((secondary) => (
                 <button
                   key={secondary.kind}
                   type="button"
                   onClick={() => { secondary.run(); setOpen(false); }}
-                  className="block w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
+                  className="block w-full cursor-pointer px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
                 >
                   {secondary.label}
                 </button>
