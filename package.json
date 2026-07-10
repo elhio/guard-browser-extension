@@ -14,7 +14,11 @@
     "compile": "tsc --noEmit",
     "postinstall": "wxt prepare",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "wxt build && playwright test",
+    "test:e2e:ui": "wxt build && playwright test --ui"
   },
   "dependencies": {
     "@contentauth/c2pa-web": "^0.12.0",

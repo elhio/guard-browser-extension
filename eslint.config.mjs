@@ -40,5 +40,12 @@ export default tseslint.config(
         { argsIgnorePattern: '^_' },
       ],
     },
+  },
+  {
+    files: ['tests/**/*.ts'],
+    rules: {
+      'react-hooks/rules-of-hooks': 'off',
+      'no-empty-pattern': 'off',
+    },
   }
 );
