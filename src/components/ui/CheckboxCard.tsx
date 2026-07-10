@@ -23,6 +23,7 @@ export function CheckboxCard({
     >
       <input
         type="checkbox"
+        data-testid={`checkbox-${id}`}
         checked={checked}
         onChange={() => onChange(id)}
         className="h-5 w-5 shrink-0 cursor-pointer rounded border-gray-300 text-teal-600 accent-teal-500 focus:ring-teal-500"

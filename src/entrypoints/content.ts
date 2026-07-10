@@ -84,7 +84,11 @@ async function processCandidates(candidates: ImageCandidate[]): Promise<void> {
  */
 const pendingClassifications = new Map<string, (response: ClassifyImageResponse) => void>();
 if (import.meta.env.FIREFOX) {
-  browser.runtime.onMessage.addListener((message) => {
+  browser.runtime.onMessage.addListener((message, sender) => {
+    // The result is pushed by our background page, which has no `sender.tab`. Reject anything that
+    // carries a tab (i.e. came from another content-script frame) so a page can't inject fake
+    // results by guessing a requestId.
+    if (sender.tab) return;
     if (!isClassifyResultPush(message)) return;
     const resolve = pendingClassifications.get(message.requestId);
     if (resolve) {
@@ -211,11 +215,22 @@ export default defineContentScript({
     window.addEventListener('message', (event) => {
       if (event.source !== window) return;
 
-      // security check
-      const envUrl = import.meta.env.VITE_WEBSITE_URL;
-      const allowedHost = new URL(envUrl).hostname;
-      const isAllowedHost = location.hostname === allowedHost || location.hostname.endsWith(`.${allowedHost}`);
-      if (!isAllowedHost) return;
+      // Only trust a token handoff from the configured site. Validate the message's own origin (not
+      // just the page's hostname): its protocol must match the configured website's (https in prod,
+      // http for local dev) and its host must equal that site or a subdomain of it, so an
+      // unrelated or cross-protocol same-window context can't inject a token.
+      const allowedOrigin = new URL(import.meta.env.VITE_WEBSITE_URL);
+      let originOk = false;
+      try {
+        const origin = new URL(event.origin);
+        originOk =
+          origin.protocol === allowedOrigin.protocol &&
+          (origin.hostname === allowedOrigin.hostname ||
+            origin.hostname.endsWith(`.${allowedOrigin.hostname}`));
+      } catch {
+        originOk = false;
+      }
+      if (!originOk) return;
 
       if (event.data?.type === 'EXT_AUTH_SUCCESS' && event.data.token) {
         void browser.runtime.sendMessage({

@@ -60,16 +60,11 @@ export default defineConfig({
     },
     minimum_chrome_version: '109',
     options_ui: { page: 'index.html', open_in_tab: true },
-    // Chrome needs the offscreen permission for chrome.offscreen; Firefox uses a hidden iframe instead.
     permissions: [
       'storage',
       'unlimitedStorage',
       ...(browser === 'chrome' ? ['offscreen'] : []),
     ],
-    // The C2PA SDK / ONNX runtime spawn a Web Worker from a `blob:` URL. Chrome treats a
-    // same-origin blob: worker as `'self'` and allows it, but Firefox requires `blob:` to be
-    // listed explicitly. Chrome MV3 rejects `blob:` in an extension_pages script-src, so the
-    // looser policy is scoped to Firefox only.
     content_security_policy: {
       extension_pages:
         browser === 'firefox'
@@ -77,11 +72,5 @@ export default defineConfig({
           : "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';",
     },
     host_permissions: ['<all_urls>', `${process.env.VITE_API_URL}/*`],
-    web_accessible_resources: [
-      {
-        resources: ['wasm/*.wasm', 'wasm/*.mjs', 'models/*', 'models/lens_light_v1/onnx/*'],
-        matches: ['<all_urls>'],
-      },
-    ],
   })
 });

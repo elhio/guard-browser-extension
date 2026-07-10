@@ -126,6 +126,7 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
             <div className="mt-8 flex w-full items-center justify-between shrink-0">
               <button
                 onClick={handleBack}
+                data-testid="wizard-back"
                 className="px-6 py-2.5 bg-white dark:bg-[#1a1a1a] border border-gray-300 text-gray-700 font-medium rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 dark:focus:ring-transparent dark:focus:ring-offset-transparent transition-colors text-sm"
               >
                 {t('setup_wizard_btn_back')}
@@ -134,6 +135,7 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
                 step === 5 ? (
                   <button
                     onClick={handleNext}
+                    data-testid="wizard-next"
                     className="px-8 py-3 bg-teal-600 text-white font-medium rounded-md hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 dark:focus:ring-transparent dark:focus:ring-offset-transparent transition-colors text-sm shadow-sm"
                   >
                     {/* Dynamically switch text based on whether a space is selected */}
@@ -143,6 +145,7 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
                   <div className={`relative group inline-flex ${step === 2 && !isStep2Valid ? 'cursor-not-allowed' : ''}`}>
                     <button
                       onClick={handleNext}
+                      data-testid="wizard-next"
                       disabled={step === 2 && !isStep2Valid}
                       className={`px-8 py-3 font-medium rounded-md transition-colors text-sm shadow-sm ${
                         step === 2 && !isStep2Valid
@@ -157,6 +160,7 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
               ) : (
                 <button
                   onClick={handleFinish}
+                  data-testid="wizard-finish"
                   className="px-8 py-3 bg-teal-600 text-white font-medium rounded-md hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 dark:focus:ring-transparent dark:focus:ring-offset-transparent transition-colors text-sm shadow-sm"
                 >
                   {t('setup_wizard_btn_finish')}

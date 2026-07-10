@@ -3,33 +3,25 @@ import { getManifestChain } from './manifestStore';
 import { detectAiGeneration } from '@/lib/c2pa/aiDetection';
 import { combineCategoryResults } from '@/lib/detection/combineResults';
 import { extractImageMetadata, detectMetadataSignals } from '@/lib/metadata';
-import { fetchWithTimeout } from '@/lib/net/fetchWithTimeout';
 import type { SerializableImageCandidate } from '@/lib/images';
 import type { ImageAnalysisResult } from '@/lib/detection/types';
 
-/** How long to wait for an image download before treating it as failed. */
-const IMAGE_FETCH_TIMEOUT_MS = 10_000;
-
 /**
- * Fetches a target image and evaluates it for AI-generation, violent, and explicit signals using a dual-pass approach.
+ * Evaluates an already-downloaded image blob for AI-generation, violent, and explicit signals using a dual-pass approach.
  *
- * Note: To minimize network overhead, this function fetches the image blob exactly once and passes the same buffer
- * to both the raw metadata parser (EXIF/XMP/IPTC) and the WebAssembly C2PA manifest reader. Additionally, it guarantees
- * that the heavy WASM `reader` instance is freed from memory in a `finally` block to prevent memory leaks, even if
- * manifest parsing throws an error.
+ * Note: The caller downloads the image blob exactly once and passes the same buffer here (and to the local model),
+ * so the extension never re-downloads an image it already has. This function feeds that one buffer to both the raw
+ * metadata parser (EXIF/XMP/IPTC) and the WebAssembly C2PA manifest reader, and guarantees that the heavy WASM
+ * `reader` instance is freed in a `finally` block to prevent memory leaks, even if manifest parsing throws.
  *
- * @param candidate - The image candidate object containing the `src` URL to fetch
+ * @param candidate - The image candidate (used for its `src`, echoed back in the result)
+ * @param blob - The already-fetched image bytes to evaluate
  * @returns A promise resolving to an `ImageAnalysisResult` containing the combined detection results.
  */
-export async function readManifestFor(candidate: SerializableImageCandidate): Promise<ImageAnalysisResult> {
-  // A fetch failure or timeout is a genuine failure — let it throw so the caller
-  // can mark this one badge as failed (gray), without affecting any other image.
-  const response = await fetchWithTimeout(candidate.src, IMAGE_FETCH_TIMEOUT_MS);
-  if (!response.ok) {
-    throw new Error(`Failed to fetch image: HTTP ${response.status}`);
-  }
-  const blob = await response.blob();
-
+export async function readManifestFor(
+  candidate: SerializableImageCandidate,
+  blob: Blob
+): Promise<ImageAnalysisResult> {
   // Metadata scan populates every category it finds evidence for (AI, violent, explicit).
   // extractImageMetadata is resilient: unsupported formats (e.g. WebP) simply yield no metadata.
   const metaCategories = detectMetadataSignals(await extractImageMetadata(blob));

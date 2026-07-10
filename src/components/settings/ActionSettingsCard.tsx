@@ -19,6 +19,7 @@ export function ActionSettingsCard() {
         value={
           <input
             type="checkbox"
+            data-testid="settings-action-mark"
             checked={detectionAction === 'mark'}
             onChange={() => handleSelectAction('mark')}
             className={checkboxClasses}
@@ -33,6 +34,7 @@ export function ActionSettingsCard() {
         value={
           <input
             type="checkbox"
+            data-testid="settings-action-blur"
             checked={detectionAction === 'blur'}
             onChange={() => handleSelectAction('blur')}
             className={checkboxClasses}
@@ -47,6 +49,7 @@ export function ActionSettingsCard() {
         value={
           <input
             type="checkbox"
+            data-testid="settings-action-hide"
             checked={detectionAction === 'hide'}
             onChange={() => handleSelectAction('hide')}
             className={checkboxClasses}

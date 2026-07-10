@@ -40,6 +40,7 @@ export function ToggleCard({
       <button
         type="button"
         role="switch"
+        data-testid={`toggle-${id}`}
         aria-checked={checked}
         disabled={disabled}
         className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 ${

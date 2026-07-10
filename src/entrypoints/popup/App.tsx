@@ -144,6 +144,7 @@ function App() {
         </div>
         <button
           type="button"
+          data-testid="popup-status-toggle"
           onClick={handleToggleStatus}
           disabled={isActive === null}
           className={`w-full flex justify-between items-center p-2 bg-gray-50 border rounded-md text-sm text-gray-700 hover:bg-gray-100 transition-colors focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed ${
@@ -193,6 +194,7 @@ function App() {
         </div>
         <details className="relative" open={isHandlingOpen}>
           <summary
+            data-testid="popup-handling-summary"
             className="list-none cursor-pointer flex justify-between items-center p-2 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-700 hover:bg-gray-100 transition-colors"
             onClick={(e) => {
               e.preventDefault();
@@ -207,6 +209,7 @@ function App() {
               <label key={option.id} className="flex items-center gap-2 p-1 cursor-pointer hover:bg-gray-50 rounded">
                 <input
                   type="radio"
+                  data-testid={`popup-action-${option.id}`}
                   name="action-selection"
                   checked={detectionAction === option.id}
                   onChange={() => handleSetAction(option.id)}
@@ -278,6 +281,7 @@ function App() {
             </span>
           </button>
           <button
+            data-testid="popup-open-settings"
             onClick={() => {
               browser.tabs.create({ url: browser.runtime.getURL('/options.html') });
             }}

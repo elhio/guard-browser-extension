@@ -1,11 +1,7 @@
 import { env, AutoModel, ImageProcessor, RawImage, Tensor } from '@huggingface/transformers';
 import { LOCAL_MODEL } from './model';
-import { fetchWithTimeout } from '@/lib/net/fetchWithTimeout';
 
 declare const chrome: { runtime: { getURL: (path: string) => string } };
-
-/** How long to wait for the source image download before treating it as failed. */
-const MODEL_FETCH_TIMEOUT_MS = 10_000;
 
 /**
  * Environment configuration for transformers.js inside a Chrome Extension (Manifest V3).
@@ -22,19 +18,6 @@ if (env.backends?.onnx?.wasm) {
   // offscreen context doesn't have. Pin to a single thread so onnxruntime-web doesn't spin up a
   // thread pool it can't use (a failed fallback that wastes time without speeding inference up).
   env.backends.onnx.wasm.numThreads = 1;
-}
-
-/** Logs the inference environment once so slow-runtime issues can be diagnosed from the console. */
-let loggedEnv = false;
-function logEnvironmentOnce(): void {
-  if (loggedEnv) return;
-  loggedEnv = true;
-  console.info('[Guard model] environment', {
-    crossOriginIsolated:
-      typeof crossOriginIsolated !== 'undefined' ? crossOriginIsolated : 'unknown',
-    sharedArrayBuffer: typeof SharedArrayBuffer !== 'undefined',
-    hardwareConcurrency: navigator.hardwareConcurrency
-  });
 }
 
 /**
@@ -188,23 +171,13 @@ function firstValue(tensor: { data: ArrayLike<number> } | undefined): number {
 /**
  * Runs the local multi-task model on the given image and returns the probability for each category.
  *
- * The image is fetched into a Blob first (identical to the C2PA reader) so cross-origin loading
- * behaves consistently and avoids canvas-tainting issues during pixel extraction.
+ * Takes the already-downloaded image blob (fetched once by the caller and shared with the
+ * metadata/C2PA reader) so the extension never downloads the same image twice.
  *
- * @param src - The absolute URL of the image to classify
- * @returns The three category probabilities (0-1), or null if the model is unavailable
- * @throws {Error} If the image network fetch fails prior to classification
+ * @param blob - The image bytes to classify
+ * @returns The three category probabilities (0-1), or null if the model can't process this image
  */
-export async function classifyImage(src: string): Promise<LocalModelScores | null> {
-  logEnvironmentOnce();
-
-  const response = await fetchWithTimeout(src, MODEL_FETCH_TIMEOUT_MS);
-  if (!response.ok) {
-    throw new Error(`Failed to fetch image: HTTP ${response.status}`);
-  }
-
-  const blob = await response.blob();
-
+export async function classifyImage(blob: Blob): Promise<LocalModelScores | null> {
   // Vector images (SVG) can't be rasterized by the browser's `createImageBitmap` on Firefox — it
   // yields an unusable bitmap that throws "object is no longer usable" when drawn — and they're
   // logos/icons the detector can't classify anyway. Skip them (metadata still applies).
@@ -226,11 +199,7 @@ export async function classifyImage(src: string): Promise<LocalModelScores | nul
   // Preprocessing is included in the critical section to keep each image's work together.
   const outputs = await runSerialized(async () => {
     const { pixel_values } = await processor(image);
-    // TEMP: measure per-image inference time (excludes queue wait). Remove once tuned.
-    const inferStart = performance.now();
-    const result = await model({ input: pixel_values });
-    console.info(`[Guard model] inference in ${Math.round(performance.now() - inferStart)}ms`);
-    return result;
+    return model({ input: pixel_values });
   });
 
   // `out_ai` is a raw logit; `out_violence`/`out_nsfw` are already sigmoid probabilities.

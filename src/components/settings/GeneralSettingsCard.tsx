@@ -38,6 +38,7 @@ export function GeneralSettingsCard() {
           <div className="flex flex-row-reverse justify-end sm:flex-row sm:justify-start items-center gap-3">
             <button
               onClick={handleToggleStatus}
+              data-testid="settings-status-toggle"
               className={`px-2 py-0.5 text-xs font-semibold rounded-md border shadow-sm transition-colors focus:outline-none ${
                 isActive
                   ? 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200'

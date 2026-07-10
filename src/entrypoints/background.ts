@@ -32,6 +32,20 @@ import { t } from '@/lib/i18n';
 /** How long to wait for the source image download during verification. */
 const VERIFY_IMAGE_FETCH_TIMEOUT_MS = 10_000;
 
+/** Only navigate to real web pages or our own extension pages — never javascript:/data:/file: URLs. */
+function isSafeTabUrl(url: string): boolean {
+  try {
+    const { protocol } = new URL(url);
+    return (
+      protocol === 'https:' ||
+      protocol === 'http:' ||
+      url.startsWith(browser.runtime.getURL('/'))
+    );
+  } catch {
+    return false;
+  }
+}
+
 /** Maps internal error codes from the verification flow to user-facing messages. */
 function toVerifyErrorMessage(error: unknown): string {
   const message = error instanceof Error ? error.message : String(error);
@@ -54,6 +68,11 @@ export default defineBackground(() => {
   });
 
   browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    // Defense-in-depth: only act on messages from our own extension contexts (content scripts,
+    // popup, options, offscreen). Web pages can't reach here anyway (no externally_connectable),
+    // but rejecting any foreign sender keeps that guarantee explicit.
+    if (sender.id !== browser.runtime.id) return undefined;
+
     // PATH 1: classification
     if (isClassifyImageRequest(message)) {
       const errorResults = (reason: unknown): ClassifyImageResult[] =>
@@ -164,7 +183,12 @@ export default defineBackground(() => {
 
     // PATH 3: open a URL in a new tab (menu "Sign in" / "Choose a space")
     if (isOpenTabRequest(message)) {
-      void browser.tabs.create({ url: message.url });
+      // Only ever open web pages or our own extension pages — never javascript:/data:/file: etc.
+      if (isSafeTabUrl(message.url)) {
+        void browser.tabs.create({ url: message.url });
+      } else {
+        console.warn('[Guard] Blocked OPEN_TAB for unsafe URL:', message.url);
+      }
       return undefined;
     }
 

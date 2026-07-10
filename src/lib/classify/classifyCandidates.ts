@@ -6,9 +6,13 @@ import {
   type TasksState,
   type ImageAnalysisResult
 } from '@/lib/detection';
+import { fetchWithTimeout } from '@/lib/net/fetchWithTimeout';
 import type { SerializableImageCandidate } from '@/lib/images';
 import type { ClassifyImageResult } from '@/lib/messaging/classifyMessages';
 import type { LocalModelScores } from '@/lib/localModel/runner';
+
+/** How long to wait for the source image download before treating this candidate as failed. */
+const IMAGE_FETCH_TIMEOUT_MS = 10_000;
 
 /** The evidence direction each category's model score points to when it fires vs. when it's clear. */
 const MODEL_KINDS: Record<DetectionCategory, { positive: SignalKind; safe: SignalKind }> = {
@@ -81,7 +85,7 @@ export async function classifyCandidates(
 ): Promise<ClassifyImageResult[]> {
   const finalResults: ClassifyImageResult[] = [];
 
-  let classifyImage: ((src: string) => Promise<LocalModelScores | null>) | null = null;
+  let classifyImage: ((blob: Blob) => Promise<LocalModelScores | null>) | null = null;
   if (useDetectorLocalModel && (tasks.aiGenerated || tasks.violent || tasks.explicit)) {
     const runner = await import('@/lib/localModel/runner');
     classifyImage = runner.classifyImage;
@@ -89,12 +93,22 @@ export async function classifyCandidates(
 
   for (const candidate of candidates) {
     try {
-      const analysis = await readManifestFor(candidate);
+      // Download the image once and share the bytes with both the metadata/C2PA reader and the
+      // local model, so the extension never re-downloads an image it already has. A fetch failure
+      // or timeout is a genuine failure — let it throw so this one badge is marked failed without
+      // affecting any other image.
+      const response = await fetchWithTimeout(candidate.src, IMAGE_FETCH_TIMEOUT_MS);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch image: HTTP ${response.status}`);
+      }
+      const blob = await response.blob();
+
+      const analysis = await readManifestFor(candidate, blob);
 
       if (classifyImage) {
         try {
           // Best-effort: a model failure must never discard the metadata result.
-          const scores = await classifyImage(candidate.src);
+          const scores = await classifyImage(blob);
           if (scores) mergeModelScores(analysis, scores, tasks);
         } catch (modelError) {
           console.warn('[Guard] Local model inference failed:', modelError);
