@@ -12,7 +12,7 @@ export default function SettingsSection({
   children,
 }: SettingsSectionProps) {
   return (
-    <div className="flex flex-col rounded-lg border border-gray-200 shadow-sm bg-white mb-2">
+    <div className="flex flex-col rounded-lg border border-gray-200 shadow-sm bg-white dark:bg-[#1a1a1a] mb-2">
       {/* Section Header */}
       <div className="flex items-center justify-between px-5 py-2.5">
         <h2 className="text-base font-semibold tracking-tight text-gray-900">

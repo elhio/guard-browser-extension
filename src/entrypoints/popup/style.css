@@ -1,4 +1,4 @@
-@import "@/assets/tailwind.css";
+@import "@/assets/pages.css";
 
 @layer base {
   body {
@@ -6,7 +6,7 @@
     min-width: 360px;
     margin: 0;
     padding: 0;
-    background-color: white;
+    /* Background is theme-aware via pages.css (white / #111111). */
   }
 }
 

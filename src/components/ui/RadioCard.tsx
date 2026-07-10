@@ -24,7 +24,7 @@ export function RadioCard({
       className={`relative group flex items-center gap-4 rounded-md border p-3 transition-colors ${
         disabled 
           ? 'cursor-not-allowed border-gray-200 bg-gray-50 opacity-60 grayscale' 
-          : 'cursor-pointer ' + (checked ? 'border-teal-500 bg-teal-50/30' : 'border-gray-200 bg-gray-50 hover:bg-gray-100')
+          : 'cursor-pointer ' + (checked ? 'border-teal-500 bg-teal-50/30 dark:bg-gray-50' : 'border-gray-200 bg-gray-50 hover:bg-gray-100')
       }`}
     >
       <div className="relative flex h-5 w-5 shrink-0 items-center justify-center">

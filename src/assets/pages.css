@@ -1,0 +1,40 @@
+@import "tailwindcss";
+
+/*
+ * Theme for the extension's own full pages (popup, options, setup).
+ *
+ * Scoped here rather than in `tailwind.css` on purpose: the content-script badge menu also imports
+ * `tailwind.css` and themes itself with explicit `dark:` variants, so it must NOT get this ramp flip.
+ *
+ * These pages are styled with the plain gray palette (no `dark:` variants). Tailwind v4 emits its
+ * colors as CSS variables (`bg-gray-50` → `var(--color-gray-50)`), so under `prefers-color-scheme:
+ * dark` we redefine the gray ramp: light surfaces (low numbers) become dark and dark text (high
+ * numbers) becomes light — every gray utility flips at once. `white` and the teal accent are left
+ * intact (buttons keep white labels); the handful of `bg-white` surfaces get explicit `dark:`
+ * overrides in the components. Background matches the badge menu's #111111.
+ */
+@layer base {
+  body {
+    background-color: var(--color-white);
+    color: var(--color-gray-900);
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-gray-50: #1c1c1c;
+    --color-gray-100: #242424;
+    --color-gray-200: #2f2f2f;
+    --color-gray-300: #3d3d3d;
+    --color-gray-400: #6b7280;
+    --color-gray-500: #9aa1ab;
+    --color-gray-600: #b6bcc4;
+    --color-gray-700: #d1d5db;
+    --color-gray-800: #e5e7eb;
+    --color-gray-900: #f3f4f6;
+  }
+
+  body {
+    background-color: #111111;
+  }
+}

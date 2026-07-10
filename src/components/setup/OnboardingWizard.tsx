@@ -54,7 +54,7 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
   };
 
   return (
-    <div className="flex min-h-screen w-full flex-col md:flex-row font-sans text-gray-800 bg-white">
+    <div className="flex min-h-screen w-full flex-col md:flex-row font-sans text-gray-800 bg-white dark:bg-[#111111]">
       {/* LEFT SIDE: The Wizard Form */}
       <div className="relative flex flex-1 items-center justify-center p-6 sm:p-10 md:p-12">
         <div className="absolute left-0 top-0 h-1 w-full bg-gray-100">
@@ -126,7 +126,7 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
             <div className="mt-8 flex w-full items-center justify-between shrink-0">
               <button
                 onClick={handleBack}
-                className="px-6 py-2.5 bg-white border border-gray-300 text-gray-700 font-medium rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 transition-colors text-sm"
+                className="px-6 py-2.5 bg-white dark:bg-[#1a1a1a] border border-gray-300 text-gray-700 font-medium rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 dark:focus:ring-transparent dark:focus:ring-offset-transparent transition-colors text-sm"
               >
                 {t('setup_wizard_btn_back')}
               </button>
@@ -134,7 +134,7 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
                 step === 5 ? (
                   <button
                     onClick={handleNext}
-                    className="px-8 py-3 bg-teal-600 text-white font-medium rounded-md hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition-colors text-sm shadow-sm"
+                    className="px-8 py-3 bg-teal-600 text-white font-medium rounded-md hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 dark:focus:ring-transparent dark:focus:ring-offset-transparent transition-colors text-sm shadow-sm"
                   >
                     {/* Dynamically switch text based on whether a space is selected */}
                     {verificatorSpace ? t('setup_wizard_btn_next') : t('setup_wizard_btn_skip')}
@@ -147,7 +147,7 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
                       className={`px-8 py-3 font-medium rounded-md transition-colors text-sm shadow-sm ${
                         step === 2 && !isStep2Valid
                           ? 'bg-teal-600/50 text-white/90 pointer-events-none' 
-                          : 'bg-teal-600 text-white hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500'
+                          : 'bg-teal-600 text-white hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 dark:focus:ring-transparent dark:focus:ring-offset-transparent'
                       }`}
                     >
                       {t('setup_wizard_btn_next')}
@@ -157,7 +157,7 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
               ) : (
                 <button
                   onClick={handleFinish}
-                  className="px-8 py-3 bg-teal-600 text-white font-medium rounded-md hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition-colors text-sm shadow-sm"
+                  className="px-8 py-3 bg-teal-600 text-white font-medium rounded-md hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 dark:focus:ring-transparent dark:focus:ring-offset-transparent transition-colors text-sm shadow-sm"
                 >
                   {t('setup_wizard_btn_finish')}
                 </button>

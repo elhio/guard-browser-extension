@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { QueryClientProvider } from '@tanstack/react-query';
 
-import '@/assets/tailwind.css';
+import '@/assets/pages.css';
 import { createQueryClient } from '@/lib/queryClient';
 import OptionsApp from './OptionsApp';
 

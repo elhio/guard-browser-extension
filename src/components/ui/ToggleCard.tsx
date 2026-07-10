@@ -24,8 +24,8 @@ export function ToggleCard({
         disabled ? 'cursor-not-allowed opacity-80' : 'cursor-pointer'
       } ${
         checked
-          ? 'border-teal-500 bg-teal-50/30'
-          : disabled 
+          ? 'border-teal-500 bg-teal-50/30 dark:bg-gray-50'
+          : disabled
             ? 'border-gray-200 bg-gray-50' 
             : 'border-gray-200 bg-gray-50 hover:bg-gray-100'
       }`}

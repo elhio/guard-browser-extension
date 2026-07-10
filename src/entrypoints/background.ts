@@ -2,8 +2,11 @@ import { ensureOffscreenDocument } from '@/lib/offscreen/ensureOffscreenDocument
 import {
   isClassifyImageRequest,
   CLASSIFY_IMAGE_OFFSCREEN_MESSAGE,
+  CLASSIFY_RESULT_MESSAGE,
   type OffscreenClassifyImageRequest,
-  type ClassifyImageResponse
+  type ClassifyImageResponse,
+  type ClassifyImageResult,
+  type ClassifyResultPush
 } from '@/lib/messaging/classifyMessages';
 import {
   isVerifyImageRequest,
@@ -11,6 +14,7 @@ import {
   type VerifyImageResponse
 } from '@/lib/messaging/verifyMessages';
 import { isOpenTabRequest } from '@/lib/messaging/openTab';
+import { respondAsync } from '@/lib/messaging/respondAsync';
 import { isSubmitReactionRequest } from '@/lib/messaging/reactionMessages';
 import { isCreateShareRequest, type CreateShareResponse } from '@/lib/messaging/shareMessages';
 import { settings } from '@/lib/settings';
@@ -49,10 +53,49 @@ export default defineBackground(() => {
     }
   });
 
-  browser.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+  browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     // PATH 1: classification
     if (isClassifyImageRequest(message)) {
-      (async () => {
+      const errorResults = (reason: unknown): ClassifyImageResult[] =>
+        message.candidates.map((c) => ({ status: 'error', src: c.src, error: String(reason) }));
+
+      if (import.meta.env.FIREFOX) {
+        // Firefox has no offscreen API. The background page (which has a DOM) hosts the offscreen
+        // page in an iframe and drives it over window.postMessage — and it can't return a runtime
+        // response to a content-script sender, so the result is PUSHED back to the sender's frame
+        // via tabs.sendMessage. Keeping the work in that ESM iframe also avoids pulling
+        // transformers.js into the IIFE-bundled background.
+        const tabId = sender.tab?.id;
+        const frameId = sender.frameId;
+        void (async () => {
+          let results: ClassifyImageResult[];
+          try {
+            const { classifyViaOffscreenIframe } = await import('@/lib/offscreen/offscreenClient');
+            results = await classifyViaOffscreenIframe(
+              message.candidates,
+              message.tasks,
+              message.useDetectorLocalModel
+            );
+          } catch (error) {
+            results = errorResults(error);
+          }
+          if (tabId != null) {
+            const push: ClassifyResultPush = {
+              type: CLASSIFY_RESULT_MESSAGE,
+              requestId: message.requestId,
+              results
+            };
+            void browser.tabs
+              .sendMessage(tabId, push, frameId != null ? { frameId } : undefined)
+              .catch(() => {});
+          }
+        })();
+        return undefined;
+      }
+
+      // Chrome (MV3): the DOM-less service worker offloads the work to an offscreen document and
+      // returns the result as the message response (which keeps the worker alive until it settles).
+      const work = (async (): Promise<ClassifyImageResponse> => {
         try {
           await ensureOffscreenDocument();
 
@@ -63,27 +106,17 @@ export default defineBackground(() => {
             useDetectorLocalModel: message.useDetectorLocalModel
           };
 
-          const response = (await browser.runtime.sendMessage(request)) as ClassifyImageResponse;
-          sendResponse(response);
+          return (await browser.runtime.sendMessage(request)) as ClassifyImageResponse;
         } catch (error) {
-          // If the offscreen document crashes entirely, safely fail all candidates
-          // so the content script doesn't hang waiting for a response
-          const fallbackResponse: ClassifyImageResponse = {
-            results: message.candidates.map((c) => ({
-              status: 'error',
-              src: c.src,
-              error: String(error)
-            }))
-          };
-          sendResponse(fallbackResponse);
+          return { results: errorResults(error) };
         }
       })();
-      return true;
+      return respondAsync(work, sendResponse);
     }
 
     // PATH 2: external verification — full activity lifecycle
     if (isVerifyImageRequest(message)) {
-      (async () => {
+      const work = (async (): Promise<VerifyImageResponse> => {
         try {
           const { token, verificatorSpace } = await settings.getValue();
           if (!token) throw new Error(t('verify_error_not_signed_in'));
@@ -121,12 +154,12 @@ export default defineBackground(() => {
             }))
           };
 
-          sendResponse({ success: true, data } satisfies VerifyImageResponse);
+          return { success: true, data };
         } catch (error) {
-          sendResponse({ success: false, error: toVerifyErrorMessage(error) } satisfies VerifyImageResponse);
+          return { success: false, error: toVerifyErrorMessage(error) };
         }
       })();
-      return true;
+      return respondAsync(work, sendResponse);
     }
 
     // PATH 3: open a URL in a new tab (menu "Sign in" / "Choose a space")
@@ -135,9 +168,9 @@ export default defineBackground(() => {
       return undefined;
     }
 
-    // PATH 4: submit a feedback reaction (fire-and-forget; response only keeps the worker alive)
+    // PATH 4: submit a feedback reaction (the response is just an acknowledgement)
     if (isSubmitReactionRequest(message)) {
-      (async () => {
+      const work = (async (): Promise<undefined> => {
         try {
           const { token } = await settings.getValue();
           if (token) {
@@ -151,16 +184,15 @@ export default defineBackground(() => {
           }
         } catch (error) {
           console.warn('[Guard] Failed to submit reaction:', error);
-        } finally {
-          sendResponse(undefined);
         }
+        return undefined;
       })();
-      return true;
+      return respondAsync(work, sendResponse);
     }
 
     // PATH 5: create a shareable result link
     if (isCreateShareRequest(message)) {
-      (async () => {
+      const work = (async (): Promise<CreateShareResponse> => {
         try {
           const { token } = await settings.getValue();
           if (!token) throw new Error(t('verify_error_not_signed_in'));
@@ -169,15 +201,15 @@ export default defineBackground(() => {
             taskId: message.taskId,
             expiresIn: message.expiresIn
           });
-          sendResponse({ success: true, shareUrl: share.share_url } satisfies CreateShareResponse);
+          return { success: true, shareUrl: share.share_url };
         } catch (error) {
-          sendResponse({
+          return {
             success: false,
             error: error instanceof Error ? error.message : String(error)
-          } satisfies CreateShareResponse);
+          };
         }
       })();
-      return true;
+      return respondAsync(work, sendResponse);
     }
 
     return undefined;

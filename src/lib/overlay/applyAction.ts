@@ -10,6 +10,8 @@ const STYLE_ELEMENT_ID = 'guard-action-style';
  * A registry of all DOM elements that have been flagged for blurring
  */
 const flaggedImages = new Set<HTMLElement>();
+/** Images pre-covered while their classification is still pending (blur/hide actions only). */
+const processingImages = new Set<HTMLElement>();
 const explicitlyRevealed = new WeakSet<HTMLElement>();
 
 let currentAction: DetectionAction = 'mark';
@@ -51,7 +53,8 @@ export function setAction(action: DetectionAction): void {
     ensureStyleInjected();
   }
 
-  for (const element of flaggedImages) {
+  // Re-apply to flagged images and to images still being processed (switching to 'mark' reveals both).
+  for (const element of new Set([...flaggedImages, ...processingImages])) {
     stripActionClasses(element);
     applyCurrentActionToElement(element);
   }
@@ -75,6 +78,31 @@ export function markImageForAction(element: HTMLElement): void {
   flaggedImages.add(element);
   ensureStyleInjected();
   applyCurrentActionToElement(element);
+}
+
+/**
+ * Pre-emptively blurs/hides an image while its classification is pending, so unclassified content
+ * isn't shown before it is known to be safe. No-op for the 'mark' action (images stay visible) and
+ * for images the user has already revealed.
+ */
+export function coverWhileProcessing(element: HTMLElement): void {
+  if (currentAction === 'mark' || explicitlyRevealed.has(element)) return;
+  processingImages.add(element);
+  ensureStyleInjected();
+  applyCurrentActionToElement(element);
+}
+
+/**
+ * Resolves an image's pending cover once its result is known. Reveals the image unless its result
+ * flagged it (in which case `applyAction` has already added it to `flaggedImages`). Safe to call for
+ * any image — it is a no-op if the image was never pre-covered.
+ *
+ * Must run *after* `applyAction` for the same result so the flagged set is up to date.
+ */
+export function revealAfterProcessing(element: HTMLElement): void {
+  if (!processingImages.delete(element)) return;
+  if (flaggedImages.has(element) || explicitlyRevealed.has(element)) return;
+  stripActionClasses(element);
 }
 
 /**
@@ -116,7 +144,11 @@ export function clearAllActions(): void {
   for (const element of flaggedImages) {
     stripActionClasses(element);
   }
+  for (const element of processingImages) {
+    stripActionClasses(element);
+  }
   flaggedImages.clear();
+  processingImages.clear();
 }
 
 /**

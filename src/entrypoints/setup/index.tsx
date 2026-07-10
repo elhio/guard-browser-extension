@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { browser } from 'wxt/browser';
 import { QueryClientProvider } from '@tanstack/react-query';
 
-import '@/assets/tailwind.css';
+import '@/assets/pages.css';
 import { createQueryClient } from '@/lib/queryClient';
 import OnboardingWizard from '@/components/setup/OnboardingWizard';
 

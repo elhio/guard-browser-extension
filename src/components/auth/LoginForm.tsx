@@ -102,7 +102,7 @@ export function LoginForm({ onSuccess, onSkip }: LoginFormProps) {
             type="button"
             onClick={onSkip}
             disabled={isWaiting}
-            className="w-full flex justify-center items-center px-4 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full flex justify-center items-center px-4 py-2 bg-white dark:bg-[#1a1a1a] border border-gray-300 text-gray-700 font-medium rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {t("login_btn_skip")}
           </button>

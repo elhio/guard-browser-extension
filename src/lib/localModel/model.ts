@@ -1,28 +1,48 @@
 /**
- * Represents the configuration and metadata for an on-device machine learning model
+ * Configuration for the on-device multi-task classifier.
  *
- * @property id - The stable, unique identifier for the model
- * @property name - The human-readable display name of the model
- * @property repo - The Hugging Face repository ID containing the ONNX weights, loaded via transformers.js
- * @property description - A brief explanation of the model's architecture, training dataset, and primary use case
+ * The weights are a custom `vit_small_patch14_reg4_dinov2` model exported to ONNX with three
+ * output heads (AI-generated, violence, NSFW/explicit) and int8 dynamic quantization. They are
+ * shipped inside the extension and loaded through `@huggingface/transformers` (`AutoModel`), so
+ * the config points at a local directory rather than a Hugging Face repo id.
+ *
+ * @property id - Stable, unique identifier for the model
+ * @property name - Human-readable display name
+ * @property dir - Extension-relative directory containing `config.json` and `onnx/` (resolved via `chrome.runtime.getURL`)
+ * @property dtype - transformers.js dtype selecting the ONNX filename suffix (`int8` → `onnx/model_int8.onnx`, `fp16` → `onnx/model_fp16.onnx`)
+ * @property device - Execution-provider preference. `'auto'` uses WebGPU for fp16/fp32 weights when
+ *   available (int8 dynamic quantization has poor WebGPU kernel support, so `'auto'` keeps it on
+ *   WASM); `'webgpu'`/`'wasm'` force a provider. The runner always falls back to WASM if the
+ *   preferred provider can't initialize.
+ * @property imageSize - Square input resolution the model expects (pixels)
+ * @property mean - Per-channel normalization mean (ImageNet, RGB)
+ * @property std - Per-channel normalization standard deviation (ImageNet, RGB)
+ * @property description - Short explanation of the architecture and purpose
  */
 export interface LocalModel {
   id: string;
   name: string;
-  repo: string;
+  dir: string;
+  dtype: 'int8' | 'fp16' | 'fp32';
+  device: 'auto' | 'webgpu' | 'wasm';
+  imageSize: number;
+  mean: [number, number, number];
+  std: [number, number, number];
   description: string;
 }
 
 /**
- * The primary local fallback model configuration.
- *
- * This specific model is a Vision Transformer (ViT) image classifier trained on the CIFAKE dataset,
- * optimized to distinguish real photographic captures from AI-generated images.
+ * The on-device model used when the user enables local detection.
  */
-export const DEFAULT_MODEL: LocalModel = {
-  id: 'vit-ai-detector',
-  name: 'ViT AI-Image Detector',
-  repo: 'onnx-community/ai-image-detection-ONNX',
+export const LOCAL_MODEL: LocalModel = {
+  id: 'lens-light-v1',
+  name: 'Lens Light v1',
+  dir: '/models/lens_light_v1',
+  dtype: 'fp16',
+  device: 'auto',
+  imageSize: 518,
+  mean: [0.485, 0.456, 0.406],
+  std: [0.229, 0.224, 0.225],
   description:
-    'Vision Transformer (ViT-Base, CIFAKE) for detecting AI-generated images (Stable Diffusion, DALL-E, Midjourney). Apache 2.0.'
+    'Custom multi-task ViT-Small/14 DINOv2 (fp16) detecting AI-generated, violent, and explicit imagery.'
 };

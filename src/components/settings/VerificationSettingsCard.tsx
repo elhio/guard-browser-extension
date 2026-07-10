@@ -164,7 +164,7 @@ export function VerificationSettingsCard() {
                   />
 
                   {!eligible && reasonText && (
-                    <div className="pointer-events-none absolute bottom-full right-0 z-10 mb-2 w-max max-w-62.5 sm:max-w-xs opacity-0 transition-opacity duration-200 group-hover:opacity-100 bg-gray-900 text-white text-xs rounded py-1.5 px-3 shadow-lg text-left sm:text-center">
+                    <div className="pointer-events-none absolute bottom-full right-0 z-10 mb-2 w-max max-w-62.5 sm:max-w-xs opacity-0 transition-opacity duration-200 group-hover:opacity-100 bg-[#1f2937] text-white text-xs rounded py-1.5 px-3 shadow-lg text-left sm:text-center">
                       {reasonText}
                       <div className="absolute top-full right-1.5 -mt-px border-4 border-transparent border-t-gray-900" />
                     </div>

@@ -1,0 +1,33 @@
+name: Release
+
+on:
+  release:
+    types:
+      - published
+
+jobs:
+  build-and-release:
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+      - name: Setup node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Package (for chrome)
+        run: npm run zip
+      - name: Package (for firefox)
+        run: npm run zip:firefox
+      - name: Upload assets to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            .output/*-chrome-mv3.zip
+            .output/*-firefox-mv3.zip
+            .output/*-sources.zip

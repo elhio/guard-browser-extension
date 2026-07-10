@@ -128,7 +128,7 @@ function App() {
   const activeTaskCount = Object.values(tasks).filter(Boolean).length;
 
   return (
-    <div className="w-90 p-6 bg-white text-gray-800 font-sans shadow-lg">
+    <div className="w-90 p-6 bg-white dark:bg-[#111111] text-gray-800 font-sans shadow-lg">
 
       {/* Header Section */}
       <div className="flex flex-col items-center mb-6">
@@ -169,7 +169,7 @@ function App() {
             <span>{getTaskSummary()}</span>
             <span className="text-gray-400 text-xs">{isTasksOpen ? '▲' : '▼'}</span>
           </summary>
-          <div className="absolute w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-10 p-2">
+          <div className="absolute w-full mt-1 bg-white dark:bg-[#1a1a1a] border border-gray-200 rounded-md shadow-lg z-10 p-2">
             {taskOptions.map(task => (
               <label key={task.id} className="flex items-center gap-2 p-1 cursor-pointer hover:bg-gray-50 rounded">
                 <input
@@ -202,7 +202,7 @@ function App() {
             <span>{currentHandlingLabel}</span>
             <span className="text-gray-400 text-xs">{isHandlingOpen ? '▲' : '▼'}</span>
           </summary>
-          <div className="absolute w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-10 p-2">
+          <div className="absolute w-full mt-1 bg-white dark:bg-[#1a1a1a] border border-gray-200 rounded-md shadow-lg z-10 p-2">
             {handlingOptions.map(option => (
               <label key={option.id} className="flex items-center gap-2 p-1 cursor-pointer hover:bg-gray-50 rounded">
                 <input
@@ -240,7 +240,7 @@ function App() {
             <span className="text-gray-400 text-xs">{isDetectionOpen ? '▲' : '▼'}</span>
           </summary>
 
-          <div className="absolute w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-10 p-2">
+          <div className="absolute w-full mt-1 bg-white dark:bg-[#1a1a1a] border border-gray-200 rounded-md shadow-lg z-10 p-2">
             <label className="flex items-center gap-2 p-1 cursor-not-allowed rounded opacity-80">
               <input type="checkbox" checked={true} disabled className="accent-teal-500" />
               <span className="text-sm text-gray-700">

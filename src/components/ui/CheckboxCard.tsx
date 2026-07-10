@@ -17,7 +17,7 @@ export function CheckboxCard({
     <label
       className={`flex cursor-pointer items-center gap-4 rounded-md border p-3 transition-colors ${
         checked
-          ? 'border-teal-500 bg-teal-50/30'
+          ? 'border-teal-500 bg-teal-50/30 dark:bg-gray-50'
           : 'border-gray-200 bg-gray-50 hover:bg-gray-100'
       }`}
     >
