@@ -52,7 +52,7 @@ This project is built using [WXT](https://wxt.dev/), the Next-gen Web Extension 
 
 ### Prerequisites
 
-* [Node.js](https://nodejs.org/) (v18 or higher recommended)
+* [Node.js](https://nodejs.org/) (v22 or higher recommended)
 * `npm`, `yarn`, or `pnpm`
 
 ### Setup

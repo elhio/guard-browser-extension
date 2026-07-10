@@ -10,24 +10,41 @@ jobs:
     permissions:
       contents: write
     runs-on: ubuntu-latest
+    environment: production
+    env:
+      VITE_WEBSITE_URL: ${{ vars.VITE_WEBSITE_URL }}
+      VITE_API_URL: ${{ vars.VITE_API_URL }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
       - name: Setup node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
       - name: Install dependencies
         run: npm ci
-      - name: Package (for chrome)
+      - name: Package (chrome)
         run: npm run zip
-      - name: Package (for firefox)
+      - name: Package (firefox)
         run: npm run zip:firefox
       - name: Upload assets to release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            .output/*-chrome-mv3.zip
-            .output/*-firefox-mv3.zip
+            .output/*-chrome.zip
+            .output/*-firefox.zip
             .output/*-sources.zip
+
+      # TODO: publish straight to the stores
+      # (see https://wxt.dev/guide/essentials/publishing)
+      # - name: Submit to stores
+      #   run: npx wxt submit --chrome-zip .output/*-chrome.zip --firefox-zip .output/*-firefox.zip --firefox-sources-zip .output/*-sources.zip
+      #   env:
+      #     CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
+      #     CHROME_CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
+      #     CHROME_CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
+      #     CHROME_REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
+      #     FIREFOX_EXTENSION_ID: ${{ secrets.FIREFOX_EXTENSION_ID }}
+      #     FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER }}
+      #     FIREFOX_JWT_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}
