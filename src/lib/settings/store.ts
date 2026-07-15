@@ -15,6 +15,9 @@ export type DetectionAction = 'mark' | 'blur' | 'hide';
  * @property useDetectorLocalModel - True if the extension should run inference also on local model
  * @property verificatorSpace - The ID of the selected workspace/environment used for API verification
  * @property hasCompletedSetup - True if the user has finished the initial onboarding wizard
+ * @property hasPromptedSetup - True once the wizard has been opened automatically. Distinct from
+ *   `hasCompletedSetup`: it stays true even if the user closes the wizard without finishing, so the
+ *   extension offers onboarding exactly once instead of reopening a tab every time it starts
  * @property isActive - The master kill-switch. If false, the extension will not scan any pages
  * @property exceptionSites - A list of hostnames (e.g., 'example.com') where the extension is explicitly disabled
  */
@@ -26,6 +29,7 @@ export interface Settings {
   useDetectorLocalModel: boolean;
   verificatorSpace: string | null;
   hasCompletedSetup: boolean;
+  hasPromptedSetup: boolean;
   isActive: boolean;
   exceptionSites: string[];
 }
@@ -41,6 +45,7 @@ export const defaultSettings: Settings = {
   useDetectorLocalModel: false,
   verificatorSpace: null,
   hasCompletedSetup: false,
+  hasPromptedSetup: false,
   isActive: true,
   exceptionSites: []
 };

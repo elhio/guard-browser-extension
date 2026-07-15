@@ -64,10 +64,11 @@ export default defineConfig({
       'storage',
       'unlimitedStorage',
       ...(browser === 'chrome' ? ['offscreen'] : []),
+      ...(browser === 'safari' ? ['nativeMessaging'] : []),
     ],
     content_security_policy: {
       extension_pages:
-        browser === 'firefox'
+        browser === 'firefox' || browser === 'safari'
           ? "script-src 'self' 'wasm-unsafe-eval' blob:; worker-src 'self' blob:; object-src 'self';"
           : "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';",
     },

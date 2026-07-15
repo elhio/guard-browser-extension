@@ -13,6 +13,7 @@ export interface Settings {
   useDetectorLocalModel: boolean;
   verificatorSpace: string | null;
   hasCompletedSetup: boolean;
+  hasPromptedSetup: boolean;
   isActive: boolean;
   exceptionSites: string[];
 }
@@ -26,6 +27,7 @@ export const defaultSettings: Settings = {
   useDetectorLocalModel: false,
   verificatorSpace: null,
   hasCompletedSetup: false,
+  hasPromptedSetup: false,
   isActive: true,
   exceptionSites: [],
 };

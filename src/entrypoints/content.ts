@@ -23,6 +23,11 @@ import {
   type VerifyImageRequest,
   type VerifyImageResponse
 } from '@/lib/messaging/verifyMessages';
+import {
+  APP_HANDOFF_MESSAGE,
+  APP_HANDOFF_PARAM,
+  type AppHandoffRequest
+} from '@/lib/messaging/appHandoff';
 
 import {
   applyAction,
@@ -78,12 +83,13 @@ async function processCandidates(candidates: ImageCandidate[]): Promise<void> {
 }
 
 /**
- * Firefox delivers the classification result by pushing a `CLASSIFY_RESULT_MESSAGE` from the
- * background (`tabs.sendMessage`) rather than as a `runtime.sendMessage` response, which it doesn't
- * reliably return to a content-script sender. These resolve the awaiting request by id.
+ * MV2 targets (Firefox + Safari) deliver the classification result by pushing a
+ * `CLASSIFY_RESULT_MESSAGE` from the background (`tabs.sendMessage`) rather than as a
+ * `runtime.sendMessage` response, which they don't reliably return to a content-script sender.
+ * These resolve the awaiting request by id.
  */
 const pendingClassifications = new Map<string, (response: ClassifyImageResponse) => void>();
-if (import.meta.env.FIREFOX) {
+if (import.meta.env.MANIFEST_VERSION === 2) {
   browser.runtime.onMessage.addListener((message, sender) => {
     // The result is pushed by our background page, which has no `sender.tab`. Reject anything that
     // carries a tab (i.e. came from another content-script frame) so a page can't inject fake
@@ -100,7 +106,7 @@ if (import.meta.env.FIREFOX) {
 
 /** Sends a classification request and resolves with its result, per-browser transport. */
 function requestClassification(request: ClassifyImageRequest): Promise<ClassifyImageResponse> {
-  if (import.meta.env.FIREFOX) {
+  if (import.meta.env.MANIFEST_VERSION === 2) {
     // Fire the request and wait for the background to push the result back by id.
     const result = new Promise<ClassifyImageResponse>((resolve) => {
       pendingClassifications.set(request.requestId, resolve);
@@ -194,11 +200,77 @@ async function verifyWithExternalApi(src: string): Promise<VerifyImageResponse> 
   return (await browser.runtime.sendMessage(request)) as VerifyImageResponse;
 }
 
+/**
+ * Relays the website's token handoff (`EXT_AUTH_SUCCESS`) on to the extension pages waiting for it.
+ *
+ * This MUST be registered before `main` awaits anything. The script runs at `document_start` and
+ * `postMessage` is not buffered, so a message posted while we're still waiting — and
+ * `createShadowRootUi` waits for `<body>` to exist — is dropped with no trace. That window is
+ * invisible during a fresh login, where the user spends seconds typing credentials, but it reliably
+ * swallows the handoff from an already-authenticated site, which posts the instant the page loads.
+ */
+function watchForAuthHandoff(): void {
+  window.addEventListener('message', (event) => {
+    if (event.source !== window) return;
+
+    // Only trust a token handoff from the configured site. Validate the message's own origin (not
+    // just the page's hostname): its protocol must match the configured website's (https in prod,
+    // http for local dev) and its host must equal that site or a subdomain of it, so an
+    // unrelated or cross-protocol same-window context can't inject a token.
+    const allowedOrigin = new URL(import.meta.env.VITE_WEBSITE_URL);
+    let originOk = false;
+    try {
+      const origin = new URL(event.origin);
+      originOk =
+        origin.protocol === allowedOrigin.protocol &&
+        (origin.hostname === allowedOrigin.hostname ||
+          origin.hostname.endsWith(`.${allowedOrigin.hostname}`));
+    } catch {
+      originOk = false;
+    }
+    if (!originOk) return;
+
+    if (event.data?.type === 'EXT_AUTH_SUCCESS' && event.data.token) {
+      void browser.runtime.sendMessage({
+        type: 'TOKEN_RECEIVED',
+        token: event.data.token
+      });
+    }
+  });
+}
+
+/**
+ * Wakes the background when the Apple container app hands off to us.
+ *
+ * The app parks its real instruction in the App Group and opens this page purely to reach the
+ * extension. Telling the background right away is the whole point: it reports in, collects the
+ * instruction, and closes this page. Left to itself a non-persistent background page might not load
+ * again for minutes.
+ *
+ * Gated to our own site so a random page can't add the marker and get its tab closed.
+ */
+function watchForAppHandoff(): void {
+  try {
+    const website = new URL(import.meta.env.VITE_WEBSITE_URL);
+    if (location.hostname !== website.hostname) return;
+    if (!new URLSearchParams(location.search).has(APP_HANDOFF_PARAM)) return;
+  } catch {
+    return;
+  }
+
+  void browser.runtime.sendMessage({ type: APP_HANDOFF_MESSAGE } satisfies AppHandoffRequest);
+}
+
 export default defineContentScript({
   matches: ['*://*/*'],
   runAt: 'document_start',
   cssInjectionMode: 'ui',
   async main(ctx) {
+    // Before any `await` — see the note on the function.
+    watchForAuthHandoff();
+
+    if (import.meta.env.SAFARI) watchForAppHandoff();
+
     const menuUi = await createShadowRootUi(ctx, {
       name: 'guard-menu',
       position: 'inline',
@@ -211,34 +283,6 @@ export default defineContentScript({
       onRemove: (root) => root?.unmount()
     });
     menuUi.mount();
-
-    window.addEventListener('message', (event) => {
-      if (event.source !== window) return;
-
-      // Only trust a token handoff from the configured site. Validate the message's own origin (not
-      // just the page's hostname): its protocol must match the configured website's (https in prod,
-      // http for local dev) and its host must equal that site or a subdomain of it, so an
-      // unrelated or cross-protocol same-window context can't inject a token.
-      const allowedOrigin = new URL(import.meta.env.VITE_WEBSITE_URL);
-      let originOk = false;
-      try {
-        const origin = new URL(event.origin);
-        originOk =
-          origin.protocol === allowedOrigin.protocol &&
-          (origin.hostname === allowedOrigin.hostname ||
-            origin.hostname.endsWith(`.${allowedOrigin.hostname}`));
-      } catch {
-        originOk = false;
-      }
-      if (!originOk) return;
-
-      if (event.data?.type === 'EXT_AUTH_SUCCESS' && event.data.token) {
-        void browser.runtime.sendMessage({
-          type: 'TOKEN_RECEIVED',
-          token: event.data.token
-        });
-      }
-    });
 
     let stopWatching: (() => void) | undefined;
 

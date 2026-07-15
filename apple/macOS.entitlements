@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Shared by the macOS app and its Safari extension. The sandbox keys are restated here because
+	     supplying an entitlements file takes over from the ENABLE_APP_SANDBOX build setting; dropping
+	     them would silently unsandbox the app and break App Store eligibility. -->
+	<key>com.apple.security.app-sandbox</key>
+	<true/>
+	<key>com.apple.security.files.user-selected.read-only</key>
+	<true/>
+	<key>com.apple.security.network.client</key>
+	<true/>
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>group.com.elhio.guard</string>
+	</array>
+</dict>
+</plist>

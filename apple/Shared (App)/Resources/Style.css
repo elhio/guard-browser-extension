@@ -1,0 +1,99 @@
+* {
+    -webkit-user-select: none;
+    -webkit-user-drag: none;
+    cursor: default;
+}
+
+:root {
+    color-scheme: light dark;
+
+    --spacing: 20px;
+    --accent: #0f766e;
+}
+
+html {
+    height: 100%;
+}
+
+body {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    flex-direction: column;
+
+    gap: var(--spacing);
+    margin: 0 calc(var(--spacing) * 1.5);
+    padding-top: calc(var(--spacing) * 2);
+    height: 100%;
+    box-sizing: border-box;
+
+    font: -apple-system-short-body;
+    text-align: center;
+}
+
+/* --- visibility switches -------------------------------------------------
+   Same idiom throughout: a thing is hidden unless <body> opts it in. Screens,
+   platform copy, OS-version wording and the permission state all use it, so
+   adding a variant never means touching JS. */
+
+.screen { display: none; flex-direction: column; align-items: center; gap: var(--spacing); width: 100%; max-width: 30em; }
+body.screen-step-1 .screen-step-1,
+body.screen-step-2 .screen-step-2,
+body.screen-step-3 .screen-step-3,
+body.screen-home   .screen-home,
+body.screen-about  .screen-about { display: flex; }
+
+body:not(.platform-mac, .platform-ios) :is(.platform-mac, .platform-ios) { display: none; }
+body.platform-ios .platform-mac { display: none; }
+body.platform-mac .platform-ios { display: none; }
+
+body:not(.settings-modern, .settings-legacy) :is(.settings-modern, .settings-legacy) { display: none; }
+body.settings-modern .settings-legacy { display: none; }
+body.settings-legacy .settings-modern { display: none; }
+
+/* Exactly one of these is ever shown, so the permissions step can't offer a way forward that
+   isn't there yet. */
+body:not(.permissions-granted) .has-permissions { display: none; }
+body.permissions-granted .needs-permissions { display: none; }
+
+.back { position: fixed; top: var(--spacing); left: var(--spacing); z-index: 1; }
+body:not(.has-back) .back { display: none; }
+
+/* --- content ------------------------------------------------------------ */
+
+.logo { flex-shrink: 0; }
+
+h1 {
+    margin: 0;
+    font: -apple-system-headline;
+    font-size: 1.5em;
+}
+
+.wordmark { font-size: 2em; }
+
+p { margin: 0; line-height: 1.45; }
+
+.bullets {
+    margin: 0;
+    padding-left: 1.3em;
+    /* Instructions to follow in order, so they read left-aligned even on a centred page. */
+    text-align: left;
+    line-height: 1.7;
+}
+
+.footnote { font: -apple-system-short-footnote; opacity: 0.6; }
+
+button { font-size: 1em; }
+
+/* Set the action apart from the copy it follows, rather than letting the flex gap alone decide. */
+.primary { margin-top: calc(var(--spacing) * 0.75); padding: 0.6em 2em; font-weight: 600; }
+
+/* The home screen's actions carry equal weight, so they get equal width. */
+.stack { display: flex; flex-direction: column; gap: calc(var(--spacing) * 0.6); width: 100%; margin-top: calc(var(--spacing) * 0.75); }
+.wide { width: 100%; padding: 0.8em 1em; }
+
+/* The about screen's link is its only action, so it gets the same breathing room. */
+.screen-about .wide { margin-top: calc(var(--spacing) * 0.75); }
+
+/* Keeps step 3's note tethered to its button rather than floating mid-screen. */
+.screen-step-3 .footnote { margin-top: calc(var(--spacing) * -0.4); }

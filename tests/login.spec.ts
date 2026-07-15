@@ -5,11 +5,11 @@ import { setupWizard } from "./pages/setup";
  * A stand-in for the real login site. The extension content script is injected here (it
  * matches every http(s) page) and, because this page's origin is the configured
  * VITE_WEBSITE_URL (http://localhost:5173), the content script accepts an EXT_AUTH_SUCCESS
- * message and forwards the token to the extension. The test posts the token itself, once,
- * after the content script has mounted (see below) — posting more than once would call the
- * wizard's onSuccess repeatedly.
+ * message and forwards the token to the extension. The test posts the token itself, once —
+ * posting more than once would call the wizard's onSuccess repeatedly.
  */
 const LOGIN_STUB_HTML = `<!doctype html><html><body>login stub</body></html>`;
+
 const TEST_TOKEN = "e2e-test-token";
 
 test("logging in via the website handoff stores the token and advances the wizard", async ({
@@ -35,8 +35,7 @@ test("logging in via the website handoff stores the token and advances the wizar
     wizard.loginWebsiteButton().click(),
   ]);
 
-  // Wait until the content script has mounted its shadow host — its window "message" listener
-  // is registered right after — then post the token exactly once.
+  // Stand in for the user finishing the login form: the site posts the token well after load.
   await loginTab.waitForSelector("guard-menu", { state: "attached", timeout: 15_000 });
   await loginTab.evaluate((token) => {
     window.postMessage({ type: "EXT_AUTH_SUCCESS", token }, "*");
@@ -58,3 +57,10 @@ test("logging in via the website handoff stores the token and advances the wizar
     .toBe("e2e-test-token");
   expect((await readSettings(serviceWorker)).isLoggedIn).toBe(true);
 });
+
+// NOTE: the already-authenticated case — where the site posts EXT_AUTH_SUCCESS during page load
+// rather than after a form submit — is deliberately not covered here. The login tab is opened by the
+// extension via `browser.tabs.create`, and its first navigation is already in flight before
+// Playwright can intercept it, so `context.route` only stubs the tab's subresources and the real
+// page loads anyway. Any test of that timing would be racing the browser rather than asserting on
+// our code. The protection lives in `watchForAuthHandoff()` being called before `main` awaits.

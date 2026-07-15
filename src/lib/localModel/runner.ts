@@ -1,19 +1,32 @@
 import { env, AutoModel, ImageProcessor, RawImage, Tensor } from '@huggingface/transformers';
+import { browser } from 'wxt/browser';
 import { LOCAL_MODEL } from './model';
 
-declare const chrome: { runtime: { getURL: (path: string) => string } };
+/**
+ * Resolves an extension-relative asset path to an absolute URL.
+ *
+ * `getURL` must be **called on `browser.runtime`**, never detached into a standalone reference:
+ * Chrome's copy is natively bound and survives that, but Safari's relies on its receiver and quietly
+ * returns `undefined` instead. The damage surfaces nowhere near the cause — transformers.js takes the
+ * undefined path into `pathJoin`, which throws `undefined is not an object (evaluating 't.replace')`
+ * and looks like a model/provider failure.
+ *
+ * The cast only widens the path type: WXT types `getURL` against a generated union of known public
+ * paths, and the weights and ORT WASM live in asset dirs (`/models/...`, `/wasm/`) that aren't in it.
+ */
+const getAssetUrl = (path: string): string =>
+  (browser.runtime.getURL as (assetPath: string) => string)(path);
 
 /**
- * Environment configuration for transformers.js inside a Chrome Extension (Manifest V3).
+ * Environment configuration for transformers.js inside a web extension.
  * Extension pages cannot pull WASM binaries from a CDN due to the strict Content Security Policy,
- * so onnxruntime-web is pointed at the local binaries shipped in `/wasm` (exposed via
- * `web_accessible_resources`). The weights are packaged locally too, so remote model fetches are
- * disabled entirely.
+ * so onnxruntime-web is pointed at the local binaries shipped in `/wasm`. The weights are packaged
+ * locally too, so remote model fetches are disabled entirely.
  */
 env.allowLocalModels = true;
 env.allowRemoteModels = false;
 if (env.backends?.onnx?.wasm) {
-  env.backends.onnx.wasm.wasmPaths = chrome.runtime.getURL('/wasm/');
+  env.backends.onnx.wasm.wasmPaths = getAssetUrl('/wasm/');
   // Multi-threaded WASM requires SharedArrayBuffer, which needs cross-origin isolation that the
   // offscreen context doesn't have. Pin to a single thread so onnxruntime-web doesn't spin up a
   // thread pool it can't use (a failed fallback that wastes time without speeding inference up).
@@ -85,7 +98,7 @@ async function loadModelWithFallback(): Promise<{ model: LoadedModel['model']; d
 
   for (const device of providers) {
     try {
-      const model = (await AutoModel.from_pretrained(chrome.runtime.getURL(LOCAL_MODEL.dir), {
+      const model = (await AutoModel.from_pretrained(getAssetUrl(LOCAL_MODEL.dir), {
         dtype: LOCAL_MODEL.dtype,
         device
       })) as unknown as LoadedModel['model'];
@@ -110,8 +123,8 @@ async function loadModelWithFallback(): Promise<{ model: LoadedModel['model']; d
  * that architecture is unknown to transformers.js, it falls back to the base class whose forward
  * returns the raw ORT outputs keyed by the graph's output names (`out_ai`, `out_violence`,
  * `out_nsfw`). The image processor is constructed from a plain config object — no
- * `preprocessor_config.json` on disk — resizing the longest edge to 518, padding to a 518×518
- * square, then rescaling and normalizing with ImageNet statistics.
+ * `preprocessor_config.json` on disk — and only rescales and normalizes with ImageNet statistics;
+ * the geometry is handled up front by {@link letterbox}, which mirrors how the model was trained.
  */
 function getModel(): Promise<LoadedModel> {
   if (!modelPromise) {
@@ -119,13 +132,13 @@ function getModel(): Promise<LoadedModel> {
       const loadStart = performance.now();
       const { model, device } = await loadModelWithFallback();
 
-      // `do_pad`/`pad_size` are honored by the base ImageProcessor at runtime but are missing from
-      // its published config type, so the config is assembled separately and cast.
+      // Resizing and padding are handled by `letterbox()`, which the processor can't reproduce, so
+      // it is left with just the pixel maths: rescale to 0-1, then normalize with ImageNet stats.
+      // The config is assembled separately and cast because the base ImageProcessor honors these
+      // keys at runtime but they're missing from its published config type.
       const processorConfig = {
-        do_resize: true,
-        size: { longest_edge: LOCAL_MODEL.imageSize },
-        do_pad: true,
-        pad_size: { width: LOCAL_MODEL.imageSize, height: LOCAL_MODEL.imageSize },
+        do_resize: false,
+        do_pad: false,
         do_rescale: true,
         rescale_factor: 1 / 255,
         do_normalize: true,
@@ -155,6 +168,56 @@ function runSerialized<T>(task: () => Promise<T>): Promise<T> {
   // Keep the chain alive regardless of this task's outcome.
   inferenceChain = result.catch(() => {});
   return result;
+}
+
+/**
+ * Reproduces the training-time letterbox: scale the longest edge down to `size` (preserving the
+ * aspect ratio), then centre the result on a `size`×`size` square, filling the short axis by
+ * REPLICATING THE EDGE PIXELS rather than with a constant colour — so the model never sees an
+ * artificial border it wasn't trained on.
+ *
+ * This is done by hand because transformers.js can't express it: its `pad_image` supports only
+ * `constant` and `symmetric` padding (and `symmetric` rejects centring), and the base
+ * `ImageProcessor` calls it with no options at all — always constant-filling with 0 (which, being
+ * applied after normalization, is the ImageNet mean colour) and anchoring the image top-left. The
+ * processor is therefore left to do only rescale + normalize.
+ *
+ * @param image - The decoded source image
+ * @param size - Target square resolution (`LOCAL_MODEL.imageSize`)
+ * @returns A `size`×`size` RGB image ready for rescale/normalize
+ */
+async function letterbox(image: RawImage, size: number): Promise<RawImage> {
+  const rgb = image.rgb();
+  const scale = size / Math.max(rgb.width, rgb.height);
+  // The training transform derives its target with Python's `int()`, which truncates — match it.
+  const width = Math.max(1, Math.floor(rgb.width * scale));
+  const height = Math.max(1, Math.floor(rgb.height * scale));
+
+  const resized = await rgb.resize(width, height, { resample: 3 /* bicubic */ });
+  if (width === size && height === size) return resized;
+
+  // Left/top offsets match the training transform's `pad // 2` split.
+  const left = Math.floor((size - width) / 2);
+  const top = Math.floor((size - height) / 2);
+
+  const src = resized.data;
+  const out = new Uint8ClampedArray(size * size * 3);
+
+  // Clamping each source coordinate back into the image IS edge replication: every padded pixel
+  // resolves to the nearest real pixel, and pixels inside the image map to themselves.
+  for (let y = 0; y < size; y++) {
+    const sy = Math.min(Math.max(y - top, 0), height - 1);
+    for (let x = 0; x < size; x++) {
+      const sx = Math.min(Math.max(x - left, 0), width - 1);
+      const s = (sy * width + sx) * 3;
+      const d = (y * size + x) * 3;
+      out[d] = src[s];
+      out[d + 1] = src[s + 1];
+      out[d + 2] = src[s + 2];
+    }
+  }
+
+  return new RawImage(out, size, size, 3);
 }
 
 /** Standard logistic function, mapping a raw logit to a 0-1 probability. */
@@ -198,14 +261,15 @@ export async function classifyImage(blob: Blob): Promise<LocalModelScores | null
   // Serialize inference: a single onnxruntime-web session can't run concurrent `run()` calls.
   // Preprocessing is included in the critical section to keep each image's work together.
   const outputs = await runSerialized(async () => {
-    const { pixel_values } = await processor(image);
+    const { pixel_values } = await processor(await letterbox(image, LOCAL_MODEL.imageSize));
     return model({ input: pixel_values });
   });
 
-  // `out_ai` is a raw logit; `out_violence`/`out_nsfw` are already sigmoid probabilities.
+  // Every head is trained with `BCEWithLogits`, so all three outputs are raw logits (unbounded, and
+  // frequently negative) — each needs a sigmoid to become a 0-1 probability.
   return {
     aiGenerated: sigmoid(firstValue(outputs.out_ai)),
-    violent: firstValue(outputs.out_violence),
-    explicit: firstValue(outputs.out_nsfw)
+    violent: sigmoid(firstValue(outputs.out_violence)),
+    explicit: sigmoid(firstValue(outputs.out_nsfw))
   };
 }

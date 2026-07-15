@@ -12,10 +12,11 @@ import { respondAsync } from '@/lib/messaging/respondAsync';
 import { classifyCandidates } from '@/lib/classify/classifyCandidates';
 
 // This page hosts the heavy C2PA + model work off the DOM-less/IIFE background:
-// - Chrome: it's a real offscreen document, messaged via `runtime.sendMessage`.
-// - Firefox: it's an iframe in the background page, driven over `window.postMessage` (Firefox
-//   can't return a runtime message response out of a background sub-frame).
-if (import.meta.env.FIREFOX) {
+// - Chrome (MV3): it's a real offscreen document, messaged via `runtime.sendMessage`.
+// - MV2 targets (Firefox + Safari): it's an iframe in the background page, driven over
+//   `window.postMessage` (they can't return a runtime message response out of a background
+//   sub-frame).
+if (import.meta.env.MANIFEST_VERSION === 2) {
   window.addEventListener('message', (event) => {
     const request = event.data;
     if (!isOffscreenIframeRequest(request)) return;

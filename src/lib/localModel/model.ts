@@ -1,8 +1,9 @@
 /**
  * Configuration for the on-device multi-task classifier.
  *
- * The weights are a custom `vit_small_patch14_reg4_dinov2` model exported to ONNX with three
- * output heads (AI-generated, violence, NSFW/explicit) and int8 dynamic quantization. They are
+ * The weights are a custom `fastvit_t8.apple_dist_in1k` backbone exported to ONNX with three output
+ * heads (AI-generated, violence, NSFW/explicit) and fp16 quantization. Every head is trained with
+ * `BCEWithLogits`, so the graph emits raw logits — `runner.ts` applies the sigmoid. The weights are
  * shipped inside the extension and loaded through `@huggingface/transformers` (`AutoModel`), so
  * the config points at a local directory rather than a Hugging Face repo id.
  *
@@ -35,14 +36,14 @@ export interface LocalModel {
  * The on-device model used when the user enables local detection.
  */
 export const LOCAL_MODEL: LocalModel = {
-  id: 'lens-light-v1',
-  name: 'Lens Light v1',
-  dir: '/models/lens_light_v1',
+  id: 'lens-tiny-v1',
+  name: 'Lens Tiny v1',
+  dir: '/models/lens_tiny_v1',
   dtype: 'fp16',
   device: 'auto',
-  imageSize: 518,
+  imageSize: 256,
   mean: [0.485, 0.456, 0.406],
   std: [0.229, 0.224, 0.225],
   description:
-    'Custom multi-task ViT-Small/14 DINOv2 (fp16) detecting AI-generated, violent, and explicit imagery.'
+    'Custom multi-task FastViT-T8 (fp16) detecting AI-generated, violent, and explicit imagery.'
 };

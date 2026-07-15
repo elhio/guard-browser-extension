@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+
+    <link rel="stylesheet" href="../Style.css">
+    <script src="../Script.js" defer></script>
+</head>
+<body>
+    <!-- Which screen is visible, and which copy variant is used, is decided entirely by classes on
+         <body> (see Script.js). Every string lives here so it can be localized; none are built in JS. -->
+
+    <button class="back" data-back>Back</button>
+
+    <img class="logo" src="../Icon.png" width="96" height="96" alt="Guard Icon">
+
+    <section class="screen screen-step-1">
+        <h1>Welcome to Guard!</h1>
+        <p>Guard checks the images on the pages you browse and flags the ones that look AI-generated,
+           violent, or explicit — right where you see them, without uploading anything.</p>
+        <button class="primary" data-goto="step-2">Get started</button>
+    </section>
+
+    <section class="screen screen-step-2">
+        <h1>Permissions</h1>
+        <p>Guard is a Safari extension, so Safari has to let it read the pages you visit. That access
+           stays on your device — it's what lets Guard check images as they load.</p>
+        <ul class="bullets platform-ios">
+            <li class="settings-legacy">Open <b>Settings</b> → <b>Safari</b> → <b>Extensions</b></li>
+            <li class="settings-modern">Open <b>Settings</b> → <b>Apps</b> → <b>Safari</b> → <b>Extensions</b></li>
+            <li>Turn on <b>Guard</b>, then set its website access to <b>Allow</b></li>
+        </ul>
+        <ul class="bullets platform-mac">
+            <li class="settings-legacy">Open <b>Safari</b> → <b>Preferences</b> → <b>Extensions</b></li>
+            <li class="settings-modern">Open <b>Safari</b> → <b>Settings</b> → <b>Extensions</b></li>
+            <li>Turn on <b>Guard</b>, then set its website access to <b>Allow</b></li>
+        </ul>
+
+        <!-- Until access is granted there is nothing to continue to, so the only action offered is the
+             one that gets you there. -->
+        <div class="needs-permissions">
+            <button class="primary platform-ios" data-action="open-settings">Open Settings</button>
+            <button class="primary platform-mac" data-action="open-preferences">Quit and Open Safari Settings…</button>
+            <p class="footnote platform-ios">This opens Settings on Guard’s own page — Safari’s extension
+               list is a few taps away, as above.</p>
+        </div>
+        <!-- Access being granted needs no announcement: the button turning into "Continue" says it. -->
+        <button class="primary has-permissions" data-goto-continue>Continue</button>
+    </section>
+
+    <section class="screen screen-step-3">
+        <h1>Settings</h1>
+        <p>The last step happens in Safari: choose what Guard should look for, what it does when it
+           finds something, and whether to link your Elhio account.</p>
+        <button class="primary" data-action="open-setup">Setup</button>
+        <p class="footnote">Guard opens its setup in a Safari tab. You can come back here any time —
+           this step waits until you’ve finished it.</p>
+    </section>
+
+    <section class="screen screen-home">
+        <h1 class="wordmark">Guard</h1>
+        <div class="stack">
+            <button class="wide" data-goto="about">About</button>
+            <button class="wide" data-goto="step-2">Permissions</button>
+            <button class="wide" data-action="open-options">Settings</button>
+        </div>
+    </section>
+
+    <section class="screen screen-about">
+        <h1>About</h1>
+        <p>Guard detects AI-generated, violent, and explicit images as you browse. Images are analysed
+           on your device.</p>
+        <p class="footnote">By Elhio</p>
+        <button class="wide" data-action="open-website">elhio.com</button>
+    </section>
+</body>
+</html>

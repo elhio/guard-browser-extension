@@ -39,6 +39,7 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
       useDetectorLocalModel,
       verificatorSpace: isAuthenticated ? verificatorSpace : null,
       hasCompletedSetup: true,
+      hasPromptedSetup: true,
       isActive: true,
       exceptionSites: []
     });

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { browser } from 'wxt/browser';
 
 import { getAppLocale, t } from '@/lib/i18n';
@@ -24,18 +24,32 @@ interface LoginFormProps {
 export function LoginForm({ onSuccess, onSkip }: LoginFormProps) {
   const [isWaiting, setIsWaiting] = useState(false);
 
+  const loginTabId = useRef<number | undefined>(undefined);
+
   const websiteUrl = import.meta.env.VITE_WEBSITE_URL.replace(/\/+$/, '');
   const locale = getAppLocale();
 
   const loginUrl = `${websiteUrl}/${locale}/login?source=extension`;
   const signupUrl = `${websiteUrl}/${locale}/signup?source=extension`;
 
+  const returnToWizard = useCallback(async (senderTabId?: number) => {
+    const tabId = senderTabId ?? loginTabId.current;
+    loginTabId.current = undefined;
+
+    if (tabId != null) {
+      await browser.tabs.remove(tabId).catch(console.error);
+    }
+
+    const wizardTab = await browser.tabs.getCurrent().catch(() => undefined);
+    if (wizardTab?.id != null) {
+      await browser.tabs.update(wizardTab.id, { active: true }).catch(console.error);
+    }
+  }, []);
+
   useEffect(() => {
     const handleMessage = (message: TokenMessage, sender: MessageSender) => {
       if (message.type === 'TOKEN_RECEIVED' && message.token) {
-        if (sender.tab?.id) {
-          browser.tabs.remove(sender.tab.id).catch(console.error);
-        }
+        void returnToWizard(sender.tab?.id);
         onSuccess(message.token);
       }
     };
@@ -45,7 +59,7 @@ export function LoginForm({ onSuccess, onSkip }: LoginFormProps) {
     return () => {
       browser.runtime.onMessage.removeListener(handleMessage);
     };
-  }, [onSuccess]);
+  }, [onSuccess, returnToWizard]);
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout>;
@@ -64,7 +78,8 @@ export function LoginForm({ onSuccess, onSkip }: LoginFormProps) {
   const handleExternalAuth = async (targetUrl: string) => {
     setIsWaiting(true);
 
-    await browser.tabs.create({ url: targetUrl, active: true });
+    const tab = await browser.tabs.create({ url: targetUrl, active: true });
+    loginTabId.current = tab.id;
   };
 
   return (

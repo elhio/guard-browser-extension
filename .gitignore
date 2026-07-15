@@ -6,6 +6,15 @@ stats-*.json
 web-ext.config.ts
 public/wasm/
 
+# Xcode
+apple/build/
+apple/DerivedData/
+xcuserdata
+*.xcuserstate
+*.moved-aside
+*.xccheckout
+*.profile
+
 # dependencies
 node_modules
 yarn.lock
