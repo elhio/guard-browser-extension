@@ -30,13 +30,6 @@ class ViewController: PlatformViewController, WKNavigationDelegate, WKScriptMess
 
     @IBOutlet var webView: WKWebView!
 
-    /// Where the wizard was left off, so returning to the app resumes rather than restarting.
-    /// Only meaningful while setup is unfinished — afterwards the App Group decides what to show.
-    private var savedScreen: String {
-        get { UserDefaults.standard.string(forKey: "wizardScreen") ?? "step-1" }
-        set { UserDefaults.standard.set(newValue, forKey: "wizardScreen") }
-    }
-
     private var isPageLoaded = false
 
     override func viewDidLoad() {
@@ -66,15 +59,32 @@ class ViewController: PlatformViewController, WKNavigationDelegate, WKScriptMess
 #endif
     }
 
+#if os(macOS)
+    override func viewDidAppear() {
+        super.viewDidAppear()
+        // The wizard is a fixed vertical flow with no scroll, and German runs longer than English, so
+        // stop the window being shrunk to where content clips. The storyboard sets the default size;
+        // this only guards the floor. Set once — the window is up by now, and re-imposing it on every
+        // activation would fight a user who resized.
+        view.window?.contentMinSize = NSSize(width: 520, height: 600)
+    }
+#endif
+
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         isPageLoaded = true
-        refresh()
+        render(initial: true)
     }
 
+    /// Re-evaluate when the app comes back to the front — granting permissions and running setup both
+    /// happen elsewhere, so the answer may have changed while we were away.
     @objc private func refresh() {
+        render(initial: false)
+    }
+
+    private func render(initial: Bool) {
         guard isPageLoaded else { return }
         resolvePermissionsGranted { [weak self] granted in
-            self?.render(permissionsGranted: granted)
+            self?.render(permissionsGranted: granted, initial: initial)
         }
     }
 
@@ -97,35 +107,48 @@ class ViewController: PlatformViewController, WKNavigationDelegate, WKScriptMess
 #endif
     }
 
-    private func render(permissionsGranted: Bool) {
+    private func render(permissionsGranted: Bool, initial: Bool) {
+        // `hasCompletedSetup` comes from the extension (the single source of truth for onboarding),
+        // relayed through the App Group. The app keeps no onboarding state of its own — so if the
+        // extension's setup is reset, the app shows the wizard again, always from the start, with
+        // nothing stale of its own to resume into.
         let setupDone = GuardAppGroup.hasCompletedSetup
 
-        // Setup is the finish line. Once it's crossed the wizard is gone for good — except that
-        // access can still be taken away afterwards, and without it Guard silently does nothing. So
-        // that one case detours back through the permissions step. Where that step then leads, in
-        // both directions, is the page's business: `setupDone` is all it needs to work it out.
-        let screen: String
+        // Which screen to force, if any. Once setup is done, always the home hub — the app never
+        // drags the user to the permissions step; home has its own Permissions button for when they
+        // want to grant or re-grant access. During first-time setup the *user* drives navigation, so
+        // we only pick the starting screen (step 1) on the initial load — a later refresh (e.g.
+        // returning from granting permissions in Safari) leaves them where they are and merely updates
+        // the permission state below, so step 2's button can turn into Continue.
+        let screen: String?
         switch (setupDone, permissionsGranted) {
-        case (true, true): screen = "home"
-        case (true, false): screen = "step-2"
-        case (false, _): screen = savedScreen
+        case (true, _): screen = "home"
+        case (false, _): screen = initial ? "step-1" : nil
         }
 
 #if os(iOS)
         let platform = "ios"
+        // iOS 18 moved Safari's settings under an "Apps" section; older iOS uses the flat path.
         let modernSettings = if #available(iOS 18, *) { true } else { false }
 #elseif os(macOS)
         let platform = "mac"
-        let modernSettings = if #available(macOS 13, *) { true } else { false }
+        // The macOS deployment target is 13, and macOS 13 renamed "Preferences" to "Settings", so the
+        // modern wording always applies.
+        let modernSettings = true
 #endif
 
-        let payload: [String: Any] = [
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? ""
+
+        var payload: [String: Any] = [
             "platform": platform,
-            "screen": screen,
             "permissionsGranted": permissionsGranted,
             "setupComplete": setupDone,
             "modernSettings": modernSettings,
+            "version": version,
         ]
+        // Omitted when there's no screen to force, so the page keeps its current step.
+        if let screen { payload["screen"] = screen }
+
         guard let json = try? JSONSerialization.data(withJSONObject: payload),
               let literal = String(data: json, encoding: .utf8) else { return }
         webView.evaluateJavaScript("render(\(literal))")
@@ -133,13 +156,6 @@ class ViewController: PlatformViewController, WKNavigationDelegate, WKScriptMess
 
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         guard let action = message.body as? String else { return }
-
-        // The wizard reports each move so we can resume there; nothing else to do.
-        if action.hasPrefix("screen:") {
-            let screen = String(action.dropFirst("screen:".count))
-            if !GuardAppGroup.hasCompletedSetup { savedScreen = screen }
-            return
-        }
 
         switch action {
         case "open-website":
@@ -152,6 +168,12 @@ class ViewController: PlatformViewController, WKNavigationDelegate, WKScriptMess
         case "open-options":
             GuardAppGroup.queue(.openOptions)
             openBrowser()
+        case "open-privacy":
+            openLegalPage("privacy")
+        case "open-terms":
+            openLegalPage("terms")
+        case "open-contact":
+            openLegalPage("contact")
 #if os(iOS)
         case "open-settings":
             openSettings()
@@ -186,7 +208,8 @@ class ViewController: PlatformViewController, WKNavigationDelegate, WKScriptMess
 #if os(iOS)
         UIApplication.shared.open(handoffURL)
 #elseif os(macOS)
-        // Explicitly Safari: the extension lives there, and the default browser may be something else.
+        // The extension lives in Safari specifically, so target it rather than whatever the default
+        // browser happens to be. Fall back to the default browser only if Safari can't be located.
         if let safari = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.apple.Safari") {
             NSWorkspace.shared.open([handoffURL], withApplicationAt: safari, configuration: NSWorkspace.OpenConfiguration())
         } else {
@@ -198,10 +221,26 @@ class ViewController: PlatformViewController, WKNavigationDelegate, WKScriptMess
     /// Opens the Elhio site so the user can sign in. The extension itself picks up the token from
     /// the page, so nothing needs to be handed back to it from here.
     private func openWebsite() {
+        openExternal(websiteURL)
+    }
+
+    /// Opens a legal page (Privacy / Terms / Contact) on the marketing site, matching the extension's
+    /// `${websiteURL}/${locale}/${slug}` convention. Locale mirrors the app's own localization, so it
+    /// lines up with the copy on screen; the base URL is the extension-reported site (App Group), or
+    /// the fallback until the extension has reported one.
+    private func openLegalPage(_ slug: String) {
+        let language = Bundle.main.preferredLocalizations.first?.prefix(2).lowercased()
+        let locale = (language == "de") ? "de" : "en"
+        let url = websiteURL.appendingPathComponent(locale).appendingPathComponent(slug)
+        openExternal(url)
+    }
+
+    /// Opens a URL in the system browser, leaving this app's UI intact.
+    private func openExternal(_ url: URL) {
 #if os(iOS)
-        UIApplication.shared.open(websiteURL)
+        UIApplication.shared.open(url)
 #elseif os(macOS)
-        NSWorkspace.shared.open(websiteURL)
+        NSWorkspace.shared.open(url)
 #endif
     }
 
@@ -214,19 +253,32 @@ class ViewController: PlatformViewController, WKNavigationDelegate, WKScriptMess
         UIApplication.shared.open(url)
     }
 #elseif os(macOS)
-    /// Opens Safari's extension settings, then quits — Safari won't reveal the pane while this app
-    /// stays frontmost.
+    /// Opens Safari's Settings → Extensions pane for Guard, then steps aside so it's visible.
     private func openSafariExtensionPreferences() {
         SFSafariApplication.showPreferencesForExtension(withIdentifier: extensionBundleIdentifier) { error in
-            guard error == nil else {
-                // Insert code to inform the user that something went wrong.
-                return
-            }
-
             DispatchQueue.main.async {
-                NSApp.terminate(self)
+                if let error {
+                    // Couldn't open the pane (e.g. the app is being run from Xcode's DerivedData rather
+                    // than /Applications, so Safari hasn't registered it). Log it and at least bring
+                    // Safari forward so the user can reach Settings → Extensions by hand.
+                    NSLog("Guard: showPreferencesForExtension(%@) failed: %@",
+                          extensionBundleIdentifier, error.localizedDescription)
+                    self.activateSafari()
+                    return
+                }
+                // Success: Safari has opened the Settings → Extensions pane and come forward. Just hide
+                // this app so the pane is revealed. Re-activating Safari here would instead raise its
+                // browsing window on top of the pane — which looked like "Safari opened but no settings".
+                // Hide rather than quit so the user can return here after granting access.
+                NSApp.hide(nil)
             }
         }
+    }
+
+    /// Brings Safari to the front (launching it if needed).
+    private func activateSafari() {
+        guard let safari = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.apple.Safari") else { return }
+        NSWorkspace.shared.openApplication(at: safari, configuration: NSWorkspace.OpenConfiguration())
     }
 #endif
 

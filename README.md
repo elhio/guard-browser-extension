@@ -31,6 +31,7 @@ choose how the extension reacts to flagged content (mark, blur, or hide), or whi
 
 * [Chrome Web Store](#) *(Coming Soon)*
 * [Firefox Add-ons](#) *(Coming Soon)*
+* [App Store](#) *(Coming Soon)*
 
 ### Manual Installation (Unpacked)
 
@@ -54,8 +55,9 @@ This project is built using [WXT](https://wxt.dev/), the Next-gen Web Extension 
 
 * [Node.js](https://nodejs.org/) (v22 or higher recommended)
 * `npm`, `yarn`, or `pnpm`
+* *For Safari / Apple development:* A Mac running a recent version of macOS and [Xcode](https://developer.apple.com/xcode/)
 
-### Setup
+### Setup: Web Extension (Chrome, Firefox)
 
 1. Clone the repository:
     ```bash
@@ -82,6 +84,32 @@ This project is built using [WXT](https://wxt.dev/), the Next-gen Web Extension 
     ```bash
     npm run build
     ```
+
+### Setup: iOS & macOS Apps (Safari Extension)
+
+Development for Apple platforms (including the Safari extension) is handled through Xcode using the dedicated `apple` 
+directory.
+
+1. Clone the repository (if you haven't already):
+    ```bash
+    git clone [https://github.com/elhio/guard-browser-extension.git](https://github.com/elhio/guard-browser-extension.git)
+    cd guard-browser-extension
+    ```
+
+2. Navigate into the `apple` directory:
+    ```bash
+    cd apple
+    ```
+
+3. Open the project in Xcode. You can do this by double-clicking the Xcode project file or running the following command 
+in your terminal:
+    ```bash
+    open .
+    ```
+
+4. Select your target device (e.g., "My Mac" or an iOS Simulator) from the Xcode toolbar.
+5. Click the **Run** button (or press `Cmd + R`) to build and run the native app and its bundled Safari extension.
+
 
 ## Contributing
 

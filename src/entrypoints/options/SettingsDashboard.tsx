@@ -6,6 +6,7 @@ import { DetectionSettingsCard } from '@/components/settings/DetectionSettingsCa
 import { VerificationSettingsCard } from '@/components/settings/VerificationSettingsCard';
 import { AccountSettingsCard } from '@/components/settings/AccountSettingsCard';
 import { ExceptionSiteListCard } from '@/components/settings/ExceptionSiteListCard';
+import { SettingsFooter } from '@/components/settings/SettingsFooter';
 
 export default function SettingsDashboard() {
   return (
@@ -39,6 +40,8 @@ export default function SettingsDashboard() {
         <AccountSettingsCard />
         <ExceptionSiteListCard />
       </main>
+
+      <SettingsFooter />
     </div>
   );
 }

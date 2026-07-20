@@ -71,6 +71,17 @@ h1 {
 
 .wordmark { font-size: 2em; }
 
+/* Keep the version tucked directly under the wordmark rather than a full screen-gap away. */
+.brand { display: flex; flex-direction: column; align-items: center; gap: 0.3em; }
+
+/* Small, muted, monospace — the same treatment the extension popup gives it. */
+.version {
+    margin: 0;
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 0.8em;
+    opacity: 0.45;
+}
+
 p { margin: 0; line-height: 1.45; }
 
 .bullets {
@@ -81,19 +92,49 @@ p { margin: 0; line-height: 1.45; }
     line-height: 1.7;
 }
 
-.footnote { font: -apple-system-short-footnote; opacity: 0.6; }
-
 button { font-size: 1em; }
 
 /* Set the action apart from the copy it follows, rather than letting the flex gap alone decide. */
 .primary { margin-top: calc(var(--spacing) * 0.75); padding: 0.6em 2em; font-weight: 600; }
 
+/* Stack the settings button, its note and the recheck link rather than letting them flow inline. */
+.needs-permissions { display: flex; flex-direction: column; align-items: center; }
+
+/* A quiet, secondary affordance — deliberately understated below the primary button. */
+.link {
+    margin-top: calc(var(--spacing) * 0.5);
+    padding: 0.3em;
+    border: none;
+    background: none;
+    color: var(--accent);
+}
+.link:hover { text-decoration: underline; }
+
+/* The "Already allowed it? Continue" escape hatch only belongs inside the setup wizard; once setup is
+   done, the permissions step is just a re-grant reached from Home, so hide it. */
+body.setup-complete .link { display: none; }
+
+/* Post-setup the permissions step is reached from Home, not the wizard, so there is no next step to
+   continue to. Never show the Continue button, and keep the Open Settings button available even once
+   access is granted — it stays the page's only action. */
+body.setup-complete .has-permissions { display: none; }
+body.setup-complete.permissions-granted .needs-permissions { display: flex; }
+
 /* The home screen's actions carry equal weight, so they get equal width. */
 .stack { display: flex; flex-direction: column; gap: calc(var(--spacing) * 0.6); width: 100%; margin-top: calc(var(--spacing) * 0.75); }
 .wide { width: 100%; padding: 0.8em 1em; }
 
-/* The about screen's link is its only action, so it gets the same breathing room. */
-.screen-about .wide { margin-top: calc(var(--spacing) * 0.75); }
-
-/* Keeps step 3's note tethered to its button rather than floating mid-screen. */
-.screen-step-3 .footnote { margin-top: calc(var(--spacing) * -0.4); }
+/* The about screen's legal links: full-size link-styled buttons in a centred, wrapping row, set
+   apart from the description above them. A thin separator sits between adjacent links. */
+.legal-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75em; margin-top: calc(var(--spacing) * 0.25); }
+.legal-link {
+    padding: 0.2em 0;
+    border: none;
+    background: none;
+    color: var(--accent);
+    font-size: 1em;
+}
+/* Hover lightens only the link text — no underline. */
+.legal-link:hover { color: #14b8a6; }
+/* The separator dot uses a fixed accent colour (not currentColor) so hovering a link never affects it. */
+.legal-link:not(:last-child)::after { content: "·"; margin-left: 0.75em; color: var(--accent); opacity: 0.4; }

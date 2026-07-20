@@ -200,6 +200,18 @@
   "settings_dashboard_logo_alt": {
     "message": "Guard-Logo"
   },
+  "settings_footer_tagline": {
+    "message": "Guard ist ein Produkt von Elhio"
+  },
+  "settings_footer_privacy": {
+    "message": "Datenschutz"
+  },
+  "settings_footer_terms": {
+    "message": "Nutzungsbedingungen"
+  },
+  "settings_footer_contact": {
+    "message": "Kontakt"
+  },
   "settings_account_title": {
     "message": "Konto"
   },
@@ -319,6 +331,12 @@
   },
   "settings_general_update_error": {
     "message": "Die Update-Prüfung ist nur verfügbar, wenn die Erweiterung aus dem Chrome Web Store installiert wurde."
+  },
+  "settings_general_update_open_store": {
+    "message": "App Store wird zum Aktualisieren geöffnet…"
+  },
+  "settings_general_update_store_error": {
+    "message": "Der App Store konnte nicht auf Updates geprüft werden. Bitte versuche es später erneut."
   },
   "settings_tasks_title": {
     "message": "Ausgewählte Aufgaben"
@@ -460,6 +478,9 @@
   },
   "popover_settings": {
     "message": "Einstellungen"
+  },
+  "popover_footer_stats": {
+    "message": "Auf dieser Seite wurden {checked} Bilder geprüft und {flagged} erkannt"
   },
   "popover_detection_lens": {
     "message": "KI-Modell auf dem Gerät"

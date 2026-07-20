@@ -43,8 +43,8 @@ describe('bucketMatchesByCategory', () => {
 
   it('derives `detected` from the category threshold', () => {
     const categories = bucketMatchesByCategory([match('explicit', 80), match('violent', 60)]);
-    expect(categories.explicit!.detected).toBe(true); // 80 >= 75
-    expect(categories.violent!.detected).toBe(false); // 60 < 65
+    expect(categories.explicit!.detected).toBe(true); // 80 >= 70
+    expect(categories.violent!.detected).toBe(false); // 60 < 70
   });
 });
 
@@ -52,18 +52,18 @@ describe('combineCategoryResults', () => {
   it('merges matches from several results, sorts them, and applies the threshold', () => {
     const a: CategoryDetectionResult = {
       detected: false,
-      confidence: 40,
-      matches: [match('aiGenerated', 40)],
+      confidence: 90,
+      matches: [match('aiGenerated', 90)],
     };
     const b: CategoryDetectionResult = {
       detected: false,
-      confidence: 55,
-      matches: [match('aiGenerated', 55)],
+      confidence: 95,
+      matches: [match('aiGenerated', 95)],
     };
     const combined = combineCategoryResults('aiGenerated', [a, b]);
-    expect(combined.confidence).toBe(55);
-    expect(combined.detected).toBe(true); // 55 >= 50
-    expect(combined.matches.map((m) => m.confidence)).toEqual([55, 40]);
+    expect(combined.confidence).toBe(95);
+    expect(combined.detected).toBe(true); // 95 >= 90
+    expect(combined.matches.map((m) => m.confidence)).toEqual([95, 90]);
   });
 
   it('returns confidence 0 and not detected when there are no matches', () => {

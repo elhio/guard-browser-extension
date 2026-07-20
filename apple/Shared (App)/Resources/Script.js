@@ -2,8 +2,9 @@
  * Drives the wizard's appearance. Every user-visible string lives in the localized Main.html — this
  * file only toggles classes on <body>, so nothing here needs translating.
  *
- * Navigation is handled locally (a round trip to Swift per tap would flicker), but each move is
- * reported back so the app can persist the step and resume there next launch.
+ * Navigation between steps is entirely local (a round trip to Swift per tap would flicker). The app
+ * decides only the STARTING screen, via render(); it keeps no per-step state, so there's nothing to
+ * report back as the user moves around.
  */
 
 /**
@@ -28,7 +29,7 @@ function send(action) {
     webkit.messageHandlers.controller.postMessage(action);
 }
 
-function showScreen(screen, { report = true } = {}) {
+function showScreen(screen) {
     for (const name of ['step-1', 'step-2', 'step-3', 'home', 'about']) {
         document.body.classList.toggle(`screen-${name}`, name === screen);
     }
@@ -37,15 +38,13 @@ function showScreen(screen, { report = true } = {}) {
     document.body.classList.toggle('has-back', Boolean(back));
     document.body.dataset.backTarget = back ?? '';
     document.body.dataset.screen = screen;
-
-    // Let the app persist where we are, so returning mid-wizard resumes here rather than restarting.
-    if (report) send(`screen:${screen}`);
 }
 
 /**
  * Called by ViewController on load and whenever the app returns to the foreground.
  *
- * @param screen  Which screen to show — the app decides, since only it knows whether setup is done.
+ * @param screen  Which screen to force. Omitted on a refresh mid-setup — the user is driving
+ *        navigation then, so we only update the state below and leave them where they are.
  * @param permissionsGranted  Whether Safari has granted website access. Real on macOS
  *        (SFSafariExtensionManager); on iOS it is whatever the extension last reported through the
  *        App Group, so it stays false until the extension has run at least once.
@@ -53,17 +52,21 @@ function showScreen(screen, { report = true } = {}) {
  * @param modernSettings  Newer OS naming: macOS 13 renamed Preferences to Settings; iOS 18 moved
  *        Safari under an "Apps" section.
  */
-function render({ platform, screen, permissionsGranted, setupComplete: done, modernSettings }) {
+function render({ platform, screen, permissionsGranted, setupComplete: done, modernSettings, version }) {
     document.body.classList.add(`platform-${platform}`);
     document.body.classList.toggle('settings-modern', Boolean(modernSettings));
     document.body.classList.toggle('settings-legacy', !modernSettings);
+    // This is what flips step 2's button between "Open Safari Settings…" and "Continue".
     document.body.classList.toggle('permissions-granted', Boolean(permissionsGranted));
 
     setupComplete = Boolean(done);
+    // Reaching the permissions step after setup is done (via Home's Permissions button) is just a
+    // re-grant, not a wizard flow — so the "Already allowed it? Continue" escape hatch is hidden then.
+    document.body.classList.toggle('setup-complete', setupComplete);
 
-    // Don't report this one back: the app just told us, and echoing it would overwrite the persisted
-    // step with one the app derived (e.g. the re-grant detour through step-2).
-    showScreen(screen, { report: false });
+    if (version) document.querySelector('.version').textContent = `v${version}`;
+
+    if (screen) showScreen(screen);
 }
 
 document.addEventListener('click', (event) => {

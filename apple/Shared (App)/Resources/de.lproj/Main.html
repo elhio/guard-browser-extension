@@ -44,9 +44,10 @@
         <!-- Ohne Zugriff gibt es nichts fortzusetzen – deshalb nur die Aktion, die dorthin führt. -->
         <div class="needs-permissions">
             <button class="primary platform-ios" data-action="open-settings">Einstellungen öffnen</button>
-            <button class="primary platform-mac" data-action="open-preferences">Beenden und Safari-Einstellungen öffnen…</button>
-            <p class="footnote platform-ios">Das öffnet die Einstellungen auf Guards eigener Seite —
-               Safaris Erweiterungs-Liste ist von dort wie oben beschrieben erreichbar.</p>
+            <button class="primary platform-mac" data-action="open-preferences">Safari-Einstellungen öffnen…</button>
+            <!-- Notausgang, falls der Button nicht von selbst auf „Weiter“ umspringt: gleiches Ziel wie
+                 der echte Weiter-Button, nur ohne auf die Berechtigungsprüfung zu warten. -->
+            <button class="link" data-goto-continue>Schon erlaubt? Weiter</button>
         </div>
         <!-- Der erteilte Zugriff braucht keine Ansage: Der Button, der zu „Weiter“ wird, sagt es. -->
         <button class="primary has-permissions" data-goto-continue>Weiter</button>
@@ -54,15 +55,18 @@
 
     <section class="screen screen-step-3">
         <h1>Einstellungen</h1>
-        <p>Der letzte Schritt passiert in Safari: Wähle, worauf Guard achten soll, was bei einem Fund
-           geschieht und ob du dein Elhio Konto verknüpfen möchtest.</p>
-        <button class="primary" data-action="open-setup">Einrichten</button>
-        <p class="footnote">Guard öffnet die Einrichtung in einem Safari-Tab. Du kannst jederzeit
-           hierher zurückkommen — dieser Schritt wartet, bis du fertig bist.</p>
+        <p>Der letzte Schritt öffnet sich in einem Einstellungen-Tab in Safari, in dem du wählst,
+           worauf Guard achten soll, was bei einem Fund geschieht und ob du dein Elhio Konto
+           verknüpfen möchtest.</p>
+        <button class="primary" data-action="open-setup">Einstellungen öffnen</button>
     </section>
 
     <section class="screen screen-home">
-        <h1 class="wordmark">Guard</h1>
+        <div class="brand">
+            <h1 class="wordmark">Guard</h1>
+            <!-- Von Script.js aus der Bundle-Version der App gefüllt (wie im Erweiterungs-Popup). -->
+            <p class="version"></p>
+        </div>
         <div class="stack">
             <button class="wide" data-goto="about">Über</button>
             <button class="wide" data-goto="step-2">Berechtigungen</button>
@@ -72,10 +76,15 @@
 
     <section class="screen screen-about">
         <h1>Über</h1>
-        <p>Guard erkennt KI-generierte, gewalttätige und explizite Bilder, während du surfst. Die
-           Bilder werden auf deinem Gerät analysiert.</p>
-        <p class="footnote">Von Elhio</p>
-        <button class="wide" data-action="open-website">elhio.com</button>
+        <p>Guard ist ein Produkt von Elhio. Es ist eine Browser-Erweiterung, die Deepfakes und alle
+           anderen visuellen Inhalte erkennt, die du herausfiltern möchtest – direkt auf der Webseite.</p>
+        <!-- Öffnen den Browser über Swift (data-action), da die Basis-URL erst zur Laufzeit über die
+             App-Gruppe bekannt ist und nicht in diese statische Seite eingebaut werden kann. -->
+        <nav class="legal-links">
+            <button class="legal-link" data-action="open-privacy">Datenschutz</button>
+            <button class="legal-link" data-action="open-terms">Nutzungsbedingungen</button>
+            <button class="legal-link" data-action="open-contact">Kontakt</button>
+        </nav>
     </section>
 </body>
 </html>

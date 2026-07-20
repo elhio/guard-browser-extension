@@ -13,6 +13,30 @@ export function GeneralSettingsCard() {
   const handleToggleStatus = () => setIsActive(!isActive);
 
   const handleUpdateCheck = async () => {
+    const installed = browser.runtime.getManifest().version;
+
+    // Safari has no `requestUpdateCheck`; extensions update via their App Store container app. Ask the
+    // iTunes Lookup API for the latest published version and hand the user off to the store if newer.
+    // Dynamically imported so the lookup code folds out of the Chrome/Firefox bundles.
+    if (import.meta.env.SAFARI) {
+      try {
+        const { fetchAppStoreInfo, isNewerVersion } = await import('@/lib/update/appStore');
+        const info = await fetchAppStoreInfo();
+        if (!info) {
+          alert(t('settings_general_update_store_error'));
+        } else if (isNewerVersion(info.version, installed)) {
+          alert(`${t('settings_general_update_available')} v${info.version}. ${t('settings_general_update_open_store')}`);
+          if (info.url) browser.tabs.create({ url: info.url });
+        } else {
+          alert(t('settings_general_update_latest'));
+        }
+      } catch (err) {
+        console.warn('App Store update check failed:', err);
+        alert(t('settings_general_update_store_error'));
+      }
+      return;
+    }
+
     try {
       const result = await browser.runtime.requestUpdateCheck();
       if (result.status === 'update_available') {

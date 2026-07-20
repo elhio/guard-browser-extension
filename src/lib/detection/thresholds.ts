@@ -4,9 +4,9 @@ import type { DetectionCategory } from './types';
  * The minimum confidence score (0-100) required to consider a category actively "detected"
  */
 export const DETECTION_THRESHOLDS: Record<DetectionCategory, number> = {
-  aiGenerated: 50,
-  violent: 65,     
-  explicit: 75,
+  aiGenerated: 90,
+  violent: 70,
+  explicit: 70,
 };
 
 /**

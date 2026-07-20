@@ -19,7 +19,7 @@ export function getAppLocale(): SupportedLocale {
     }
 
     return DEFAULT_LOCALE;
-  } catch (error) {
+  } catch {
     return DEFAULT_LOCALE;
   }
 }

@@ -1,4 +1,5 @@
 import type { ClassifyImageResult } from '@/lib/messaging/classifyMessages';
+import type { TabStats } from '@/lib/messaging/tabStatsMessages';
 import type { VerifyImageData, VerifyImageResponse } from '@/lib/messaging/verifyMessages';
 import type { TasksState } from '@/lib/detection';
 import type { DetectionAction } from '@/lib/settings';
@@ -135,6 +136,25 @@ export function updateSettings(next: OverlaySettings): void {
 
 export function setVerifyTransport(fn: (src: string) => Promise<VerifyImageResponse>): void {
   verifyTransport = fn;
+}
+
+/**
+ * Per-page scan counts for the popup footer: `checked` is images that finished a successful scan
+ * (`idle` or `alert`), `flagged` is the detected subset (`alert`). In-flight (`processing`) and failed
+ * (`error`) images are excluded, so `flagged <= checked`.
+ */
+export function getPageStats(): TabStats {
+  let checked = 0;
+  let flagged = 0;
+  for (const entry of entries.values()) {
+    if (entry.status === 'alert') {
+      checked++;
+      flagged++;
+    } else if (entry.status === 'idle') {
+      checked++;
+    }
+  }
+  return { checked, flagged };
 }
 
 /** Drops all tracked entries and closes the menu (page navigation / feature disabled). */

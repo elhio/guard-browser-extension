@@ -63,7 +63,12 @@ function openSetupOnce(): Promise<void> {
     // opened, so the next background start should try again rather than silently swallow the user's
     // one shot at onboarding. A create that succeeds can't loop, so there's no tab-spam risk here.
     await browser.tabs.create({ url: browser.runtime.getURL('/setup.html') });
-    await settings.setValue({ ...current, hasPromptedSetup: true });
+    // Re-read instead of reusing `current`: opening the tab above is slow, and another context may
+    // have written settings meanwhile (e.g. the user finishing setup in the tab, or E2E seeding).
+    // Merging over the latest value flips only `hasPromptedSetup` and avoids clobbering fields like
+    // `hasCompletedSetup` back to their pre-open snapshot.
+    const latest = await settings.getValue();
+    await settings.setValue({ ...latest, hasPromptedSetup: true });
   })().catch((error) => {
     console.warn('[Guard] Could not open the setup wizard:', error);
   });
@@ -95,6 +100,14 @@ export default defineBackground({
 
       void reportState();
       settings.watch(() => void reportState());
+
+      // Push a fresh report the instant the user grants or revokes website access in Safari, rather
+      // than making the container app poll or wait for the extension's next run. The app reads the
+      // App Group when it returns to the foreground, so by then it already sees the change — its
+      // permissions step can flip to "Continue" without the user first having to load a page.
+      // Registered at top level so Safari wakes this (non-persistent) background to deliver them.
+      browser.permissions.onAdded.addListener(() => void reportState());
+      browser.permissions.onRemoved.addListener(() => void reportState());
     }
 
     browser.runtime.onMessage.addListener((message, sender, sendResponse) => {

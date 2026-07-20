@@ -43,9 +43,11 @@
              one that gets you there. -->
         <div class="needs-permissions">
             <button class="primary platform-ios" data-action="open-settings">Open Settings</button>
-            <button class="primary platform-mac" data-action="open-preferences">Quit and Open Safari Settings…</button>
-            <p class="footnote platform-ios">This opens Settings on Guard’s own page — Safari’s extension
-               list is a few taps away, as above.</p>
+            <button class="primary platform-mac" data-action="open-preferences">Open Safari Settings…</button>
+            <!-- Escape hatch if the button hasn't flipped to Continue on its own: let the user proceed
+                 on their word. Same destination as the real Continue button — it just doesn't wait for
+                 the permission check. -->
+            <button class="link" data-goto-continue>Already allowed it? Continue</button>
         </div>
         <!-- Access being granted needs no announcement: the button turning into "Continue" says it. -->
         <button class="primary has-permissions" data-goto-continue>Continue</button>
@@ -53,15 +55,17 @@
 
     <section class="screen screen-step-3">
         <h1>Settings</h1>
-        <p>The last step happens in Safari: choose what Guard should look for, what it does when it
-           finds something, and whether to link your Elhio account.</p>
-        <button class="primary" data-action="open-setup">Setup</button>
-        <p class="footnote">Guard opens its setup in a Safari tab. You can come back here any time —
-           this step waits until you’ve finished it.</p>
+        <p>The last step opens in a Settings tab in Safari, where you choose what Guard should look
+           for, what it does when it finds something, and whether to link your Elhio account.</p>
+        <button class="primary" data-action="open-setup">Open Settings</button>
     </section>
 
     <section class="screen screen-home">
-        <h1 class="wordmark">Guard</h1>
+        <div class="brand">
+            <h1 class="wordmark">Guard</h1>
+            <!-- Filled in by Script.js from the app's bundle version (mirrors the extension popup). -->
+            <p class="version"></p>
+        </div>
         <div class="stack">
             <button class="wide" data-goto="about">About</button>
             <button class="wide" data-goto="step-2">Permissions</button>
@@ -71,10 +75,15 @@
 
     <section class="screen screen-about">
         <h1>About</h1>
-        <p>Guard detects AI-generated, violent, and explicit images as you browse. Images are analysed
-           on your device.</p>
-        <p class="footnote">By Elhio</p>
-        <button class="wide" data-action="open-website">elhio.com</button>
+        <p>Guard is a product of Elhio. It is a browser extension to detect deepfakes and any other
+           visual content you choose to filter out, right on the webpage.</p>
+        <!-- These open in the browser via Swift (data-action), because the base URL is only known at
+             runtime through the App Group and can't be baked into this static page. -->
+        <nav class="legal-links">
+            <button class="legal-link" data-action="open-privacy">Privacy Policy</button>
+            <button class="legal-link" data-action="open-terms">Terms of Service</button>
+            <button class="legal-link" data-action="open-contact">Contact</button>
+        </nav>
     </section>
 </body>
 </html>

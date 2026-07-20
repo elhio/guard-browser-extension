@@ -20,12 +20,9 @@ class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
     func beginRequest(with context: NSExtensionContext) {
         let request = context.inputItems.first as? NSExtensionItem
 
-        let message: Any?
-        if #available(iOS 15.0, macOS 11.0, *) {
-            message = request?.userInfo?[SFExtensionMessageKey]
-        } else {
-            message = request?.userInfo?["message"]
-        }
+        // `SFExtensionMessageKey` is available from iOS 15 / macOS 11, both at or below our deployment
+        // targets (iOS 15, macOS 13), so no availability fallback is needed.
+        let message = request?.userInfo?[SFExtensionMessageKey]
 
         if let state = message as? [String: Any] {
             GuardAppGroup.recordExtensionState(
@@ -46,11 +43,7 @@ class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
         }
 
         let response = NSExtensionItem()
-        if #available(iOS 15.0, macOS 11.0, *) {
-            response.userInfo = [SFExtensionMessageKey: reply]
-        } else {
-            response.userInfo = ["message": reply]
-        }
+        response.userInfo = [SFExtensionMessageKey: reply]
 
         context.completeRequest(returningItems: [response], completionHandler: nil)
     }

@@ -46,7 +46,9 @@ export const defaultSettings: Settings = {
   verificatorSpace: null,
   hasCompletedSetup: false,
   hasPromptedSetup: false,
-  isActive: true,
+  // Ships disabled: the detector stays off until the onboarding wizard is finished, which flips this
+  // (and `hasCompletedSetup`) to true. See the `shouldRun` gate in `entrypoints/content.ts`.
+  isActive: false,
   exceptionSites: []
 };
 

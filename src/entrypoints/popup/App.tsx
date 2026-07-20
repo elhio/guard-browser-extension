@@ -6,6 +6,8 @@ import GuardLogo from '@/assets/guard.svg?react';
 import { settings, type DetectionAction } from '@/lib/settings';
 import { t } from '@/lib/i18n';
 import type { TasksState } from '@/lib/detection';
+import { GET_TAB_STATS_MESSAGE, type TabStats } from '@/lib/messaging/tabStatsMessages';
+import { AnimatedCount } from '@/components/ui/AnimatedCount';
 
 function App() {
   const [isActive, setIsActive] = useState<boolean | null>(null);
@@ -18,10 +20,38 @@ function App() {
   const [isHandlingOpen, setIsHandlingOpen] = useState(false);
   const [isDetectionOpen, setIsDetectionOpen] = useState(false);
   const [currentHost, setCurrentHost] = useState<string | null>(null);
+  const [stats, setStats] = useState<TabStats | null>(null);
   const [version] = useState(() => browser.runtime.getManifest().version);
+  const [setupComplete, setSetupComplete] = useState<boolean | null>(null);
 
+  // Before showing anything, decide whether onboarding is done. If not, the extension isn't usable yet:
+  // hand off to the wizard tab (the same `/setup.html` the background auto-opens). Opening it as the
+  // active tab pulls focus away, which dismisses the popup on its own — the same thing the "Settings"
+  // button below relies on. We deliberately do NOT call `window.close()`: on macOS Safari the popover is
+  // anchored to the originating tab, and closing it programmatically makes Safari restore that tab,
+  // flashing the wizard for a split second and snapping back to the previous page.
   useEffect(() => {
     let isMounted = true;
+    settings.getValue().then((res) => {
+      if (!isMounted) return;
+      if (!res.hasCompletedSetup) {
+        void browser.tabs.create({ url: browser.runtime.getURL('/setup.html') });
+        return;
+      }
+      setSetupComplete(true);
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    // Don't spin up settings watchers or stats polling until setup is confirmed complete — otherwise
+    // they'd start on a popup that's about to redirect and close.
+    if (setupComplete !== true) return;
+
+    let isMounted = true;
+    let statsInterval: ReturnType<typeof setInterval> | undefined;
 
     settings.getValue().then((res) => {
       if (!isMounted) return;
@@ -48,6 +78,22 @@ function App() {
           // Only whitelist actual web pages (ignore chrome://, about:, etc.)
           if (['http:', 'https:'].includes(urlObj.protocol)) {
             setCurrentHost(urlObj.hostname);
+
+            // Poll the page's content script for its scan counts while the popup is open. Restricted
+            // pages and not-yet-injected scripts simply reject, leaving the note hidden.
+            const tabId = tab.id;
+            if (tabId !== undefined) {
+              const poll = () => {
+                browser.tabs
+                  .sendMessage(tabId, { type: GET_TAB_STATS_MESSAGE })
+                  .then((res) => {
+                    if (isMounted && res) setStats(res as TabStats);
+                  })
+                  .catch(() => {});
+              };
+              poll();
+              statsInterval = setInterval(poll, 700);
+            }
           }
         } catch {
           setCurrentHost(null);
@@ -58,8 +104,9 @@ function App() {
     return () => {
       isMounted = false;
       unwatch();
+      if (statsInterval) clearInterval(statsInterval);
     };
-  }, []);
+  }, [setupComplete]);
 
   const handleToggleStatus = async () => {
     if (isActive === null) return;
@@ -123,9 +170,25 @@ function App() {
       : activeTasks[0].label;
   };
 
+  // Render the localized stats sentence with each number as its own animated node. Splitting the
+  // template (rather than substituting) keeps word order translator-controlled — German places the
+  // numbers differently — while letting {checked}/{flagged} roll independently.
+  const renderStatsNote = (s: TabStats) =>
+    t('popover_footer_stats')
+      .split(/(\{checked\}|\{flagged\})/)
+      .map((part, i) => {
+        if (part === '{checked}') return <AnimatedCount key={i} value={s.checked} />;
+        if (part === '{flagged}') return <AnimatedCount key={i} value={s.flagged} />;
+        return <span key={i}>{part}</span>;
+      });
+
   const currentHostWhitelisted = currentHost !== null && exceptionSites.includes(currentHost);
   const currentHandlingLabel = handlingOptions.find(h => h.id === detectionAction)?.label || detectionAction;
   const activeTaskCount = Object.values(tasks).filter(Boolean).length;
+
+  // While setup status is unknown, or when it's incomplete (we're redirecting to the wizard and about to
+  // close), render nothing so the full popup UI never flashes.
+  if (setupComplete !== true) return null;
 
   return (
     <div className="w-90 p-6 bg-white dark:bg-[#111111] text-gray-800 font-sans shadow-lg">
@@ -267,31 +330,43 @@ function App() {
         </details>
       </div>
 
-      {/* Footer menu */}
-      <div className="bg-gray-50 -mx-6 -mb-6 p-4 border-t border-gray-200">
-        <div className="flex flex-col gap-1">
-          <button
-            onClick={handleAddHost}
-            disabled={!currentHost || currentHostWhitelisted}
-            className="group flex items-center gap-3 w-full px-2 py-1 text-sm text-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <LuListPlus size={16} className="text-gray-700 group-hover:text-gray-500 transition-colors" />
-            <span className="font-medium text-gray-700 group-hover:text-gray-500 transition-colors">
-              {t('popover_add_exception')}
-            </span>
-          </button>
-          <button
-            data-testid="popup-open-settings"
-            onClick={() => {
-              browser.tabs.create({ url: browser.runtime.getURL('/options.html') });
-            }}
-            className="group flex items-center gap-3 w-full px-2 py-1 text-sm text-gray-700 transition-colors"
-          >
-            <LuSettings size={16} className="text-gray-700 group-hover:text-gray-500 transition-colors" />
-            <span className="font-medium text-gray-700 group-hover:text-gray-500 transition-colors">
-              {t('popover_settings')}
-            </span>
-          </button>
+      {/* Bottom region: the page stats (bottom of the white content area) sitting above the gray footer.
+          On iOS the popup is a full-screen sheet and this block is pinned to the bottom (the
+          `:last-child` rule in popup/style.css), so any extra vertical space opens up above the stats —
+          keeping them aligned to the bottom rather than floating under the settings. */}
+      <div>
+        {stats && (
+          <p className="mb-3 px-2 text-center text-[11px] leading-snug text-gray-400 dark:text-gray-500">
+            {renderStatsNote(stats)}
+          </p>
+        )}
+
+        {/* Footer menu */}
+        <div className="bg-gray-50 -mx-6 -mb-6 p-4 border-t border-gray-200">
+          <div className="flex flex-col gap-1">
+            <button
+              onClick={handleAddHost}
+              disabled={!currentHost || currentHostWhitelisted}
+              className="group flex items-center gap-3 w-full px-2 py-1 text-sm text-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <LuListPlus size={16} className="text-gray-700 group-hover:text-gray-500 transition-colors" />
+              <span className="font-medium text-gray-700 group-hover:text-gray-500 transition-colors">
+                {t('popover_add_exception')}
+              </span>
+            </button>
+            <button
+              data-testid="popup-open-settings"
+              onClick={() => {
+                browser.tabs.create({ url: browser.runtime.getURL('/options.html') });
+              }}
+              className="group flex items-center gap-3 w-full px-2 py-1 text-sm text-gray-700 transition-colors"
+            >
+              <LuSettings size={16} className="text-gray-700 group-hover:text-gray-500 transition-colors" />
+              <span className="font-medium text-gray-700 group-hover:text-gray-500 transition-colors">
+                {t('popover_settings')}
+              </span>
+            </button>
+          </div>
         </div>
       </div>
 

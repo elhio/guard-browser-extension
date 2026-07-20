@@ -28,6 +28,7 @@ import {
   APP_HANDOFF_PARAM,
   type AppHandoffRequest
 } from '@/lib/messaging/appHandoff';
+import { isGetTabStatsRequest } from '@/lib/messaging/tabStatsMessages';
 
 import {
   applyAction,
@@ -36,6 +37,7 @@ import {
   clearOverlayState,
   coverWhileProcessing,
   revealAfterProcessing,
+  getPageStats,
   setAction,
   setVerifyTransport,
   updateSettings,
@@ -240,6 +242,21 @@ function watchForAuthHandoff(): void {
 }
 
 /**
+ * Answers the popup's request for this page's scan counts.
+ *
+ * Only the top frame replies, so the numbers reflect the main page and stay deterministic when the
+ * popup's `tabs.sendMessage` fans out to every frame. Returns a promise so the response is delivered
+ * across all targets (Chrome MV3 and the MV2 browsers).
+ */
+function watchForTabStats(): void {
+  if (window.top !== window) return;
+  browser.runtime.onMessage.addListener((message) => {
+    if (!isGetTabStatsRequest(message)) return;
+    return Promise.resolve(getPageStats());
+  });
+}
+
+/**
  * Wakes the background when the Apple container app hands off to us.
  *
  * The app parks its real instruction in the App Group and opens this page purely to reach the
@@ -268,6 +285,7 @@ export default defineContentScript({
   async main(ctx) {
     // Before any `await` — see the note on the function.
     watchForAuthHandoff();
+    watchForTabStats();
 
     if (import.meta.env.SAFARI) watchForAppHandoff();
 
@@ -308,7 +326,11 @@ export default defineContentScript({
     const isHostWhitelisted = (host: string, whitelist: string[]) => whitelist.includes(host);
 
     const shouldRun = (state: Settings) => {
-      return state.isActive !== false && !isHostWhitelisted(location.hostname, state.exceptionSites);
+      return (
+        state.hasCompletedSetup &&
+        state.isActive !== false &&
+        !isHostWhitelisted(location.hostname, state.exceptionSites)
+      );
     };
 
     let currentSettings = await settings.getValue();

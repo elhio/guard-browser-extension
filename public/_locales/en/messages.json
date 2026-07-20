@@ -200,6 +200,18 @@
   "settings_dashboard_logo_alt": {
     "message": "Guard Logo"
   },
+  "settings_footer_tagline": {
+    "message": "Guard is a product of Elhio"
+  },
+  "settings_footer_privacy": {
+    "message": "Privacy Policy"
+  },
+  "settings_footer_terms": {
+    "message": "Terms of Service"
+  },
+  "settings_footer_contact": {
+    "message": "Contact"
+  },
   "settings_account_title": {
     "message": "Account"
   },
@@ -319,6 +331,12 @@
   },
   "settings_general_update_error": {
     "message": "Update checking is only available when installed from the Chrome Web Store."
+  },
+  "settings_general_update_open_store": {
+    "message": "Opening the App Store to update…"
+  },
+  "settings_general_update_store_error": {
+    "message": "Couldn't check the App Store for updates. Please try again later."
   },
   "settings_tasks_title": {
     "message": "Selected Tasks"
@@ -460,6 +478,9 @@
   },
   "popover_settings": {
     "message": "Settings"
+  },
+  "popover_footer_stats": {
+    "message": "On this page {checked} images were checked and {flagged} detected"
   },
   "popover_detection_lens": {
     "message": "On-Device AI Model"
