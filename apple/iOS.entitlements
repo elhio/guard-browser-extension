@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Shared by the iOS app and its Safari extension: the only channel through which the app can
+	     learn the extension's state (iOS exposes no API for it). The extension's native handler
+	     writes here; the app reads. Both targets must declare the identical group. -->
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>group.com.elhio.guard</string>
+	</array>
+</dict>
+</plist>

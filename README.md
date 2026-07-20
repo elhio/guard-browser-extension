@@ -1,16 +1,29 @@
-# Guard
-
-[![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![Built with WXT](https://img.shields.io/badge/Built%20with-WXT-2b6cb0.svg)](https://wxt.dev/)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
-
-> The browser extension Guard: A real-time filter that detects deepfakes and blocks unsafe visual media directly on 
-> the webpage
+<div align="center">
+  <h1>
+    <img src="./src/assets/guard.svg" width="100" alt="Guard Logo"><br>
+    Guard
+  </h1>
+  <p><em>A browser extension to detect deepfakes and any other visual content you choose to filter out, right on the webpage</em></p>
+  <p>
+    <a href="https://www.gnu.org/licenses/agpl-3.0"><img src="https://img.shields.io/badge/License-AGPL%20v3-blue.svg" alt="License: AGPL v3"></a>
+    <a href="https://wxt.dev/"><img src="https://img.shields.io/badge/Built%20with-WXT-2b6cb0.svg" alt="Built with WXT"></a>
+    <a href="https://github.com/elhio/guard-browser-extension/fork"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs Welcome"></a>
+  </p>
+</div>
 
 ## Features
 
-* **[Feature 1]:** *(Coming Soon)*
-* **[Feature 2]:** *(Coming Soon)*
+**🛡️ Multi-Layered Content Moderation:** Automatically checks web images as you browse to find AI-made, violent, or 
+sexual content before you see them.
+
+**⚡ Fast Local Inference:** Runs a lightweight AI classification model entirely on-device using ONNX Runtime 
+and WebAssembly. To save system resources, you can disable the AI model and rely on instant C2PA metadata checks.
+
+**🌐 Deep Scan Verification:** Not sure about a local result? Click the “Verify” button on the badge to send the image 
+to our advanced API models for a highly accurate secondary verification.
+
+**⚙️ Granular Control:** Toggle specific detection tasks (e.g., turn off violence detection but keep AI detection), 
+choose how the extension reacts to flagged content (mark, blur, or hide), or whitelist specific websites.
 
 ## Installation
 
@@ -18,12 +31,13 @@
 
 * [Chrome Web Store](#) *(Coming Soon)*
 * [Firefox Add-ons](#) *(Coming Soon)*
+* [App Store](#) *(Coming Soon)*
 
 ### Manual Installation (Unpacked)
 
 If you want to install the latest version manually or test it locally:
 
-1. Download the latest release from the [Releases page](https://github.com/yourusername/yourrepo/releases) or build it from source (see below).
+1. Download the latest release from the [Releases page](https://github.com/elhio/guard-browser-extension/releases) or build it from source (see below).
 2. **Chrome/Edge/Brave:**
    * Go to `chrome://extensions/`
    * Enable **Developer mode** in the top right corner.
@@ -39,31 +53,63 @@ This project is built using [WXT](https://wxt.dev/), the Next-gen Web Extension 
 
 ### Prerequisites
 
-* [Node.js](https://nodejs.org/) (v18 or higher recommended)
+* [Node.js](https://nodejs.org/) (v22 or higher recommended)
 * `npm`, `yarn`, or `pnpm`
+* *For Safari / Apple development:* A Mac running a recent version of macOS and [Xcode](https://developer.apple.com/xcode/)
 
-### Setup
+### Setup: Web Extension (Chrome, Firefox)
 
 1. Clone the repository:
     ```bash
     git clone https://github.com/elhio/guard-browser-extension.git
     cd guard-browser-extension
     ```
+   
+2. Copy the example environment file:
+    ```bash
+    cp .env.example .env
+    ```
 
-2. Install dependencies:
+3. Install dependencies:
     ```bash
     npm install # or yarn install / pnpm install
     ```
 
-3. Start the development server (loads the extension in a fresh browser profile):
+4. Start the development server (loads the extension in a fresh browser profile):
     ```bash
     npm run dev
     ```
 
-4. Build for production:
+5. Build for production:
     ```bash
     npm run build
     ```
+
+### Setup: iOS & macOS Apps (Safari Extension)
+
+Development for Apple platforms (including the Safari extension) is handled through Xcode using the dedicated `apple` 
+directory.
+
+1. Clone the repository (if you haven't already):
+    ```bash
+    git clone [https://github.com/elhio/guard-browser-extension.git](https://github.com/elhio/guard-browser-extension.git)
+    cd guard-browser-extension
+    ```
+
+2. Navigate into the `apple` directory:
+    ```bash
+    cd apple
+    ```
+
+3. Open the project in Xcode. You can do this by double-clicking the Xcode project file or running the following command 
+in your terminal:
+    ```bash
+    open .
+    ```
+
+4. Select your target device (e.g., "My Mac" or an iOS Simulator) from the Xcode toolbar.
+5. Click the **Run** button (or press `Cmd + R`) to build and run the native app and its bundled Safari extension.
+
 
 ## Contributing
 

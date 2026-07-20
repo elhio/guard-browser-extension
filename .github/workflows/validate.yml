@@ -1,0 +1,65 @@
+name: Validate
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types:
+      - opened
+      - synchronize
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+      - name: Setup node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+
+      # The build inlines VITE_* vars (and wxt.config reads process.env.VITE_API_URL for
+      # host_permissions). The E2E login spec also relies on VITE_WEBSITE_URL === http://localhost:5173.
+      # The committed example holds exactly those local values, so it is the correct env for validation.
+      - name: Prepare env (local/test values)
+        run: cp .env.example .env
+
+      - name: Lint code
+        run: npm run lint
+      - name: Type check
+        run: npm run compile
+      - name: Run unit tests
+        run: npm test
+
+      - name: Build (chrome)
+        run: npm run build
+      - name: Build (firefox)
+        run: npm run build:firefox
+
+      # E2E loads the built .output/chrome-mv3 (see tests/fixtures.ts); Chromium only.
+      - name: Install Playwright (chromium)
+        run: npx playwright install --with-deps chromium
+      - name: Run Playwright tests
+        run: xvfb-run npx playwright test --reporter=html
+
+      - name: Upload Playwright report
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7

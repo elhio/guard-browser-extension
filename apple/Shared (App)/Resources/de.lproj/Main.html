@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+
+    <link rel="stylesheet" href="../Style.css">
+    <script src="../Script.js" defer></script>
+</head>
+<body>
+    <!-- Welcher Screen sichtbar ist und welche Textvariante gilt, entscheiden ausschließlich Klassen
+         auf <body> (siehe Script.js). Alle Texte stehen hier, damit sie lokalisierbar bleiben. -->
+
+    <button class="back" data-back>Zurück</button>
+
+    <img class="logo" src="../Icon.png" width="96" height="96" alt="Guard Symbol">
+
+    <section class="screen screen-step-1">
+        <h1>Willkommen bei Guard!</h1>
+        <p>Guard prüft die Bilder auf den Seiten, die du besuchst, und markiert die, die
+           KI-generiert, gewalttätig oder explizit wirken — direkt dort, wo du sie siehst, ohne dass
+           etwas hochgeladen wird.</p>
+        <button class="primary" data-goto="step-2">Loslegen</button>
+    </section>
+
+    <section class="screen screen-step-2">
+        <h1>Berechtigungen</h1>
+        <p>Guard ist eine Safari-Erweiterung. Safari muss ihr daher erlauben, die Seiten zu lesen, die
+           du besuchst. Dieser Zugriff bleibt auf deinem Gerät — nur so kann Guard Bilder beim Laden
+           prüfen.</p>
+        <ul class="bullets platform-ios">
+            <li class="settings-legacy">Öffne <b>Einstellungen</b> → <b>Safari</b> → <b>Erweiterungen</b></li>
+            <li class="settings-modern">Öffne <b>Einstellungen</b> → <b>Apps</b> → <b>Safari</b> → <b>Erweiterungen</b></li>
+            <li>Aktiviere <b>Guard</b> und setze den Webseiten-Zugriff auf <b>Erlauben</b></li>
+        </ul>
+        <ul class="bullets platform-mac">
+            <li class="settings-legacy">Öffne <b>Safari</b> → <b>Einstellungen</b> → <b>Erweiterungen</b></li>
+            <li class="settings-modern">Öffne <b>Safari</b> → <b>Einstellungen</b> → <b>Erweiterungen</b></li>
+            <li>Aktiviere <b>Guard</b> und setze den Webseiten-Zugriff auf <b>Erlauben</b></li>
+        </ul>
+
+        <!-- Ohne Zugriff gibt es nichts fortzusetzen – deshalb nur die Aktion, die dorthin führt. -->
+        <div class="needs-permissions">
+            <button class="primary platform-ios" data-action="open-settings">Einstellungen öffnen</button>
+            <button class="primary platform-mac" data-action="open-preferences">Safari-Einstellungen öffnen…</button>
+            <!-- Notausgang, falls der Button nicht von selbst auf „Weiter“ umspringt: gleiches Ziel wie
+                 der echte Weiter-Button, nur ohne auf die Berechtigungsprüfung zu warten. -->
+            <button class="link" data-goto-continue>Schon erlaubt? Weiter</button>
+        </div>
+        <!-- Der erteilte Zugriff braucht keine Ansage: Der Button, der zu „Weiter“ wird, sagt es. -->
+        <button class="primary has-permissions" data-goto-continue>Weiter</button>
+    </section>
+
+    <section class="screen screen-step-3">
+        <h1>Einstellungen</h1>
+        <p>Der letzte Schritt öffnet sich in einem Einstellungen-Tab in Safari, in dem du wählst,
+           worauf Guard achten soll, was bei einem Fund geschieht und ob du dein Elhio Konto
+           verknüpfen möchtest.</p>
+        <button class="primary" data-action="open-setup">Einstellungen öffnen</button>
+    </section>
+
+    <section class="screen screen-home">
+        <div class="brand">
+            <h1 class="wordmark">Guard</h1>
+            <!-- Von Script.js aus der Bundle-Version der App gefüllt (wie im Erweiterungs-Popup). -->
+            <p class="version"></p>
+        </div>
+        <div class="stack">
+            <button class="wide" data-goto="about">Über</button>
+            <button class="wide" data-goto="step-2">Berechtigungen</button>
+            <button class="wide" data-action="open-options">Einstellungen</button>
+        </div>
+    </section>
+
+    <section class="screen screen-about">
+        <h1>Über</h1>
+        <p>Guard ist ein Produkt von Elhio. Es ist eine Browser-Erweiterung, die Deepfakes und alle
+           anderen visuellen Inhalte erkennt, die du herausfiltern möchtest – direkt auf der Webseite.</p>
+        <!-- Öffnen den Browser über Swift (data-action), da die Basis-URL erst zur Laufzeit über die
+             App-Gruppe bekannt ist und nicht in diese statische Seite eingebaut werden kann. -->
+        <nav class="legal-links">
+            <button class="legal-link" data-action="open-privacy">Datenschutz</button>
+            <button class="legal-link" data-action="open-terms">Nutzungsbedingungen</button>
+            <button class="legal-link" data-action="open-contact">Kontakt</button>
+        </nav>
+    </section>
+</body>
+</html>

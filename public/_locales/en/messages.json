@@ -1,0 +1,556 @@
+{
+  "login_heading": {
+    "message": "Link Account"
+  },
+  "login_subheading": {
+    "message": "Log in to your Elhio account to allow Guard to access advanced detection models and your personal settings."
+  },
+  "login_btn_website": {
+    "message": "Log in on the website"
+  },
+  "login_btn_skip": {
+    "message": "Skip"
+  },
+  "login_no_account": {
+    "message": "Don't have an account?"
+  },
+  "login_register_link": {
+    "message": "Sign up"
+  },
+  "login_waiting_title": {
+    "message": "Waiting for authentication..."
+  },
+  "login_waiting_subtitle": {
+    "message": "Please complete the process in the newly opened tab."
+  },
+  "login_cancel": {
+    "message": "Cancel"
+  },
+  "setup_tasks_heading": {
+    "message": "What should Guard detect?"
+  },
+  "setup_tasks_subheading": {
+    "message": "Choose which types of images should be automatically analyzed and marked on websites."
+  },
+  "setup_task_ai_title": {
+    "message": "AI-Generated"
+  },
+  "setup_task_ai_desc": {
+    "message": "Detects images created or manipulated by generative AI."
+  },
+  "setup_task_violent_title": {
+    "message": "Violent"
+  },
+  "setup_task_violent_desc": {
+    "message": "Identifies graphic, violent, or gory content."
+  },
+  "setup_task_explicit_title": {
+    "message": "Explicit"
+  },
+  "setup_task_explicit_desc": {
+    "message": "Detects adult, obscene, or pornographic content."
+  },
+  "setup_tasks_tooltip_empty": {
+    "message": "Please select at least one category to continue."
+  },
+  "setup_action_heading": {
+    "message": "Action on Detection"
+  },
+  "setup_action_subheading": {
+    "message": "What should happen when the previously selected content is detected?"
+  },
+  "setup_action_mark_title": {
+    "message": "Mark"
+  },
+  "setup_action_mark_desc": {
+    "message": "Adds a subtle visual indicator to the image."
+  },
+  "setup_action_blur_title": {
+    "message": "Blur"
+  },
+  "setup_action_blur_desc": {
+    "message": "Covers the image with a blur effect."
+  },
+  "setup_action_hide_title": {
+    "message": "Hide"
+  },
+  "setup_action_hide_desc": {
+    "message": "Hides the image behind a black box."
+  },
+  "setup_detector_heading": {
+    "message": "Default Detection"
+  },
+  "setup_detector_subheading": {
+    "message": "Choose how the images should be analyzed by default."
+  },
+  "setup_detector_lens_title": {
+    "message": "Lens Mobile"
+  },
+  "setup_detector_lens_desc": {
+    "message": "Offers higher accuracy by scanning the images with a locally running detection model. Consumes more energy."
+  },
+  "setup_detector_metadata_title": {
+    "message": "Metadata"
+  },
+  "setup_detector_metadata_desc": {
+    "message": "Checks the data attached to the image. This feature is fundamental and always activated."
+  },
+  "setup_verificator_heading": {
+    "message": "Advanced Verification"
+  },
+  "setup_verificator_subheading": {
+    "message": "If you want to verify an image, you can have it checked more thoroughly in one of your spaces on Elhio."
+  },
+  "setup_verificator_no_workspaces": {
+    "message": "No workspaces found."
+  },
+  "setup_verificator_no_desc_fallback": {
+    "message": "No description available."
+  },
+  "setup_verificator_error_media": {
+    "message": "This workspace does not support images."
+  },
+  "setup_verificator_error_task_ai": {
+    "message": "This workspace does not support AI detection."
+  },
+  "setup_verificator_error_task_violent": {
+    "message": "This workspace does not support violence detection."
+  },
+  "setup_verificator_error_task_explicit": {
+    "message": "This workspace does not support explicit content detection."
+  },
+  "space_desc_template": {
+    "message": "Detects {tasks} on {media} with {predictor}."
+  },
+  "space_conj_and": {
+    "message": " and "
+  },
+  "space_media_image": {
+    "message": "Images"
+  },
+  "space_media_video": {
+    "message": "Videos"
+  },
+  "space_fallback_model": {
+    "message": "a model"
+  },
+  "setup_summary_heading": {
+    "message": "Summary"
+  },
+  "setup_summary_subheading": {
+    "message": "Check that your settings are correct. You can change them at any time in the settings menu."
+  },
+  "setup_summary_account": {
+    "message": "Account"
+  },
+  "setup_summary_tasks": {
+    "message": "Selected Tasks"
+  },
+  "setup_summary_action": {
+    "message": "Action"
+  },
+  "setup_summary_default_detection": {
+    "message": "Default Detection"
+  },
+  "setup_summary_advanced_verification": {
+    "message": "Advanced Verification"
+  },
+  "setup_summary_skipped": {
+    "message": "Skipped"
+  },
+  "setup_summary_metadata_only": {
+    "message": "Metadata"
+  },
+  "setup_summary_metadata_lens": {
+    "message": "Metadata + Lens Mobile"
+  },
+  "setup_summary_task_ai": {
+    "message": "AI-Generated"
+  },
+  "setup_summary_task_violent": {
+    "message": "Violent"
+  },
+  "setup_summary_task_explicit": {
+    "message": "Explicit"
+  },
+  "setup_summary_unknown_space": {
+    "message": "Unknown Workspace"
+  },
+  "setup_summary_error": {
+    "message": "Error loading"
+  },
+  "setup_wizard_btn_back": {
+    "message": "Back"
+  },
+  "setup_wizard_btn_next": {
+    "message": "Next"
+  },
+  "setup_wizard_btn_skip": {
+    "message": "Skip"
+  },
+  "setup_wizard_btn_finish": {
+    "message": "Finish"
+  },
+  "settings_dashboard_title": {
+    "message": "Guard"
+  },
+  "settings_dashboard_description": {
+    "message": "Manage the configuration of your browser extension on this page."
+  },
+  "settings_dashboard_logo_alt": {
+    "message": "Guard Logo"
+  },
+  "settings_footer_tagline": {
+    "message": "Guard is a product of Elhio"
+  },
+  "settings_footer_privacy": {
+    "message": "Privacy Policy"
+  },
+  "settings_footer_terms": {
+    "message": "Terms of Service"
+  },
+  "settings_footer_contact": {
+    "message": "Contact"
+  },
+  "settings_account_title": {
+    "message": "Account"
+  },
+  "settings_account_profile_title": {
+    "message": "Go to profile"
+  },
+  "settings_account_profile_disabled_title": {
+    "message": "Please log in to manage profile"
+  },
+  "settings_account_waiting_auth": {
+    "message": "Waiting for authentication..."
+  },
+  "settings_account_sign_in": {
+    "message": "Sign In"
+  },
+  "settings_account_free_plan": {
+    "message": "Free Plan"
+  },
+  "settings_account_logout": {
+    "message": "Logout"
+  },
+  "settings_action_title": {
+    "message": "Action on Detection"
+  },
+  "settings_action_mark_label": {
+    "message": "Mark"
+  },
+  "settings_action_mark_desc": {
+    "message": "Adds a subtle visual indicator to the image."
+  },
+  "settings_action_mark_aria": {
+    "message": "Select Mark action"
+  },
+  "settings_action_blur_label": {
+    "message": "Blur"
+  },
+  "settings_action_blur_desc": {
+    "message": "Covers the image with a blur effect."
+  },
+  "settings_action_blur_aria": {
+    "message": "Select Blur action"
+  },
+  "settings_action_hide_label": {
+    "message": "Hide"
+  },
+  "settings_action_hide_desc": {
+    "message": "Hides the image behind a black box."
+  },
+  "settings_action_hide_aria": {
+    "message": "Select Hide action"
+  },
+  "settings_detection_title": {
+    "message": "Default Detection"
+  },
+  "settings_detection_metadata_label": {
+    "message": "Metadata"
+  },
+  "settings_detection_metadata_desc": {
+    "message": "Checks the data attached to the images. This feature is fundamental and always activated."
+  },
+  "settings_detection_metadata_aria": {
+    "message": "Metadata detection (always enabled)"
+  },
+  "settings_detection_lens_label": {
+    "message": "Lens Mobile"
+  },
+  "settings_detection_lens_desc": {
+    "message": "Offers higher accuracy by scanning the images with a locally running detection model. Consumes more energy."
+  },
+  "settings_detection_lens_aria": {
+    "message": "Toggle Lens Mobile detection"
+  },
+  "settings_exception_title": {
+    "message": "Exception Site List"
+  },
+  "settings_exception_empty": {
+    "message": "No sites have been added to the exception list."
+  },
+  "settings_exception_remove": {
+    "message": "Remove"
+  },
+  "settings_general_title": {
+    "message": "General"
+  },
+  "settings_general_status": {
+    "message": "Status"
+  },
+  "settings_general_deactivate": {
+    "message": "Deactivate"
+  },
+  "settings_general_activate": {
+    "message": "Activate"
+  },
+  "settings_general_active": {
+    "message": "Active"
+  },
+  "settings_general_inactive": {
+    "message": "Inactive"
+  },
+  "settings_general_version": {
+    "message": "Version"
+  },
+  "settings_general_update": {
+    "message": "Update"
+  },
+  "settings_general_update_available": {
+    "message": "Update available:"
+  },
+  "settings_general_update_downloading": {
+    "message": "Chrome is downloading it now."
+  },
+  "settings_general_update_latest": {
+    "message": "You are already running the latest version!"
+  },
+  "settings_general_update_throttled": {
+    "message": "Update check throttled by the browser. Please try again later."
+  },
+  "settings_general_update_error": {
+    "message": "Update checking is only available when installed from the Chrome Web Store."
+  },
+  "settings_general_update_open_store": {
+    "message": "Opening the App Store to update…"
+  },
+  "settings_general_update_store_error": {
+    "message": "Couldn't check the App Store for updates. Please try again later."
+  },
+  "settings_tasks_title": {
+    "message": "Selected Tasks"
+  },
+  "settings_tasks_ai_label": {
+    "message": "AI-Generated"
+  },
+  "settings_tasks_ai_desc": {
+    "message": "Detects images created or manipulated by generative AI."
+  },
+  "settings_tasks_ai_aria": {
+    "message": "Toggle AI-Generated detection"
+  },
+  "settings_tasks_violent_label": {
+    "message": "Violent"
+  },
+  "settings_tasks_violent_desc": {
+    "message": "Detects graphic, violent, or gory content."
+  },
+  "settings_tasks_violent_aria": {
+    "message": "Toggle Violent detection"
+  },
+  "settings_tasks_explicit_label": {
+    "message": "Explicit"
+  },
+  "settings_tasks_explicit_desc": {
+    "message": "Detects adult, obscene, or pornographic content."
+  },
+  "settings_tasks_explicit_aria": {
+    "message": "Toggle Explicit detection"
+  },
+  "settings_verification_title": {
+    "message": "Advanced Verification"
+  },
+  "settings_verification_manage_title": {
+    "message": "Manage spaces"
+  },
+  "settings_verification_manage_disabled_title": {
+    "message": "Please log in to manage spaces"
+  },
+  "settings_verification_manage_aria": {
+    "message": "Manage spaces in external tab"
+  },
+  "settings_verification_login_required": {
+    "message": "Please log in to load your available spaces."
+  },
+  "settings_verification_no_workspaces": {
+    "message": "No workspaces found."
+  },
+  "settings_verification_conj_and": {
+    "message": " and "
+  },
+  "settings_verification_media_image": {
+    "message": "images"
+  },
+  "settings_verification_media_video": {
+    "message": "videos"
+  },
+  "settings_verification_fallback_model": {
+    "message": "a model"
+  },
+  "settings_verification_desc_template": {
+    "message": "Detects {tasks} in {media} using {predictor}."
+  },
+  "settings_verification_no_desc_fallback": {
+    "message": "No description available."
+  },
+  "settings_verification_error_media": {
+    "message": "This space does not support image analysis."
+  },
+  "settings_verification_error_task_ai": {
+    "message": "Your tasks require AI-Generated detection."
+  },
+  "settings_verification_error_task_violent": {
+    "message": "Your tasks require Violent detection."
+  },
+  "settings_verification_error_task_explicit": {
+    "message": "Your tasks require Explicit detection."
+  },
+  "settings_verification_select_aria": {
+    "message": "Select"
+  },
+  "popover_logo_title": {
+    "message": "Guard Logo"
+  },
+  "popover_status_label": {
+    "message": "Status"
+  },
+  "popover_status_loading": {
+    "message": "Loading..."
+  },
+  "popover_status_active": {
+    "message": "Active"
+  },
+  "popover_status_disabled": {
+    "message": "Disabled"
+  },
+  "popover_tasks_label": {
+    "message": "Tasks"
+  },
+  "popover_tasks_none": {
+    "message": "No tasks selected"
+  },
+  "popover_more": {
+    "message": "more"
+  },
+  "popover_task_ai": {
+    "message": "AI-Generated"
+  },
+  "popover_task_nsfw": {
+    "message": "NSFW"
+  },
+  "popover_task_violent": {
+    "message": "Violent"
+  },
+  "popover_handling_label": {
+    "message": "Handling"
+  },
+  "popover_handling_blur": {
+    "message": "Blur"
+  },
+  "popover_handling_hide": {
+    "message": "Hide"
+  },
+  "popover_detection_label": {
+    "message": "Default Detector"
+  },
+  "popover_detection_none": {
+    "message": "None selected"
+  },
+  "popover_detection_metadata": {
+    "message": "Metadata"
+  },
+  "popover_detection_lens_desc": {
+    "message": " (runs locally, uses more energy)"
+  },
+  "popover_add_exception": {
+    "message": "Add exception"
+  },
+  "popover_settings": {
+    "message": "Settings"
+  },
+  "popover_footer_stats": {
+    "message": "On this page {checked} images were checked and {flagged} detected"
+  },
+  "popover_detection_lens": {
+    "message": "On-Device AI Model"
+  },
+  "badge_category_ai": {
+    "message": "AI Generated"
+  },
+  "badge_category_violent": {
+    "message": "Violent"
+  },
+  "badge_category_explicit": {
+    "message": "Explicit"
+  },
+  "badge_error_analyze": {
+    "message": "Failed to analyze image"
+  },
+  "badge_error_verify": {
+    "message": "Verification failed"
+  },
+  "badge_error_timeout": {
+    "message": "Analysis timed out"
+  },
+  "verify_error_not_signed_in": {
+    "message": "Sign in to verify images"
+  },
+  "verify_error_no_space": {
+    "message": "Select a verification space in settings"
+  },
+  "verify_error_unsupported_media": {
+    "message": "This media type can't be verified"
+  },
+  "verify_error_timeout": {
+    "message": "Verification timed out"
+  },
+  "menu_signal_none_ai": { "message": "No signs of AI generation" },
+  "menu_signal_possible_ai": { "message": "Possible signs of AI generation" },
+  "menu_signal_strong_ai": { "message": "Strong signs of AI generation" },
+  "menu_signal_none_violent": { "message": "No signs of violence" },
+  "menu_signal_possible_violent": { "message": "Possible signs of violence" },
+  "menu_signal_strong_violent": { "message": "Strong signs of violence" },
+  "menu_signal_none_explicit": { "message": "No signs of explicit content" },
+  "menu_signal_possible_explicit": { "message": "Possible signs of explicit content" },
+  "menu_signal_strong_explicit": { "message": "Strong signs of explicit content" },
+  "menu_action_verify": { "message": "Verify" },
+  "menu_action_verifying": { "message": "Verifying…" },
+  "menu_action_reveal": { "message": "Show image" },
+  "menu_action_hide": { "message": "Hide again" },
+  "menu_action_signin": { "message": "Sign in to verify" },
+  "menu_action_choose_space": { "message": "Choose a space" },
+  "menu_close": { "message": "Close" },
+  "menu_scroll_left": { "message": "Scroll tasks left" },
+  "menu_scroll_right": { "message": "Scroll tasks right" },
+  "menu_more_actions": { "message": "More actions" },
+  "menu_action_mark_correct": { "message": "Mark as correct" },
+  "menu_action_mark_incorrect": { "message": "Mark as incorrect" },
+  "menu_action_share": { "message": "Share" },
+  "menu_feedback_thanks": { "message": "Thank you for your feedback! 🎉" },
+  "menu_feedback_prompt_correct": { "message": "Would you like to help us improve further? Please tell us why you believe the result for {task} is correct for this media." },
+  "menu_feedback_prompt_incorrect": { "message": "Would you like to help us improve further? Please tell us why you believe the result for {task} is incorrect for this media." },
+  "menu_feedback_expected_label": { "message": "Expected Result" },
+  "menu_feedback_description_label": { "message": "Description" },
+  "menu_action_save": { "message": "Save" },
+  "menu_share_title": { "message": "Share" },
+  "menu_share_prompt": { "message": "Do you want to share this result with your friends?" },
+  "menu_share_ready_prompt": { "message": "Please copy your share link now." },
+  "menu_share_valid_label": { "message": "Valid for" },
+  "menu_share_valid_24h": { "message": "24 hours" },
+  "menu_share_valid_3d": { "message": "3 days" },
+  "menu_share_valid_7d": { "message": "7 days" },
+  "menu_action_create": { "message": "Create" },
+  "menu_action_copy": { "message": "Copy" },
+  "menu_action_copied": { "message": "Copied" }
+}

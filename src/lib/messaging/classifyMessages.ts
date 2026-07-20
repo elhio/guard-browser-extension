@@ -1,0 +1,107 @@
+import type { SerializableImageCandidate } from '@/lib/images';
+import type { TasksState, ImageAnalysisResult } from '@/lib/detection';
+
+/**
+ * The unique identifier used by content scripts to request image classification
+ */
+export const CLASSIFY_IMAGE_MESSAGE = 'CLASSIFY_IMAGE_MESSAGE';
+
+/**
+ * The unique identifier used by the background script to forward heavy tasks
+ */
+export const CLASSIFY_IMAGE_OFFSCREEN_MESSAGE = 'CLASSIFY_IMAGE_OFFSCREEN_MESSAGE';
+
+/**
+ * On Firefox the background pushes the classification result back to the content script with this
+ * message (via `tabs.sendMessage`) instead of returning it as a `runtime.sendMessage` response,
+ * which Firefox doesn't reliably deliver to a content-script sender.
+ */
+export const CLASSIFY_RESULT_MESSAGE = 'CLASSIFY_RESULT_MESSAGE';
+
+/**
+ * The unified payload sent from the content script to request classification for a batch of images
+ *
+ * @property type - The routing identifier for this message
+ * @property candidates - An array of serializable image candidates to be analyzed
+ * @property tasks - The user's active moderation settings (AI, violent, explicit)
+ * @property useDetectorLocalModel - Flag indicating if the local model should be run alongside metadata checks
+ */
+export interface ClassifyImageRequest {
+  type: typeof CLASSIFY_IMAGE_MESSAGE;
+  /** Correlates the Firefox result push back to the awaiting caller (unused on Chrome). */
+  requestId: string;
+  candidates: SerializableImageCandidate[];
+  tasks: TasksState;
+  useDetectorLocalModel: boolean;
+}
+
+/**
+ * The payload forwarded by the background script to the offscreen document for processing
+ */
+export interface OffscreenClassifyImageRequest {
+  type: typeof CLASSIFY_IMAGE_OFFSCREEN_MESSAGE;
+  candidates: SerializableImageCandidate[];
+  tasks: TasksState;
+  useDetectorLocalModel: boolean;
+}
+
+export type ClassifyImageResult =
+  | ({ status: 'success' } & ImageAnalysisResult)
+  | { status: 'error'; src: string; error: string };
+
+/**
+ * The unified response payload returned after processing the batch of images.
+ *
+ * @property results - An array containing the merged metadata and local model results for each candidate
+ */
+export interface ClassifyImageResponse {
+  results: ClassifyImageResult[];
+}
+
+/**
+ * The classification result pushed from the background to the content script on Firefox.
+ *
+ * @property requestId - Matches the originating `ClassifyImageRequest.requestId`
+ * @property results - The merged metadata + local model results
+ */
+export interface ClassifyResultPush {
+  type: typeof CLASSIFY_RESULT_MESSAGE;
+  requestId: string;
+  results: ClassifyImageResult[];
+}
+
+/**
+ * Internal helper to safely verify if an unknown message object contains a specific 'type' property
+ */
+function hasMessageType(message: unknown, type: string): boolean {
+  return (
+    typeof message === 'object' &&
+    message !== null &&
+    (message as { type?: unknown }).type === type
+  );
+}
+
+/**
+ * Type Guard: Safely checks if an incoming generic message is a standard `ClassifyImageRequest`
+ */
+export function isClassifyImageRequest(
+  message: unknown
+): message is ClassifyImageRequest {
+  return hasMessageType(message, CLASSIFY_IMAGE_MESSAGE);
+}
+
+/**
+ * Type Guard: Safely checks if an incoming generic message is an `OffscreenClassifyImageRequest`
+ */
+export function isOffscreenClassifyImageRequest(
+  message: unknown
+): message is OffscreenClassifyImageRequest {
+  return hasMessageType(message, CLASSIFY_IMAGE_OFFSCREEN_MESSAGE);
+}
+
+/**
+ * Type Guard: Safely checks if an incoming generic message is a `ClassifyResultPush`
+ */
+export function isClassifyResultPush(message: unknown): message is ClassifyResultPush {
+  return hasMessageType(message, CLASSIFY_RESULT_MESSAGE);
+}

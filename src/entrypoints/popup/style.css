@@ -1,0 +1,54 @@
+@import "@/assets/pages.css";
+
+@layer base {
+  body {
+    /* A definite width matching the app card (`w-90` = 22.5rem). */
+    width: 22.5rem;
+    margin: 0;
+    padding: 0;
+    /* Background is theme-aware via pages.css (white / #111111). */
+  }
+
+  /* When the content is a touch taller than Safari's ~600px popup (e.g. once the footer stats line
+     appears), macOS "always show scroll bars" reserves ~17px for a classic scrollbar, showing as an
+     empty band on the right. Give the scrollbar zero width so it never steals that space; the popup
+     still scrolls by trackpad/wheel. */
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+  }
+}
+
+@layer utilities {
+  /* iOS Safari shows the toolbar popup as a full-screen sheet, so the content-sized desktop layout
+     leaves empty bands on the right and bottom. When flagged (see popup/main.tsx), fill the viewport:
+     the body spans full width, the app card stretches to it and to full height, and its footer is
+     pushed to the bottom edge. In @layer utilities so the width override wins over the `w-90` utility. */
+  html.ios-popup,
+  html.ios-popup body {
+    width: 100%;
+    min-width: 0;
+  }
+  html.ios-popup #root > * {
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+  }
+  html.ios-popup #root > * > :last-child {
+    margin-top: auto;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 20px;
+  }
+}
