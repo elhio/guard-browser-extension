@@ -47,6 +47,16 @@ export default defineConfig({
             }
           }
         }
+      },
+      {
+        name: 'drop-redundant-onnx-wasm-asset',
+        generateBundle(_options, bundle) {
+          for (const fileName of Object.keys(bundle)) {
+            if (bundle[fileName].type === 'asset' && /ort-wasm.*\.asyncify.*\.wasm$/.test(fileName)) {
+              delete bundle[fileName];
+            }
+          }
+        }
       }
     ],
   }),
