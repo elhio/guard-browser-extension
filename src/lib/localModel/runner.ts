@@ -25,6 +25,7 @@ const getAssetUrl = (path: string): string =>
  */
 env.allowLocalModels = true;
 env.allowRemoteModels = false;
+env.useBrowserCache = false;
 if (env.backends?.onnx?.wasm) {
   env.backends.onnx.wasm.wasmPaths = getAssetUrl('/wasm/');
   // Multi-threaded WASM requires SharedArrayBuffer, which needs cross-origin isolation that the
