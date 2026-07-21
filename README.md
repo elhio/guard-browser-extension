@@ -92,7 +92,7 @@ directory.
 
 1. Clone the repository (if you haven't already):
     ```bash
-    git clone [https://github.com/elhio/guard-browser-extension.git](https://github.com/elhio/guard-browser-extension.git)
+    git clone https://github.com/elhio/guard-browser-extension.git
     cd guard-browser-extension
     ```
 

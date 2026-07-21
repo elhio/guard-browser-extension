@@ -1,6 +1,8 @@
 {
   "name": "guard-browser-extension",
-  "description": "Browser extension that detects AI-generated, violent, or explicit images on web pages",
+  "description": "A browser extension to detect deepfakes and any other visual content you choose to filter out, right on the webpage.",
+  "author": "Elhio <hello@elhio.com>",
+  "homepage": "https://elhio.com",
   "private": true,
   "version": "0.0.1",
   "type": "module",

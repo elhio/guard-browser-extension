@@ -62,8 +62,11 @@ export default defineConfig({
   }),
   manifest: ({ browser }) => ({
     name: 'Guard',
-    description: 'A browser extension to detect deepfakes and any other visual content you choose to filter out, right on the webpage',
+    description: 'A browser extension to detect deepfakes and any other visual content you choose to filter out, right on the webpage.',
     default_locale: 'en',
+    ...(browser === 'chrome'
+      ? { author: { email: 'hello@elhio.com' } }
+      : { author: 'Elhio' }),
     homepage_url: 'https://elhio.com',
     browser_specific_settings: {
       gecko: { id: 'hello@elhio.com', strict_min_version: '109.0' },
@@ -72,7 +75,6 @@ export default defineConfig({
     options_ui: { page: 'index.html', open_in_tab: true },
     permissions: [
       'storage',
-      'unlimitedStorage',
       ...(browser === 'chrome' ? ['offscreen'] : []),
       ...(browser === 'safari' ? ['nativeMessaging'] : []),
     ],
