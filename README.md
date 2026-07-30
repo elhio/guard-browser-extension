@@ -96,19 +96,25 @@ directory.
     cd guard-browser-extension
     ```
 
-2. Navigate into the `apple` directory:
+2. Build the extension itself. Xcode bundles the output of this command — it does **not** run it for you:
+    ```bash
+    npm install
+    npm run build:safari
+    ```
+   
+3. Navigate into the `apple` directory:
     ```bash
     cd apple
     ```
 
-3. Open the project in Xcode. You can do this by double-clicking the Xcode project file or running the following command 
+4. Open the project in Xcode. You can do this by double-clicking the Xcode project file or running the following command 
 in your terminal:
     ```bash
     open .
     ```
 
-4. Select your target device (e.g., "My Mac" or an iOS Simulator) from the Xcode toolbar.
-5. Click the **Run** button (or press `Cmd + R`) to build and run the native app and its bundled Safari extension.
+5. Select your target device (e.g., "My Mac" or an iOS Simulator) from the Xcode toolbar.
+6. Click the **Run** button (or press `Cmd + R`) to build and run the native app and its bundled Safari extension.
 
 
 ## Contributing

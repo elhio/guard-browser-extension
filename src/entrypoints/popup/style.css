@@ -21,8 +21,9 @@
 }
 
 @layer utilities {
-  /* iOS Safari shows the toolbar popup as a full-screen sheet, so the content-sized desktop layout
-     leaves empty bands on the right and bottom. When flagged (see popup/main.tsx), fill the viewport:
+  /* iPhone Safari shows the toolbar popup as a full-screen sheet (iPadOS uses a macOS-style popover
+     and is excluded), so the content-sized desktop layout leaves empty bands on the right and bottom.
+     When flagged (see popup/main.tsx), fill the viewport:
      the body spans full width, the app card stretches to it and to full height, and its footer is
      pushed to the bottom edge. In @layer utilities so the width override wins over the `w-90` utility. */
   html.ios-popup,

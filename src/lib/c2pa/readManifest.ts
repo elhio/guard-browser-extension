@@ -39,8 +39,8 @@ export async function readManifestFor(
         await reader.free();
       }
     }
-  } catch {
-    // No / unreadable C2PA manifest for this format — ignore and keep the metadata results.
+  } catch (error) {
+    console.warn('[Guard] C2PA read failed:', candidate.src, error);
   }
 
   // Merge the C2PA and metadata AI evidence; violent/explicit come from metadata alone.

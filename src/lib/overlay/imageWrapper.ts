@@ -27,6 +27,12 @@ export function ensureBadgeWrapper(target: HTMLImageElement): HTMLElement {
   wrapper.style.position = 'relative';
 
   wrapper.style.display = getComputedStyle(target).display;
+  // Preserve the image's percentage-height chain. Inserting this box would otherwise leave it
+  // with an indefinite height, collapsing an `img { height: 100% }` (used with object-fit to
+  // fill a sized container) down to the image's natural ratio. `height: 100%` is a no-op when
+  // the parent's height is indefinite (it resolves to auto) and only takes effect when the
+  // parent is definite — exactly the case the image needs it to resolve against.
+  wrapper.style.height = '100%';
 
   target.replaceWith(wrapper);
   wrapper.append(target);

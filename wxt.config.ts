@@ -4,6 +4,9 @@ import path from 'node:path';
 import tailwindcss from '@tailwindcss/vite';
 import svgr from 'vite-plugin-svgr';
 
+let sawC2paWeb = false;
+let patchedWorkerUrlGuard = false;
+
 export default defineConfig({
   srcDir: 'src',
   modules: ['@wxt-dev/module-react', '@wxt-dev/auto-icons'],
@@ -45,6 +48,32 @@ export default defineConfig({
             if (fs.existsSync(srcPath)) {
               fs.copyFileSync(srcPath, destPath);
             }
+          }
+        }
+      },
+      {
+        // c2pa-web validates its `workerSrc` with an `https:`-only guard and throws for any other
+        // scheme. We host the worker as a same-origin extension asset (see lib/c2pa/client.ts), whose
+        // URL is `chrome-extension:`/`moz-extension:`/`safari-web-extension:` — all rejected by that
+        // guard. Widen the check to accept the extension schemes.
+        name: 'c2pa-allow-extension-worker-url',
+        transform(code, id) {
+          if (!id.includes('@contentauth/c2pa-web')) return null;
+          sawC2paWeb = true;
+          if (!code.includes('.protocol !== "https:"')) return null;
+          patchedWorkerUrlGuard = true;
+          return code.replace(
+            /(\w+)\.protocol !== "https:"/,
+            '!["https:","chrome-extension:","moz-extension:","safari-web-extension:"].includes($1.protocol)'
+          );
+        },
+        generateBundle() {
+          if (sawC2paWeb && !patchedWorkerUrlGuard) {
+            throw new Error(
+              "c2pa-allow-extension-worker-url: could not find c2pa-web's `https:`-only workerSrc guard. " +
+                'If the dependency dropped the guard, remove this plugin; if it merely reformatted, update the ' +
+                'match. Shipping as-is breaks C2PA detection on Safari.'
+            );
           }
         }
       },
