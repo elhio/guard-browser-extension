@@ -49,6 +49,22 @@ export default defineConfig({
         }
       },
       {
+        // c2pa-web validates its `workerSrc` with an `https:`-only guard and throws for any other
+        // scheme. We host the worker as a same-origin extension asset (see lib/c2pa/client.ts), whose
+        // URL is `chrome-extension:`/`moz-extension:`/`safari-web-extension:` — all rejected by that
+        // guard. Widen the check to accept the extension schemes; if a future c2pa-web version drops
+        // the guard, the replacement simply no-ops.
+        name: 'c2pa-allow-extension-worker-url',
+        transform(code, id) {
+          if (!id.includes('@contentauth/c2pa-web')) return null;
+          if (!code.includes('.protocol !== "https:"')) return null;
+          return code.replace(
+            /(\w+)\.protocol !== "https:"/,
+            '!["https:","chrome-extension:","moz-extension:","safari-web-extension:"].includes($1.protocol)'
+          );
+        }
+      },
+      {
         name: 'drop-redundant-onnx-wasm-asset',
         generateBundle(_options, bundle) {
           for (const fileName of Object.keys(bundle)) {
