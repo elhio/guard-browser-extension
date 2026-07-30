@@ -1,4 +1,8 @@
 {
+  "extension_description": {
+    "message": "A browser extension to detect deepfakes and any other visual content you choose to filter out, right on the webpage.",
+    "description": "Manifest description, referenced as __MSG_extension_description__ in wxt.config.ts. Shown as the short description in the extension stores, so keep it under 132 characters (Chrome's limit)."
+  },
   "login_heading": {
     "message": "Link Account"
   },

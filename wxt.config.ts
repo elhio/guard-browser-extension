@@ -91,7 +91,8 @@ export default defineConfig({
   }),
   manifest: ({ browser }) => ({
     name: 'Guard',
-    description: 'A browser extension to detect deepfakes and any other visual content you choose to filter out, right on the webpage.',
+    // Resolved per-locale from public/_locales/<lang>/messages.json
+    description: '__MSG_extension_description__',
     default_locale: 'en',
     ...(browser === 'chrome'
       ? { author: { email: 'hello@elhio.com' } }
