@@ -28,12 +28,15 @@ jobs:
         run: npm run zip
       - name: Package (firefox)
         run: npm run zip:firefox
+      - name: Package (safari)
+        run: npm run zip:safari
       - name: Upload assets to release
         uses: softprops/action-gh-release@v2
         with:
           files: |
             .output/*-chrome.zip
             .output/*-firefox.zip
+            .output/*-safari.zip
             .output/*-sources.zip
 
       # TODO: publish straight to the stores

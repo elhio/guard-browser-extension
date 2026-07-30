@@ -47,6 +47,8 @@ jobs:
         run: npm run build
       - name: Build (firefox)
         run: npm run build:firefox
+      - name: Build (safari)
+        run: npm run build:safari
 
       # E2E loads the built .output/chrome-mv3 (see tests/fixtures.ts); Chromium only.
       - name: Install Playwright (chromium)
