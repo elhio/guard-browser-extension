@@ -99,7 +99,11 @@ export default defineConfig({
       : { author: 'Elhio' }),
     homepage_url: 'https://elhio.com',
     browser_specific_settings: {
-      gecko: { id: 'hello@elhio.com', strict_min_version: '109.0' },
+      gecko: {
+        id: 'hello@elhio.com',
+        strict_min_version: '109.0',
+        data_collection_permissions: { required: ['websiteContent'] },
+      },
     },
     minimum_chrome_version: '109',
     options_ui: { page: 'index.html', open_in_tab: true },
