@@ -1,7 +1,7 @@
 {
   "extension_description": {
-    "message": "Eine Browser-Erweiterung, die Deepfakes und andere visuelle Inhalte, die du herausfiltern möchtest, direkt auf der Webseite erkennt.",
-    "description": "Manifest description, referenced as __MSG_extension_description__ in wxt.config.ts. Shown as the short description in the extension stores, so keep it under 132 characters (Chrome's limit)."
+    "message": "Eine Browser-Erweiterung, die Deepfakes und andere unerwünschte visuelle Inhalte direkt auf Webseiten erkennt.",
+    "description": "Manifest Beschreibung. Die Beschreibung sollte maximal 112 Zeichen umfassen (Apples Obergrenze)."
   },
   "login_heading": {
     "message": "Konto verknüpfen"
