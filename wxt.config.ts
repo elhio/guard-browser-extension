@@ -90,8 +90,8 @@ export default defineConfig({
     ],
   }),
   manifest: ({ browser }) => ({
-    name: 'Guard',
     // Resolved per-locale from public/_locales/<lang>/messages.json
+    name: '__MSG_extension_name__',
     description: '__MSG_extension_description__',
     default_locale: 'en',
     ...(browser === 'chrome'

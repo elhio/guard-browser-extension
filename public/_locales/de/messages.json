@@ -1,4 +1,8 @@
 {
+  "extension_name": {
+    "message": "Guard: KI- & Medienfilter",
+    "description": "Manifest Name. Der Name sollte maximal 30 Zeichen umfassen (Apples Obergrenze)."
+  },
   "extension_description": {
     "message": "Eine Browser-Erweiterung, die Deepfakes und andere unerwünschte visuelle Inhalte direkt auf Webseiten erkennt.",
     "description": "Manifest Beschreibung. Die Beschreibung sollte maximal 112 Zeichen umfassen (Apples Obergrenze)."

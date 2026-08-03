@@ -1,4 +1,8 @@
 {
+  "extension_name": {
+    "message": "Guard: AI & Media Filter",
+    "description": "Manifest name. Keep name within 30 characters (Apple's limit)."
+  },
   "extension_description": {
     "message": "A browser extension that detects deepfakes and other unwanted visual content directly on webpages.",
     "description": "Manifest description. Keep description within 112 characters (Apple's limit)."
