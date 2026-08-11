@@ -3,6 +3,7 @@ import { browser } from 'wxt/browser';
 import { LuChevronDown } from 'react-icons/lu';
 
 import { t } from '@/lib/i18n';
+import { websiteAuthUrl } from '@/lib/website/urls';
 import { runVerify, type OverlayEntry, type OverlaySettings } from '@/lib/overlay/store';
 import {
   getCurrentAction,
@@ -55,10 +56,12 @@ export function MenuFooter({ entry, settings, canFeedback, onFeedback, onShare }
     label: t('menu_action_hide'),
     run: () => { hideImage(element); force(); },
   };
+  // Must land on the login page, not the site root: the root is the marketing page and carries the
+  // pricing table, which makes a "Sign in" button read as a purchase call-to-action (guideline 3.1.1).
   const signinAction: MenuAction = {
     kind: 'signin',
     label: t('menu_action_signin'),
-    run: () => openTab(import.meta.env.VITE_WEBSITE_URL),
+    run: () => openTab(websiteAuthUrl('login')),
   };
 
   // Primary: Verify → Unblur → context prompt (Sign in / Choose a space).

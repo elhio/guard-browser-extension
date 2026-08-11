@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { browser } from 'wxt/browser';
 
-import { getAppLocale, t } from '@/lib/i18n';
+import { t } from '@/lib/i18n';
+import { websiteAuthUrl } from '@/lib/website/urls';
 import ElhioLogo from '@/assets/elhio.svg?react';
 import { Button } from '@/components/ui/Button';
 
@@ -26,11 +27,8 @@ export function LoginForm({ onSuccess, onSkip }: LoginFormProps) {
 
   const loginTabId = useRef<number | undefined>(undefined);
 
-  const websiteUrl = import.meta.env.VITE_WEBSITE_URL.replace(/\/+$/, '');
-  const locale = getAppLocale();
-
-  const loginUrl = `${websiteUrl}/${locale}/login?source=extension`;
-  const signupUrl = `${websiteUrl}/${locale}/signup?source=extension`;
+  const loginUrl = websiteAuthUrl('login');
+  const signupUrl = websiteAuthUrl('signup');
 
   const returnToWizard = useCallback(async (senderTabId?: number) => {
     const tabId = senderTabId ?? loginTabId.current;

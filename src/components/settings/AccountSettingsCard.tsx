@@ -4,7 +4,8 @@ import { LuExternalLink, LuLogOut, LuLogIn } from 'react-icons/lu';
 import { useQuery } from '@tanstack/react-query';
 
 import SettingsSection from '@/components/ui/SettingsSection';
-import { getAppLocale, t } from '@/lib/i18n';
+import { t } from '@/lib/i18n';
+import { websiteAuthUrl } from '@/lib/website/urls';
 import { settings } from '@/lib/settings/store';
 import { fetchUserProfile } from '@/lib/api';
 
@@ -24,8 +25,7 @@ export function AccountSettingsCard() {
   const [isWaitingAuth, setIsWaitingAuth] = useState(false);
 
   const websiteUrl = import.meta.env.VITE_WEBSITE_URL || '';
-  const locale = getAppLocale();
-  const loginUrl = `${websiteUrl}/${locale}/login?source=extension`;
+  const loginUrl = websiteAuthUrl('login');
 
   const getInitials = (name?: string) => {
     if (!name) return '?';
