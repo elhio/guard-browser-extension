@@ -47,7 +47,7 @@ import {
   type OverlaySettings,
 } from '@/lib/overlay';
 
-import { settings, type Settings } from '@/lib/settings';
+import { settings, clearSession, type Settings } from '@/lib/settings';
 import { t } from '@/lib/i18n';
 
 /** Max images classified in parallel (bounds concurrent fetch/metadata/C2PA work). */
@@ -203,7 +203,30 @@ async function verifyWithExternalApi(src: string): Promise<VerifyImageResponse> 
 }
 
 /**
- * Relays the website's token handoff (`EXT_AUTH_SUCCESS`) on to the extension pages waiting for it.
+ * Decides whether a `postMessage` really came from the main website.
+ *
+ * Validates the message's own origin, not just the page's hostname, so an unrelated same-window
+ * context can't pose as the site and hand us a token — or sign the user out. The port has to match
+ * too: without it any `http://localhost:<any-port>` dev server would be trusted in development.
+ */
+function isWebsiteOrigin(origin: string): boolean {
+  try {
+    const allowed = new URL(import.meta.env.VITE_WEBSITE_URL);
+    const actual = new URL(origin);
+    return (
+      actual.protocol === allowed.protocol &&
+      actual.port === allowed.port &&
+      (actual.hostname === allowed.hostname || actual.hostname.endsWith(`.${allowed.hostname}`))
+    );
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Handles the website's auth signals: `EXT_AUTH_SUCCESS` after a login, which is relayed to
+ * whichever extension page is waiting for the token, and `EXT_AUTH_LOGOUT` when the user signs out
+ * or deletes their account, which is acted on here.
  *
  * This MUST be registered before `main` awaits anything. The script runs at `document_start` and
  * `postMessage` is not buffered, so a message posted while we're still waiting — and
@@ -214,29 +237,18 @@ async function verifyWithExternalApi(src: string): Promise<VerifyImageResponse> 
 function watchForAuthHandoff(): void {
   window.addEventListener('message', (event) => {
     if (event.source !== window) return;
-
-    // Only trust a token handoff from the configured site. Validate the message's own origin (not
-    // just the page's hostname): its protocol must match the configured website's (https in prod,
-    // http for local dev) and its host must equal that site or a subdomain of it, so an
-    // unrelated or cross-protocol same-window context can't inject a token.
-    const allowedOrigin = new URL(import.meta.env.VITE_WEBSITE_URL);
-    let originOk = false;
-    try {
-      const origin = new URL(event.origin);
-      originOk =
-        origin.protocol === allowedOrigin.protocol &&
-        (origin.hostname === allowedOrigin.hostname ||
-          origin.hostname.endsWith(`.${allowedOrigin.hostname}`));
-    } catch {
-      originOk = false;
-    }
-    if (!originOk) return;
+    if (!isWebsiteOrigin(event.origin)) return;
 
     if (event.data?.type === 'EXT_AUTH_SUCCESS' && event.data.token) {
       void browser.runtime.sendMessage({
         type: 'TOKEN_RECEIVED',
         token: event.data.token
       });
+      return;
+    }
+
+    if (event.data?.type === 'EXT_AUTH_LOGOUT') {
+      void clearSession();
     }
   });
 }

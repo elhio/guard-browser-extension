@@ -1,30 +1,18 @@
 import { useEffect, useState } from 'react';
 import { browser } from 'wxt/browser';
-import { LuExternalLink, LuLogOut, LuLogIn } from 'react-icons/lu';
+import { LuExternalLink, LuLogOut, LuLogIn, LuTrash2 } from 'react-icons/lu';
 import { useQuery } from '@tanstack/react-query';
 
 import SettingsSection from '@/components/ui/SettingsSection';
 import { t } from '@/lib/i18n';
-import { websiteAuthUrl } from '@/lib/website/urls';
-import { settings } from '@/lib/settings/store';
+import { websiteAuthUrl, websiteAccountUrl } from '@/lib/website/urls';
+import { settings, clearSession } from '@/lib/settings/store';
 import { fetchUserProfile } from '@/lib/api';
-
-interface TokenMessage {
-  type: string;
-  token?: string;
-}
-
-interface MessageSender {
-  tab?: {
-    id?: number;
-  };
-}
 
 export function AccountSettingsCard() {
   const [token, setToken] = useState<string | null | undefined>(undefined);
   const [isWaitingAuth, setIsWaitingAuth] = useState(false);
 
-  const websiteUrl = import.meta.env.VITE_WEBSITE_URL || '';
   const loginUrl = websiteAuthUrl('login');
 
   const getInitials = (name?: string) => {
@@ -48,6 +36,8 @@ export function AccountSettingsCard() {
     const unwatch = settings.watch((newSettings) => {
       if (!newSettings || !isMounted) return;
       setToken(newSettings.token);
+      // The background stores the token (see PATH 3.5); arriving here is what ends the wait.
+      if (newSettings.token) setIsWaitingAuth(false);
     });
 
     return () => {
@@ -66,48 +56,20 @@ export function AccountSettingsCard() {
   const isAuthenticated = !!token;
   const isLoading = token === undefined || isUserLoading;
 
-  useEffect(() => {
-    const handleMessage = async (message: TokenMessage, sender: MessageSender) => {
-      if (message.type === 'TOKEN_RECEIVED' && message.token) {
-        if (sender.tab?.id) {
-          browser.tabs.remove(sender.tab.id).catch(console.error);
-        }
-
-        const currentSettings = await settings.getValue();
-        await settings.setValue({
-          ...currentSettings,
-          token: message.token,
-          isLoggedIn: true,
-        });
-
-        setIsWaitingAuth(false);
-      }
-    };
-
-    browser.runtime.onMessage.addListener(handleMessage);
-    return () => browser.runtime.onMessage.removeListener(handleMessage);
-  }, []);
-
   const handleLoginClick = async () => {
     setIsWaitingAuth(true);
     await browser.tabs.create({ url: loginUrl, active: true });
     setTimeout(() => setIsWaitingAuth(false), 10000);
   };
 
-  const handleLogout = async () => {
-    const currentSettings = await settings.getValue();
-
-    await settings.setValue({
-      ...currentSettings,
-      token: null,
-      isLoggedIn: false,
-      verificatorSpace: null,
-    });
-  };
+  // Signs out of the extension only — the website session is deliberately left alone. An extension
+  // yanking the user out of a site they may have open in another tab is the surprising behaviour;
+  // the sync runs the other way (see `clearSession`'s callers).
+  const handleLogout = () => clearSession();
 
   const profileAction = (
     <a
-      href={isAuthenticated ? `${websiteUrl}/settings/account` : undefined}
+      href={isAuthenticated ? websiteAccountUrl() : undefined}
       target="_blank"
       rel="noopener noreferrer"
       className={`flex items-center justify-center transition-colors focus:outline-none -mr-0.5 ${
@@ -189,6 +151,21 @@ export function AccountSettingsCard() {
             <LuLogOut size={16} className="text-gray-700 group-hover:text-gray-900 transition-colors" />
             <span className="font-medium">{t('settings_account_logout')}</span>
           </button>
+
+          {/* Safari only. Apple's review guideline 5.1.1(v) requires an app that creates accounts to
+              let users start deleting one from inside it, so the Safari build has to carry this row. */}
+          {import.meta.env.SAFARI && (
+            <a
+              href={websiteAccountUrl({ deleteAccount: true })}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 pb-3 pt-1 w-full text-sm text-gray-700 hover:text-gray-900 transition-colors group cursor-pointer focus:outline-none text-left"
+              title={t('settings_account_delete_title')}
+            >
+              <LuTrash2 size={16} className="text-gray-700 group-hover:text-gray-900 transition-colors" />
+              <span className="font-medium">{t('settings_account_delete')}</span>
+            </a>
+          )}
 
         </div>
       )}

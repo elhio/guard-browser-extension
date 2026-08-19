@@ -61,3 +61,25 @@ export const settings = storage.defineItem<Settings>(
     fallback: defaultSettings,
   }
 );
+
+/**
+ * Ends the signed-in session, leaving every other preference untouched.
+ *
+ * The single way the extension signs out, so the Logout button, the website's logout signal and a
+ * 401 from the API all behave identically. Everything else reacts through `settings.watch`.
+ *
+ * `verificatorSpace` goes with the token: it is a workspace id belonging to the account that just
+ * left, and would otherwise carry over to whoever signs in next.
+ */
+export async function clearSession(): Promise<void> {
+  const current = await settings.getValue();
+
+  if (!current.token && !current.isLoggedIn && !current.verificatorSpace) return;
+
+  await settings.setValue({
+    ...current,
+    token: null,
+    isLoggedIn: false,
+    verificatorSpace: null,
+  });
+}

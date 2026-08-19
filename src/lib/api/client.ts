@@ -1,4 +1,5 @@
-import { getAppLocale } from '@/lib/i18n';
+import { getAppLocale, t } from '@/lib/i18n';
+import { clearSession } from '@/lib/settings/store';
 
 interface RequestOptions {
   method?: 'GET' | 'POST';
@@ -27,7 +28,8 @@ async function extractErrorMessage(response: Response): Promise<string> {
  *
  * @template T - The expected type of the parsed JSON response (`undefined` for 204)
  * @throws {Error} If the network request fails or the server returns a non-2xx status
- *   (the server's `detail` message is used when present)
+ *   (the server's `detail` message is used when present). A 401 additionally clears the stored
+ *   session, since the token can never recover.
  */
 async function request<T>(endpoint: string, token: string, options: RequestOptions = {}): Promise<T> {
   const { method = 'GET', body, params = {} } = options;
@@ -48,6 +50,11 @@ async function request<T>(endpoint: string, token: string, options: RequestOptio
     },
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
+
+  if (response.status === 401) {
+    await clearSession();
+    throw new Error(t('auth_error_session_expired'));
+  }
 
   if (!response.ok) {
     throw new Error(await extractErrorMessage(response));

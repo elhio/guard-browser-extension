@@ -92,3 +92,16 @@ export async function readSettings(serviceWorker: Worker): Promise<Settings> {
   );
   return value as Settings;
 }
+
+/**
+ * The origin the extension was *built* to trust, taken from the same `VITE_WEBSITE_URL` that got
+ * baked into the content script (playwright.config.ts pulls it in via `dotenv/config`). Reading it
+ * here rather than hard-coding localhost keeps the specs honest against both a local production
+ * `.env` and CI's `.env.example`; requests to it are stubbed, so the real site is never hit.
+ */
+export const WEBSITE_ORIGIN = new URL(
+  process.env.VITE_WEBSITE_URL || "http://localhost:5173"
+).origin;
+
+/** A stand-in for the real site, served on whichever origin a spec routes. */
+export const WEBSITE_STUB_HTML = `<!doctype html><html><body>website stub</body></html>`;

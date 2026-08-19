@@ -241,6 +241,12 @@
   "settings_account_logout": {
     "message": "Logout"
   },
+  "settings_account_delete": {
+    "message": "Delete account"
+  },
+  "settings_account_delete_title": {
+    "message": "Opens your account settings in the browser to confirm deletion"
+  },
   "settings_action_title": {
     "message": "Action on Detection"
   },
@@ -510,6 +516,9 @@
   },
   "badge_error_timeout": {
     "message": "Analysis timed out"
+  },
+  "auth_error_session_expired": {
+    "message": "Your session has ended. Please sign in again."
   },
   "verify_error_not_signed_in": {
     "message": "Sign in to verify images"

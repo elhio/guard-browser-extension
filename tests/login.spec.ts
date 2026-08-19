@@ -1,4 +1,11 @@
-import { test, expect, readSettings } from "./fixtures";
+import {
+  test,
+  expect,
+  seedSettings,
+  readSettings,
+  WEBSITE_ORIGIN,
+  WEBSITE_STUB_HTML,
+} from "./fixtures";
 import { setupWizard } from "./pages/setup";
 
 /**
@@ -58,9 +65,51 @@ test("logging in via the website handoff stores the token and advances the wizar
   expect((await readSettings(serviceWorker)).isLoggedIn).toBe(true);
 });
 
-// NOTE: the already-authenticated case — where the site posts EXT_AUTH_SUCCESS during page load
-// rather than after a form submit — is deliberately not covered here. The login tab is opened by the
-// extension via `browser.tabs.create`, and its first navigation is already in flight before
-// Playwright can intercept it, so `context.route` only stubs the tab's subresources and the real
-// page loads anyway. Any test of that timing would be racing the browser rather than asserting on
-// our code. The protection lives in `watchForAuthHandoff()` being called before `main` awaits.
+/**
+ * The badge-menu path: signed out, onboarding already finished, and no extension page open anywhere.
+ *
+ * This used to lose the login entirely. `TOKEN_RECEIVED` was only listened for by the options page
+ * and the setup wizard, so a sign-in started from the in-page menu — which opens the login tab via
+ * the background and leaves no extension page around — was dropped, and the tab stayed open on the
+ * dashboard. The background now stores the token and closes the tab.
+ *
+ * Opening the page here rather than letting the extension open it is also what makes the
+ * already-authenticated timing case testable at all: the site posts during page load, and a tab
+ * created by `browser.tabs.create` is already navigating before `context.route` can intercept it.
+ */
+test("stores the token and closes the tab with no extension page open", async ({
+  context,
+  serviceWorker,
+}) => {
+  await context.route(`${WEBSITE_ORIGIN}/**`, (route) =>
+    route.fulfill({ contentType: "text/html", body: WEBSITE_STUB_HTML })
+  );
+
+  // Past onboarding but signed out — the state the badge menu's "Sign in to verify" is used in.
+  await seedSettings(serviceWorker, {
+    hasCompletedSetup: true,
+    hasPromptedSetup: true,
+  });
+
+  // A separate tab, not the `page` fixture: the extension closes this one, which would otherwise
+  // break teardown.
+  const loginTab = await context.newPage();
+  await loginTab.goto(`${WEBSITE_ORIGIN}/en/login?source=extension`);
+  await loginTab.waitForSelector("guard-menu", { state: "attached", timeout: 15_000 });
+
+  // Armed before posting: the background closes this tab almost immediately, and a listener
+  // attached afterwards would be waiting for an event that has already fired.
+  const tabClosed = loginTab.waitForEvent("close", { timeout: 10_000 });
+
+  // Stand in for the site posting the token, as it does on load for an already-signed-in user.
+  await loginTab.evaluate((token) => {
+    window.postMessage({ type: "EXT_AUTH_SUCCESS", token }, "*");
+  }, "badge-menu-token");
+
+  // The website waits ~500ms after posting for the extension to do exactly this.
+  await tabClosed;
+
+  const stored = await readSettings(serviceWorker);
+  expect(stored.token).toBe("badge-menu-token");
+  expect(stored.isLoggedIn).toBe(true);
+});

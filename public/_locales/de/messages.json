@@ -241,6 +241,12 @@
   "settings_account_logout": {
     "message": "Abmelden"
   },
+  "settings_account_delete": {
+    "message": "Konto löschen"
+  },
+  "settings_account_delete_title": {
+    "message": "Öffnet deine Kontoeinstellungen im Browser zur Bestätigung"
+  },
   "settings_action_title": {
     "message": "Aktion bei Erkennung"
   },
@@ -510,6 +516,9 @@
   },
   "badge_error_timeout": {
     "message": "Analyse-Zeitüberschreitung"
+  },
+  "auth_error_session_expired": {
+    "message": "Deine Sitzung ist beendet. Bitte melde dich erneut an."
   },
   "verify_error_not_signed_in": {
     "message": "Zum Verifizieren anmelden"

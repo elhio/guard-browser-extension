@@ -24,3 +24,25 @@ export function websiteAuthUrl(page: AuthPage): string {
 
   return `${base}/${getAppLocale()}/${page}?${query}`;
 }
+
+/**
+ * Builds a URL into the website's account area.
+ *
+ * Unlike the auth pages this route carries no locale segment, so it deliberately does not go through
+ * `websiteAuthUrl` — prefixing it would produce `/en/settings/account`, which does not exist.
+ *
+ * `deleteAccount` opens the account page with its deletion confirmation modal already showing.
+ * App Review guideline 5.1.1(v) requires account deletion to be initiated from inside the app, and
+ * Apple's guidance asks for a link that lands directly on the page completing it rather than on a
+ * hub the user has to search — hence the parameter rather than a plain link to the account page.
+ */
+export function websiteAccountUrl({ deleteAccount = false } = {}): string {
+  const base = (import.meta.env.VITE_WEBSITE_URL || '').replace(/\/+$/, '');
+  const query = new URLSearchParams({
+    source: 'extension',
+    browser: import.meta.env.BROWSER,
+  });
+  if (deleteAccount) query.set('delete', 'true');
+
+  return `${base}/settings/account?${query}`;
+}

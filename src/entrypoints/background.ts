@@ -47,6 +47,22 @@ function isSafeTabUrl(url: string): boolean {
   }
 }
 
+/**
+ * The token the website hands over after a login, relayed here by the content script.
+ *
+ * Kept as an inline shape rather than a shared message module: the matching `'TOKEN_RECEIVED'`
+ * literals live in `content.ts` (sender) and `LoginForm.tsx` (the wizard's own listener).
+ */
+function isTokenReceived(message: unknown): message is { type: 'TOKEN_RECEIVED'; token: string } {
+  const candidate = message as Record<string, unknown> | null;
+  return (
+    !!candidate &&
+    candidate.type === 'TOKEN_RECEIVED' &&
+    typeof candidate.token === 'string' &&
+    candidate.token.length > 0
+  );
+}
+
 /** Deduplicates concurrent calls within one background page load */
 let openingSetup: Promise<void> | undefined;
 
@@ -255,6 +271,25 @@ export default defineBackground({
           console.warn('[Guard] Blocked OPEN_TAB for unsafe URL:', message.url);
         }
         return undefined;
+      }
+
+      // PATH 3.5: the website handed over a token after a login. Stored here rather than in an
+      // extension page because the sign-in can start from the in-page badge menu — PATH 3 above
+      // opens the tab and then no extension page is open to hear the result, so it used to be
+      // dropped and the user stayed signed out with the login tab left behind.
+      if (isTokenReceived(message)) {
+        const tabId = sender.tab?.id;
+        const work = (async () => {
+          const current = await settings.getValue();
+          // Merged over the current value: this must not disturb `hasCompletedSetup`, `tasks` or
+          // any other preference.
+          await settings.setValue({ ...current, token: message.token, isLoggedIn: true });
+          // The website deliberately waits ~500ms after posting for us to do this.
+          if (tabId != null) await browser.tabs.remove(tabId).catch(() => {});
+        })();
+        // Returning the promise keeps the non-persistent MV2 background (Firefox/Safari) alive
+        // until the write lands, rather than being unloaded mid-store.
+        return work.then(() => undefined);
       }
 
       // PATH 4: submit a feedback reaction (the response is just an acknowledgement)
