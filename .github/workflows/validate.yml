@@ -30,8 +30,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # The build inlines VITE_* vars (and wxt.config reads process.env.VITE_API_URL for
-      # host_permissions). The E2E login spec also relies on VITE_WEBSITE_URL === http://localhost:5173.
+      # The build inlines VITE_* vars, and the E2E login spec relies on VITE_WEBSITE_URL === http://localhost:5173.
       # The committed example holds exactly those local values, so it is the correct env for validation.
       - name: Prepare env (local/test values)
         run: cp .env.example .env

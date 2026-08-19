@@ -92,6 +92,58 @@ function openSetupOnce(): Promise<void> {
   return openingSetup;
 }
 
+/** Coalesces overlapping reports; see {@link runReport}. */
+let reportInFlight: Promise<void> | undefined;
+/** The throwaway tab the container app opened, waiting for a command to navigate it to. */
+let handoffTabId: number | undefined;
+
+/**
+ * Reports to the container app and carries out whatever command comes back (Safari only).
+ *
+ * Serialized because the two callers collide: the handoff wakes this background page, so the report
+ * fired at startup and the report fired by the handoff itself run at the same moment — and the
+ * native handler drains the queued command destructively, so whichever round trip lands first gets
+ * it. Left racing, the startup call would open a *second* tab while the handoff call, told there was
+ * nothing to do, closed the one the app opened.
+ *
+ * The tab id rides along rather than being passed down into the native layer so that a report with
+ * no tab (a settings write, a permission change) still picks up a command the handoff never reached
+ * — that is the fallback for a user who hasn't granted site access, where no content script runs and
+ * the command waits until `permissions.onAdded` wakes us.
+ */
+function runReport(tabId?: number): Promise<void> {
+  if (tabId != null) handoffTabId = tabId;
+
+  reportInFlight ??= (async () => {
+    const { reportStateToApp, appCommandUrl } = await import('@/lib/native/reportState');
+    const command = await reportStateToApp();
+
+    const tab = handoffTabId;
+    handoffTabId = undefined;
+
+    if (command && tab != null) {
+      const url = appCommandUrl(command);
+      await browser.tabs.update(tab, { url }).catch(async () => {
+        await browser.tabs.create({ url });
+        await browser.tabs.remove(tab).catch(() => {});
+      });
+    } else if (command) {
+      await browser.tabs.create({ url: appCommandUrl(command) });
+    } else if (tab != null) {
+      await browser.tabs.remove(tab).catch(() => {});
+    }
+
+    if (handoffTabId != null && handoffTabId !== tab) {
+      await browser.tabs.remove(handoffTabId).catch(() => {});
+      handoffTabId = undefined;
+    }
+  })().finally(() => {
+    reportInFlight = undefined;
+  });
+
+  return reportInFlight;
+}
+
 /** Maps internal error codes from the verification flow to user-facing messages. */
 function toVerifyErrorMessage(error: unknown): string {
   const message = error instanceof Error ? error.message : String(error);
@@ -109,21 +161,17 @@ export default defineBackground({
 
     if (import.meta.env.SAFARI) {
       void openSetupOnce();
-      const reportState = async () => {
-        const { reportStateToApp } = await import('@/lib/native/reportState');
-        await reportStateToApp();
-      };
 
-      void reportState();
-      settings.watch(() => void reportState());
+      void runReport();
+      settings.watch(() => void runReport());
 
       // Push a fresh report the instant the user grants or revokes website access in Safari, rather
       // than making the container app poll or wait for the extension's next run. The app reads the
       // App Group when it returns to the foreground, so by then it already sees the change — its
       // permissions step can flip to "Continue" without the user first having to load a page.
       // Registered at top level so Safari wakes this (non-persistent) background to deliver them.
-      browser.permissions.onAdded.addListener(() => void reportState());
-      browser.permissions.onRemoved.addListener(() => void reportState());
+      browser.permissions.onAdded.addListener(() => void runReport());
+      browser.permissions.onRemoved.addListener(() => void runReport());
     }
 
     browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -132,20 +180,12 @@ export default defineBackground({
       // but rejecting any foreign sender keeps that guarantee explicit.
       if (sender.id !== browser.runtime.id) return undefined;
 
-      // PATH 0: the container app is handing off — collect its instruction, then dispose of the
-      // throwaway page it opened to reach us.
+      // PATH 0: the container app is handing off — collect its instruction and turn the throwaway
+      // page it opened into the page the user actually asked for.
       if (import.meta.env.SAFARI && isAppHandoffRequest(message)) {
-        const tabId = sender.tab?.id;
-        const work = (async () => {
-          const { reportStateToApp } = await import('@/lib/native/reportState');
-          // This is what actually carries out the app's instruction: reporting in returns any
-          // queued command, and acting on it opens setup or the options page.
-          await reportStateToApp();
-          if (tabId != null) await browser.tabs.remove(tabId).catch(() => {});
-        })();
-        // Returning the promise keeps the non-persistent page alive until the page it opened exists;
-        // otherwise Safari may unload us mid-handoff and the tap appears to do nothing.
-        return work.then(() => undefined);
+        // Returning the promise keeps the non-persistent page alive until the navigation has
+        // happened; otherwise Safari may unload us mid-handoff and the tap appears to do nothing.
+        return runReport(sender.tab?.id).then(() => undefined);
       }
 
       // PATH 1: classification

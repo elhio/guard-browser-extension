@@ -195,7 +195,7 @@ class ViewController: PlatformViewController, WKNavigationDelegate, WKScriptMess
     /// and the extension won't notice a queued command until its background page next loads — which,
     /// being non-persistent, may be a long time. Opening a page it *does* run on gets its content
     /// script to wake it immediately; the marker tells the extension this page is disposable, and it
-    /// closes it once the real page is open. The user should end up on Setup/Settings, not here.
+    /// navigates this very tab on to the real page. The user should end up on Setup/Settings, not here.
     private var handoffURL: URL {
         let base = websiteURL
         guard var components = URLComponents(url: base, resolvingAgainstBaseURL: false) else { return base }

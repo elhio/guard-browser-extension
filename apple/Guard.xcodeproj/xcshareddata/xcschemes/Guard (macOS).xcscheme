@@ -15,9 +15,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "F8D5F32F3007950B00BEC2E6"
+               BlueprintIdentifier = "F8D5F3413007950B00BEC2E6"
                BuildableName = "Guard.app"
-               BlueprintName = "Guard (iOS)"
+               BlueprintName = "Guard (macOS)"
                ReferencedContainer = "container:Guard.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -45,9 +45,9 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "F8D5F32F3007950B00BEC2E6"
+            BlueprintIdentifier = "F8D5F3413007950B00BEC2E6"
             BuildableName = "Guard.app"
-            BlueprintName = "Guard (iOS)"
+            BlueprintName = "Guard (macOS)"
             ReferencedContainer = "container:Guard.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
@@ -62,9 +62,9 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "F8D5F32F3007950B00BEC2E6"
+            BlueprintIdentifier = "F8D5F3413007950B00BEC2E6"
             BuildableName = "Guard.app"
-            BlueprintName = "Guard (iOS)"
+            BlueprintName = "Guard (macOS)"
             ReferencedContainer = "container:Guard.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>

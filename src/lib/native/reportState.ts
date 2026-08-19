@@ -27,6 +27,21 @@ interface NativeReply {
   openOptions?: boolean;
 }
 
+/** A job the container app left for us, mirroring `GuardAppGroup.Command` on the native side. */
+export type AppCommand = 'openSetup' | 'openOptions';
+
+/**
+ * The extension page that carries out a command.
+ *
+ * `/options.html` rather than `runtime.openOptionsPage()` so the caller controls *how* the page
+ * opens — the handoff navigates the tab it was given instead of leaving a spare one behind. It's
+ * also what the popup and the badge menu already link to, and Safari's `options_ui` has no
+ * `open_in_tab`, so `openOptionsPage()` was opening a tab regardless, just less predictably.
+ */
+export function appCommandUrl(command: AppCommand): string {
+  return browser.runtime.getURL(command === 'openSetup' ? '/setup.html' : '/options.html');
+}
+
 /**
  * Whether the user has actually granted access to websites.
  *
@@ -49,32 +64,40 @@ async function hasSiteAccess(): Promise<boolean> {
 }
 
 /**
- * Reports the extension's state to the container app and runs any command it left for us.
+ * Reports the extension's state to the container app and returns any command it left for us.
+ *
+ * Reporting only — carrying the command out is the caller's job. The handoff wants to reuse the tab
+ * the app opened, while a report triggered by a settings or permission change has no tab to reuse,
+ * and the native handler drains the command destructively, so exactly one caller may act on it.
+ * Keeping the decision out here is what lets the background serialise those two paths.
  *
  * Safe to call often — it's a plain message round trip with no side effects beyond the reply.
  */
-export async function reportStateToApp(): Promise<void> {
+export async function reportStateToApp(): Promise<AppCommand | null> {
   try {
-    const { hasCompletedSetup } = await settings.getValue();
+    // Both are IPC hops and neither depends on the other, so overlap them: this sits on the handoff's
+    // critical path, between the user's tap and the page they asked for.
+    const [{ hasCompletedSetup }, siteAccess] = await Promise.all([
+      settings.getValue(),
+      hasSiteAccess()
+    ]);
 
     const reply = (await browser.runtime.sendNativeMessage(NATIVE_APPLICATION_ID, {
       hasCompletedSetup,
-      hasSiteAccess: await hasSiteAccess(),
+      hasSiteAccess: siteAccess,
       // The app has no way to know which site this build talks to — it's baked in here at build time
       // and differs between a dev server and production. It matters: the app opens this URL to hand
       // off to us, and the content script only honours the handoff marker on this exact host.
       websiteUrl: import.meta.env.VITE_WEBSITE_URL
     })) as NativeReply | undefined;
 
-    if (reply?.openSetup) {
-      await browser.tabs.create({ url: browser.runtime.getURL('/setup.html') });
-    }
-    if (reply?.openOptions) {
-      await browser.runtime.openOptionsPage();
-    }
+    if (reply?.openSetup) return 'openSetup';
+    if (reply?.openOptions) return 'openOptions';
+    return null;
   } catch (error) {
     // The bridge is best-effort: if the app never launched, or the handler isn't reachable, the
     // extension must carry on detecting regardless.
     console.warn('[Guard] Could not report state to the app:', error);
+    return null;
   }
 }

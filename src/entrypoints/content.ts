@@ -268,26 +268,85 @@ function watchForTabStats(): void {
   });
 }
 
+/** How long the handoff page stays hidden before we give up and show it. */
+const HANDOFF_MASK_TIMEOUT_MS = 4_000;
+
+/**
+ * Hides the handoff page so it never paints.
+ *
+ * This page is a throwaway — the user asked for Settings and should see Settings, not the marketing
+ * site we only loaded to reach the extension. We run at `document_start`, before the first paint, so
+ * hiding here means it never renders at all.
+ *
+ * Only when we run, though. After Safari has been quit, extensions aren't ready as the first page
+ * loads and no content script runs, so the site renders and the background — which does start with
+ * Safari — collects the command and opens the page in a tab of its own, leaving this one behind.
+ * Both of those are accepted on a cold start; don't add tab-hunting to paper over them.
+ *
+ * `visibility` on the root element rather than a cover node: `<body>` doesn't exist yet at
+ * `document_start` so there's nothing dependable to append to, an SPA that replaces `document.body`
+ * would drop an injected node anyway, and this can't lose a z-index fight with the site's own fixed
+ * chrome. The background colours match `pages.css` so the blank frame flows into the options page
+ * instead of flashing white on the way into a dark UI.
+ */
+function maskHandoffPage(): void {
+  const root = document.documentElement;
+  const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  root.style.setProperty('visibility', 'hidden', 'important');
+  root.style.setProperty('background', dark ? '#111111' : '#ffffff', 'important');
+
+  const reveal = (): void => {
+    root.style.removeProperty('visibility');
+    root.style.removeProperty('background');
+  };
+
+  // A ceiling on failure, not a target
+  setTimeout(reveal, HANDOFF_MASK_TIMEOUT_MS);
+
+  // Restored from the back/forward cache the mask would otherwise still be applied, leaving the site
+  // permanently blank.
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted) reveal();
+  });
+}
+
 /**
  * Wakes the background when the Apple container app hands off to us.
  *
  * The app parks its real instruction in the App Group and opens this page purely to reach the
  * extension. Telling the background right away is the whole point: it reports in, collects the
- * instruction, and closes this page. Left to itself a non-persistent background page might not load
- * again for minutes.
+ * instruction, and navigates this tab to the page the user actually asked for. Left to itself a
+ * non-persistent background page might not load again for minutes.
  *
- * Gated to our own site so a random page can't add the marker and get its tab closed.
+ * Gated to our own site so a random page can't add the marker and get its tab taken over.
+ *
+ * Returns whether this *is* a handoff page, so the caller can skip the rest of the content script.
  */
-function watchForAppHandoff(): void {
+function watchForAppHandoff(): boolean {
   try {
     const website = new URL(import.meta.env.VITE_WEBSITE_URL);
-    if (location.hostname !== website.hostname) return;
-    if (!new URLSearchParams(location.search).has(APP_HANDOFF_PARAM)) return;
+    if (location.hostname !== website.hostname) return false;
+    if (!new URLSearchParams(location.search).has(APP_HANDOFF_PARAM)) return false;
   } catch {
-    return;
+    return false;
   }
 
+  maskHandoffPage();
+
   void browser.runtime.sendMessage({ type: APP_HANDOFF_MESSAGE } satisfies AppHandoffRequest);
+
+  // Drop the marker from the address bar. Navigating away leaves this URL in history, and coming
+  // back to it would start a second handoff — one with no command waiting for it, which would just
+  // sit behind the mask until it times out.
+  try {
+    const clean = new URL(location.href);
+    clean.searchParams.delete(APP_HANDOFF_PARAM);
+    history.replaceState(null, '', clean.toString());
+  } catch {
+    // Cosmetic only — a failure here doesn't affect the handoff itself.
+  }
+
+  return true;
 }
 
 export default defineContentScript({
@@ -299,7 +358,9 @@ export default defineContentScript({
     watchForAuthHandoff();
     watchForTabStats();
 
-    if (import.meta.env.SAFARI) watchForAppHandoff();
+    // Nothing else is worth doing on a page we're about to leave: no shadow-root UI to mount, no
+    // settings to read, no images to scan. Bailing keeps the handoff off the critical path.
+    if (import.meta.env.SAFARI && watchForAppHandoff()) return;
 
     const menuUi = await createShadowRootUi(ctx, {
       name: 'guard-menu',

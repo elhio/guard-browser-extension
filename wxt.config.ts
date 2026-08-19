@@ -118,6 +118,6 @@ export default defineConfig({
           ? "script-src 'self' 'wasm-unsafe-eval' blob:; worker-src 'self' blob:; object-src 'self';"
           : "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';",
     },
-    host_permissions: ['<all_urls>', `${process.env.VITE_API_URL}/*`],
+    host_permissions: ['<all_urls>'],
   })
 });
