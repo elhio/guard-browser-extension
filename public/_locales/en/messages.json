@@ -223,20 +223,14 @@
   "settings_account_title": {
     "message": "Account"
   },
-  "settings_account_profile_title": {
-    "message": "Go to profile"
-  },
-  "settings_account_profile_disabled_title": {
-    "message": "Please log in to manage profile"
-  },
   "settings_account_waiting_auth": {
     "message": "Waiting for authentication..."
   },
   "settings_account_sign_in": {
     "message": "Sign In"
   },
-  "settings_account_free_plan": {
-    "message": "Free Plan"
+  "settings_account_default_plan": {
+    "message": "Individual"
   },
   "settings_account_logout": {
     "message": "Logout"
@@ -246,6 +240,34 @@
   },
   "settings_account_delete_title": {
     "message": "Opens your account settings in the browser to confirm deletion"
+  },
+  "settings_account_fallback_name": {
+    "message": "User"
+  },
+  "settings_account_unavailable": {
+    "message": "Your account couldn't be loaded."
+  },
+  "settings_account_retry": {
+    "message": "Try again"
+  },
+  "settings_account_tokens_used": {
+    "message": "$USED$ / $LIMIT$ Tokens used",
+    "placeholders": {
+      "used": { "content": "$1", "example": "200" },
+      "limit": { "content": "$2", "example": "1,000" }
+    }
+  },
+  "settings_account_buy_tokens": {
+    "message": "Buy tokens"
+  },
+  "settings_account_upgrade_plan": {
+    "message": "Upgrade your plan"
+  },
+  "settings_account_dashboard": {
+    "message": "Dashboard"
+  },
+  "settings_account_settings": {
+    "message": "Account Settings"
   },
   "settings_action_title": {
     "message": "Action on Detection"
@@ -385,20 +407,14 @@
   "settings_verification_title": {
     "message": "Advanced Verification"
   },
-  "settings_verification_manage_title": {
-    "message": "Manage spaces"
-  },
-  "settings_verification_manage_disabled_title": {
-    "message": "Please log in to manage spaces"
-  },
-  "settings_verification_manage_aria": {
-    "message": "Manage spaces in external tab"
-  },
   "settings_verification_login_required": {
     "message": "Please log in to load your available spaces."
   },
   "settings_verification_no_workspaces": {
     "message": "No workspaces found."
+  },
+  "settings_verification_unavailable": {
+    "message": "Your workspaces couldn't be loaded."
   },
   "settings_verification_conj_and": {
     "message": " and "

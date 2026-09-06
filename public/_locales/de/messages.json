@@ -223,20 +223,14 @@
   "settings_account_title": {
     "message": "Konto"
   },
-  "settings_account_profile_title": {
-    "message": "Zum Profil"
-  },
-  "settings_account_profile_disabled_title": {
-    "message": "Bitte melde dich an, um dein Profil zu verwalten"
-  },
   "settings_account_waiting_auth": {
     "message": "Warten auf Authentifizierung..."
   },
   "settings_account_sign_in": {
     "message": "Anmelden"
   },
-  "settings_account_free_plan": {
-    "message": "Free"
+  "settings_account_default_plan": {
+    "message": "Individual"
   },
   "settings_account_logout": {
     "message": "Abmelden"
@@ -246,6 +240,34 @@
   },
   "settings_account_delete_title": {
     "message": "Öffnet deine Kontoeinstellungen im Browser zur Bestätigung"
+  },
+  "settings_account_fallback_name": {
+    "message": "Benutzer"
+  },
+  "settings_account_unavailable": {
+    "message": "Dein Konto konnte nicht geladen werden."
+  },
+  "settings_account_retry": {
+    "message": "Erneut versuchen"
+  },
+  "settings_account_tokens_used": {
+    "message": "$USED$ / $LIMIT$ Tokens verbraucht",
+    "placeholders": {
+      "used": { "content": "$1", "example": "200" },
+      "limit": { "content": "$2", "example": "1.000" }
+    }
+  },
+  "settings_account_buy_tokens": {
+    "message": "Tokens kaufen"
+  },
+  "settings_account_upgrade_plan": {
+    "message": "Tarif upgraden"
+  },
+  "settings_account_dashboard": {
+    "message": "Dashboard"
+  },
+  "settings_account_settings": {
+    "message": "Kontoeinstellungen"
   },
   "settings_action_title": {
     "message": "Aktion bei Erkennung"
@@ -385,20 +407,14 @@
   "settings_verification_title": {
     "message": "Erweiterte Überprüfung"
   },
-  "settings_verification_manage_title": {
-    "message": "Workspaces verwalten"
-  },
-  "settings_verification_manage_disabled_title": {
-    "message": "Bitte melde dich an, um Workspaces zu verwalten"
-  },
-  "settings_verification_manage_aria": {
-    "message": "Workspaces in externem Tab verwalten"
-  },
   "settings_verification_login_required": {
     "message": "Bitte melde dich an, um deine verfügbaren Workspaces zu laden."
   },
   "settings_verification_no_workspaces": {
     "message": "Keine Workspaces gefunden."
+  },
+  "settings_verification_unavailable": {
+    "message": "Deine Workspaces konnten nicht geladen werden."
   },
   "settings_verification_conj_and": {
     "message": " und "

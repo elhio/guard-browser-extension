@@ -103,5 +103,14 @@ export const WEBSITE_ORIGIN = new URL(
   process.env.VITE_WEBSITE_URL || "http://localhost:5173"
 ).origin;
 
+/**
+ * The API origin the extension was *built* against, read from the same `VITE_API_URL` Vite baked in.
+ * Derived rather than hard-coded for the reason `WEBSITE_ORIGIN` is: a spec pinned to localhost
+ * passes against `.env.example` and then quietly stops stubbing anything against a real `.env`.
+ */
+export const API_ORIGIN = new URL(
+  process.env.VITE_API_URL || "http://localhost:8000"
+).origin;
+
 /** A stand-in for the real site, served on whichever origin a spec routes. */
 export const WEBSITE_STUB_HTML = `<!doctype html><html><body>website stub</body></html>`;
