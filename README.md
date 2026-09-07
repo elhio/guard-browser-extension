@@ -29,8 +29,8 @@ choose how the extension reacts to flagged content (mark, blur, or hide), or whi
 
 ### From Extension Stores
 
-* [Chrome Web Store](#) *(Coming Soon)*
-* [Firefox Add-ons](#) *(Coming Soon)*
+* [Chrome Web Store](https://chrome.google.com/webstore/detail/nmdpakglbpnbdplejkhomkjofhbbafdp)
+* [Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/guard/)
 * [App Store](#) *(Coming Soon)*
 
 ### Manual Installation (Unpacked)
