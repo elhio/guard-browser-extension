@@ -166,16 +166,32 @@ export function clearOverlayState(): void {
 
 // ---- Menu facing actions ----
 
+/** Sub-pixel anchor drift that is not worth a re-render. */
+const ANCHOR_EPSILON_PX = 0.5;
+
 export function openMenu(src: string, anchor: AnchorRect): void {
   openTarget = { src, anchor };
   emit();
 }
 
+/**
+ * Moves the open menu's anchor. Called from the badge layer's reposition pass, i.e. potentially on
+ * every scroll frame, so an unchanged anchor must not `emit()` — that would re-render the menu
+ * continuously while the page scrolls past a `position: fixed` image whose rect never moves.
+ */
 export function updateAnchor(src: string, anchor: AnchorRect): void {
-  if (openTarget?.src === src) {
-    openTarget = { src, anchor };
-    emit();
-  }
+  if (openTarget?.src !== src) return;
+
+  const previous = openTarget.anchor;
+  const unchanged =
+    Math.abs(previous.top - anchor.top) < ANCHOR_EPSILON_PX &&
+    Math.abs(previous.left - anchor.left) < ANCHOR_EPSILON_PX &&
+    Math.abs(previous.width - anchor.width) < ANCHOR_EPSILON_PX &&
+    Math.abs(previous.height - anchor.height) < ANCHOR_EPSILON_PX;
+  if (unchanged) return;
+
+  openTarget = { src, anchor };
+  emit();
 }
 
 export function closeMenu(): void {

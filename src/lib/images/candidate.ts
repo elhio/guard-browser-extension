@@ -41,6 +41,7 @@ export function toImageCandidate(
   return {
     src,
     element,
+    elements: element ? [element] : [],
     fileName,
     fileExtension: getFileExtension(fileName)
   };

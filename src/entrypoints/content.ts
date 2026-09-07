@@ -33,6 +33,8 @@ import { isGetTabStatsRequest } from '@/lib/messaging/tabStatsMessages';
 import {
   applyAction,
   clearAllBadges,
+  ensureBadgeLayer,
+  destroyBadgeLayer,
   clearAllActions,
   clearOverlayState,
   coverWhileProcessing,
@@ -64,17 +66,54 @@ const MIN_IMAGE_SIZE_PX = 64;
  */
 const CLASSIFY_TIMEOUT_MS = 40_000;
 
+/**
+ * Styles for the `<guard-menu>` shadow host itself.
+ *
+ * WXT mounts the host into `<body>` and, with `position: 'inline'`, applies no styles of its own.
+ * Its reset (`:host{all:initial !important}`) computes `display: inline`, which leaves an inline box
+ * wrapping a UA-block `<html>`: that adds a line box to the page's body and becomes a stray item on
+ * a flex or grid body. Because the reset is `!important`, styles set from JavaScript cannot win —
+ * this has to go through the `css` option, which WXT appends after the reset in the same stylesheet.
+ *
+ * `position: fixed` is the load-bearing declaration: it takes the host out of flow entirely, so it
+ * is never a flex or grid item and never generates a line box. The `transform`/`filter`/`contain`/
+ * `will-change` resets are not cosmetic — any of them would make the host a containing block for the
+ * `position: fixed` badge layer inside it, collapsing its `inset: 0` to a zero-sized box.
+ */
+const MENU_HOST_STYLES = `
+  :host {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    display: block !important;
+    overflow: visible !important;
+    float: none !important;
+    z-index: 2147483647 !important;
+    transform: none !important;
+    filter: none !important;
+    contain: none !important;
+    will-change: auto !important;
+  }
+  @media print { :host { display: none !important; } }
+`;
+
 async function processCandidates(candidates: ImageCandidate[]): Promise<void> {
   const currentSettings = await settings.getValue();
-  const elementsBySrc = new Map(candidates.map((candidate) => [candidate.src, candidate.element]));
+  // Keyed by URL because that is how a classification result comes back, but the value is every
+  // element showing that URL, so all copies of a repeated image are badged from one classification.
+  const elementsBySrc = new Map(candidates.map((candidate) => [candidate.src, candidate.elements]));
 
   markBadgesProcessing(candidates, elementsBySrc);
 
   // With a blur/hide action, cover images up front so unclassified content isn't shown before it's
   // known to be safe; each one is revealed (or kept covered if flagged) once its result arrives.
   for (const candidate of candidates) {
-    const element = elementsBySrc.get(candidate.src);
-    if (element) coverWhileProcessing(element);
+    for (const element of candidate.elements) coverWhileProcessing(element);
   }
 
   // Classify each image independently so every badge updates as soon as its own result
@@ -123,9 +162,9 @@ function requestClassification(request: ClassifyImageRequest): Promise<ClassifyI
 async function classifyCandidate(
   candidate: ImageCandidate,
   currentSettings: Settings,
-  elementsBySrc: ReadonlyMap<string, HTMLImageElement | undefined>
+  elementsBySrc: ReadonlyMap<string, readonly HTMLImageElement[]>
 ): Promise<void> {
-  const element = elementsBySrc.get(candidate.src);
+  const elements = elementsBySrc.get(candidate.src) ?? [];
   const request: ClassifyImageRequest = {
     type: CLASSIFY_IMAGE_MESSAGE,
     requestId: crypto.randomUUID(),
@@ -139,7 +178,7 @@ async function classifyCandidate(
 
     const result = response?.results?.[0];
     if (!result) {
-      if (element) showBadgeError(candidate.src, element, t('badge_error_analyze'));
+      for (const element of elements) showBadgeError(candidate.src, element, t('badge_error_analyze'));
       return;
     }
 
@@ -149,13 +188,14 @@ async function classifyCandidate(
     applyAction([result], elementsBySrc);
   } catch (error) {
     const timedOut = error instanceof Error && error.message === 'timeout';
-    if (element) showBadgeError(candidate.src, element, timedOut ? t('badge_error_timeout') : t('badge_error_analyze'));
+    const message = timedOut ? t('badge_error_timeout') : t('badge_error_analyze');
+    for (const element of elements) showBadgeError(candidate.src, element, message);
   } finally {
     // Drop the pending entry (no-op on Chrome / already-resolved requests).
     pendingClassifications.delete(request.requestId);
     // Reveal the image unless it was flagged (applyAction ran above); no-op for the 'mark' action
     // and for images that were never covered. Runs on success, empty, and error/timeout paths.
-    if (element) revealAfterProcessing(element);
+    for (const element of elements) revealAfterProcessing(element);
   }
 }
 
@@ -229,8 +269,8 @@ function isWebsiteOrigin(origin: string): boolean {
  * or deletes their account, which is acted on here.
  *
  * This MUST be registered before `main` awaits anything. The script runs at `document_start` and
- * `postMessage` is not buffered, so a message posted while we're still waiting — and
- * `createShadowRootUi` waits for `<body>` to exist — is dropped with no trace. That window is
+ * `postMessage` is not buffered, so a message posted while we're still waiting — and mounting the
+ * menu waits for both its CSS and `<body>` — is dropped with no trace. That window is
  * invisible during a fresh login, where the user spends seconds typing credentials, but it reliably
  * swallows the handoff from an already-authenticated site, which posts the instant the page loads.
  */
@@ -349,6 +389,28 @@ function watchForAppHandoff(): boolean {
   return true;
 }
 
+/**
+ * Resolves once `document.body` exists.
+ *
+ * WXT's `mountUi` throws outright when its anchor is missing rather than waiting for it, and this
+ * script runs at `document_start`. `createShadowRootUi` awaits only the entrypoint CSS fetch, so on
+ * a page with a slow `<head>` that await can settle before the parser has reached `<body>` — and the
+ * throw then kills the rest of `main`: no menu, no badge layer, no image scanning at all. Reproduced
+ * on tagesschau.de, where the extension silently did nothing.
+ */
+function bodyReady(): Promise<void> {
+  if (document.body) return Promise.resolve();
+
+  return new Promise((resolve) => {
+    const observer = new MutationObserver(() => {
+      if (!document.body) return;
+      observer.disconnect();
+      resolve();
+    });
+    observer.observe(document.documentElement, { childList: true });
+  });
+}
+
 export default defineContentScript({
   matches: ['*://*/*'],
   runAt: 'document_start',
@@ -366,6 +428,7 @@ export default defineContentScript({
       name: 'guard-menu',
       position: 'inline',
       anchor: 'body',
+      css: MENU_HOST_STYLES,
       onMount: (container) => {
         const root = ReactDOM.createRoot(container);
         root.render(createElement(BadgeMenu));
@@ -373,7 +436,14 @@ export default defineContentScript({
       },
       onRemove: (root) => root?.unmount()
     });
+    await bodyReady();
     menuUi.mount();
+
+    // Badge rings render in a viewport-fixed layer inside this same shadow root, so they never
+    // touch the page's element tree. It is a sibling of WXT's inner <html>, keeping it clear of the
+    // React root that owns `container`, and one z-index below the menu that shares the tree.
+    ensureBadgeLayer(menuUi.shadow);
+    ctx.onInvalidated(destroyBadgeLayer);
 
     let stopWatching: (() => void) | undefined;
 

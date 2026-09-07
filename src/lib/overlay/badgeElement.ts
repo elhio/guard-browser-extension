@@ -1,4 +1,4 @@
-import { openMenu, type RingStatus } from './store';
+import type { RingStatus } from './store';
 
 /**
  * The lightweight per-image status ring. Clicking it opens the shared menu for its `src`.
@@ -10,16 +10,23 @@ export interface BadgeRing {
 }
 
 /**
- * Encapsulated styles for the ring. `:host { all: initial }` isolates it from the page.
- * The ring sits one z-index below the menu so the menu always stacks above it.
+ * Encapsulated styles for the ring.
+ *
+ * The host is a fixed 24x24 box pinned at the layer's origin; `badgeLayer` moves it with a
+ * `transform`, so no offsets are set here. `all: initial` isolates the ring from the Tailwind reset
+ * that shares its shadow tree, and forces an explicit `display` because `all: initial` computes to
+ * `inline`. The ring must opt back into pointer events: the layer around it is click-through.
  */
 const RING_STYLES = `
   :host {
     all: initial;
+    display: block;
     position: absolute;
-    top: 8px;
-    right: 8px;
-    z-index: 2147483646;
+    top: 0;
+    left: 0;
+    width: 24px;
+    height: 24px;
+    pointer-events: auto;
   }
   .ring {
     width: 24px;
@@ -47,9 +54,16 @@ const RING_STYLES = `
   @keyframes guard-spin { 100% { transform: rotate(360deg); } }
 `;
 
-/** Builds a status ring for one image; clicking it opens the menu anchored to the ring. */
-export function createBadgeRing(src: string): BadgeRing {
+/**
+ * Builds a status ring for one image.
+ *
+ * @param onActivate - Called when the ring is clicked. The ring does not open the menu itself: only
+ *   `badgeLayer` knows the image's clipped anchor rect, so it owns that call.
+ */
+export function createBadgeRing(onActivate: () => void): BadgeRing {
   const host = document.createElement('div');
+  // The ring's own shadow is closed, so this attribute on the host is the only handle tests have.
+  host.setAttribute('data-guard-ring', '');
   const shadow = host.attachShadow({ mode: 'closed' });
 
   const style = document.createElement('style');
@@ -63,15 +77,7 @@ export function createBadgeRing(src: string): BadgeRing {
   ring.addEventListener('click', (event) => {
     event.preventDefault();
     event.stopPropagation();
-    const rect = host.getBoundingClientRect();
-    openMenu(src, {
-      top: rect.top,
-      left: rect.left,
-      right: rect.right,
-      bottom: rect.bottom,
-      width: rect.width,
-      height: rect.height,
-    });
+    onActivate();
   });
 
   shadow.append(style, ring);

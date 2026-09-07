@@ -155,11 +155,11 @@ export function clearAllActions(): void {
  * Batch-processes a list of C2PA manifest read results
  *
  * @param results - The array of parsed C2PA manifest results
- * @param elementsBySrc - A map linking absolute image URLs back to their live DOM nodes
+ * @param elementsBySrc - A map linking absolute image URLs back to every live DOM node showing them
  */
 export function applyAction(
   results: readonly ClassifyImageResult[],
-  elementsBySrc: ReadonlyMap<string, HTMLImageElement | undefined>
+  elementsBySrc: ReadonlyMap<string, readonly HTMLImageElement[]>
 ): void {
   for (const result of results) {
     if (result.status !== 'success') continue;
@@ -167,9 +167,7 @@ export function applyAction(
     // Trigger the action if any category crossed its detection threshold.
     if (!isImageFlagged(result.categories)) continue;
 
-    const element = elementsBySrc.get(result.src);
-    if (element) {
-      markImageForAction(element);
-    }
+    // Every copy of a flagged URL is covered, not just the first one on the page
+    for (const element of elementsBySrc.get(result.src) ?? []) markImageForAction(element);
   }
 }
