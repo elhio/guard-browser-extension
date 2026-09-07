@@ -9,6 +9,33 @@
 
     --spacing: 20px;
     --accent: #0f766e;
+    /* The accent at low alpha, written out rather than mixed: color-mix() only arrived in Safari 16.2
+       and the iOS deployment target is 15, where the whole border declaration would be dropped and
+       the spinner would simply not appear. */
+    --accent-soft: rgba(15, 118, 110, 0.25);
+    --error: #dc2626;
+    --error-soft: rgba(220, 38, 38, 0.25);
+    --pending: #b45309;
+    --pending-soft: rgba(180, 83, 9, 0.25);
+
+    /* The size of the spinner and of every mark it can turn into. */
+    --mark: 40px;
+
+    /* The bundle cards, taken from the same tokens the website is built on so the two look related:
+       `bg.panel` for the face, white over gray.950, and `border.default` for the edge, gray.200 over
+       gray.800. The edge is the dark grey only in the dark appearance, where it reads as a quiet card
+       border; the same colour on white would be a near-black outline. The rest of this page is drawn
+       by the system and adapts on its own, so these are the only colours it has to be told about —
+       which is why this is the one place with a colour-scheme query. */
+    --panel: #ffffff;
+    --panel-outline: #e4e4e7;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --panel: #111111;
+        --panel-outline: #27272a;
+    }
 }
 
 html {
@@ -24,7 +51,8 @@ body {
     gap: var(--spacing);
     margin: 0 calc(var(--spacing) * 1.5);
     padding-top: calc(var(--spacing) * 2);
-    height: 100%;
+    padding-bottom: calc(var(--spacing) * 2);
+    min-height: 100%;
     box-sizing: border-box;
 
     font: -apple-system-short-body;
@@ -41,6 +69,7 @@ body.screen-step-1 .screen-step-1,
 body.screen-step-2 .screen-step-2,
 body.screen-step-3 .screen-step-3,
 body.screen-home   .screen-home,
+body.screen-store  .screen-store,
 body.screen-about  .screen-about { display: flex; }
 
 body:not(.platform-mac, .platform-ios) :is(.platform-mac, .platform-ios) { display: none; }
@@ -138,3 +167,198 @@ body.setup-complete.permissions-granted .needs-permissions { display: flex; }
 .legal-link:hover { color: #14b8a6; }
 /* The separator dot uses a fixed accent colour (not currentColor) so hovering a link never affects it. */
 .legal-link:not(:last-child)::after { content: "·"; margin-left: 0.75em; color: var(--accent); opacity: 0.4; }
+
+/* --- token store ---------------------------------------------------------
+   Same opt-in idiom as the screens above, one level down: the store is a single screen whose blocks
+   are switched by data-store-state, and whose failure wording is switched by data-store-reason. Both
+   are set by Swift through renderStore(), so no state here is ever inferred in JS. */
+
+.store-state { display: none; flex-direction: column; align-items: center; gap: var(--spacing); width: 100%; }
+body[data-store-state="loading"] .store-state-loading,
+body[data-store-state="ready"]   .store-state-ready,
+body[data-store-state="buying"]  .store-state-buying,
+body[data-store-state="pending"] .store-state-pending,
+body[data-store-state="success"] .store-state-success,
+body[data-store-state="error"]   .store-state-error { display: flex; }
+
+/* Every reason is written out in the page; exactly the one named is shown. */
+.store-reason { display: none; }
+body[data-store-reason="session"]     .store-reason-session,
+body[data-store-reason="notReported"] .store-reason-notReported,
+body[data-store-reason="network"]     .store-reason-network,
+body[data-store-reason="plan"]        .store-reason-plan,
+body[data-store-reason="restricted"]  .store-reason-restricted,
+body[data-store-reason="unavailable"] .store-reason-unavailable,
+body[data-store-reason="payment"]     .store-reason-payment,
+body[data-store-reason="unsettled"]   .store-reason-unsettled,
+body[data-store-reason="reporting"]   .store-reason-reporting,
+body[data-store-reason="approval"]    .store-reason-approval { display: block; }
+
+/* Only a failure that might come out differently is worth offering to repeat. Everything else needs
+   the user to change something first, so the store's only other way out is Done. */
+.store-retry { display: none; }
+body[data-store-reason="network"] .store-retry { display: block; }
+
+/* A bundle reads as name over sentence over price, so the row stacks rather than running inline.
+   `white-space: normal` because the description is the one label here long enough to need wrapping,
+   and a button will not wrap without being told. */
+.store-item {
+    /* Taking the button's appearance over, which is what lets it carry a panel colour at all: left
+       native it draws the system's own grey face and ignores a background. Doing so also drops the
+       system's label colour, hence `color: inherit` — the card's text should read as the page's. */
+    appearance: none;
+    -webkit-appearance: none;
+    background: var(--panel);
+    border: 1px solid var(--panel-outline);
+    border-radius: 10px;
+    color: inherit;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    /* One gap for both splits, so the name, the sentence and the price sit evenly apart. It is
+       measured against the card rather than against each line, so enlarging the name below does not
+       pull the three lines out of rhythm. */
+    gap: 0.5em;
+    white-space: normal;
+    line-height: 1.35;
+}
+/* iOS only. `-apple-system-short-body` is a larger face there than on the Mac, which reads as right
+   for a page of prose and too heavy for four dense cards. Set on the card rather than on each line,
+   so the name keeps its lead over the two lines under it, and the gap and padding — both in `em` —
+   come down with the text instead of leaving it swimming. */
+body.platform-ios .store-item { font-size: 0.9em; }
+
+/* The name is what the four cards are told apart by, so it leads. */
+.store-item-name { font-weight: 600; font-size: 1.15em; }
+/* The sentence and the numbers under the name get nothing of their own: same size, same weight and
+   the card's own text colour, which is the colour every other label in the app is set in. They were
+   dimmed, and dimmed text on a control whose only purpose is to be pressed reads as unavailable. */
+
+/* Waiting on the App Store or on our own server is the one place in this app where something takes
+   long enough to need saying. The text says it; this says it without being read. */
+.spinner {
+    width: var(--mark);
+    height: var(--mark);
+    box-sizing: border-box;
+    /* A column flex parent would otherwise be free to squash it out of round. */
+    flex: none;
+    border: 4px solid var(--accent-soft);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* A rotating object is exactly what "reduce motion" is asking us not to draw, but a frozen ring reads
+   as a hang. Fade in place instead: still alive, nothing travelling. */
+@media (prefers-reduced-motion: reduce) {
+    .spinner { animation: breathe 1.6s ease-in-out infinite; }
+}
+
+@keyframes breathe { 50% { opacity: 0.35; } }
+
+
+/* What the spinner turns into. Same ring, same size, same place, so the wait reads as resolving into
+   its answer rather than being replaced by an unrelated screen. Both marks are drawn from borders
+   rather than fetched: the page's own CSP allows nothing external, and an icon file would have to be
+   duplicated into each localized bundle. */
+.icon {
+    position: relative;
+    width: var(--mark);
+    height: var(--mark);
+    box-sizing: border-box;
+    flex: none;
+    border: 4px solid;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: settle 0.25s ease-out;
+}
+
+.icon-success { border-color: var(--accent-soft); }
+.icon-error { border-color: var(--error-soft); }
+
+/* A tick is two sides of an empty box stood on its corner. */
+.icon-success::before {
+    content: "";
+    width: 10px;
+    height: 18px;
+    border: solid var(--accent);
+    border-width: 0 4px 4px 0;
+    transform: translateY(-2px) rotate(45deg);
+}
+
+/* A cross is one bar drawn twice. Centred by hand rather than by the flex box around it: an
+   absolutely positioned child takes its place from the flex alignment only while its offsets are
+   auto, which is a fine point to hang an icon on. */
+.icon-error::before,
+.icon-error::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 4px;
+    height: 20px;
+    margin: -10px 0 0 -2px;
+    border-radius: 2px;
+    background: var(--error);
+}
+.icon-error::before { transform: rotate(45deg); }
+.icon-error::after { transform: rotate(-45deg); }
+
+/* Two hands on a clock face, both pinned at the ring's centre and swung out from there. Amber rather
+   than red: nothing has gone wrong, the answer just hasn't arrived. */
+.icon-pending { border-color: var(--pending-soft); }
+.icon-pending::before,
+.icon-pending::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 4px;
+    border-radius: 2px;
+    background: var(--pending);
+    transform-origin: bottom center;
+}
+.icon-pending::before { height: 11px; margin: -11px 0 0 -2px; }
+.icon-pending::after { height: 8px; margin: -8px 0 0 -2px; transform: rotate(110deg); }
+
+@keyframes settle { from { transform: scale(0.7); opacity: 0; } }
+
+/* The mark still has to arrive, but it need not travel to get here. */
+@media (prefers-reduced-motion: reduce) {
+    .icon { animation: fade-in 0.25s ease-out; }
+}
+
+@keyframes fade-in { from { opacity: 0; } }
+
+/* The mark sits under the sentence it illustrates, set apart from it. A margin rather than a wider
+   gap on the state: the gap also spaces the retry button, which belongs close to the message. */
+.spinner, .icon { margin-top: calc(var(--spacing) * 0.75); }
+
+/* A press has to show, and the card no longer has the system's own pressed state to fall back on —
+   taking its appearance over for the panel colour took that with it. The accent on the edge rather
+   than a fill, so the panel stays the panel. Both platforms: a finger needs this more than a pointer
+   does, having no hover to lean on. */
+.store-item {
+    transition: transform 0.12s ease, filter 0.12s ease, border-color 0.12s ease;
+}
+.store-item:active {
+    border-color: var(--accent);
+}
+
+/* Mac only: a pointer hovers, a finger does not, and on iOS the effect would instead stick to
+   whichever card was tapped last. The card lifts towards the cursor and casts a shadow, which is the
+   plainest way to say "this one, and it is pressable". */
+body.platform-mac .store-item:hover {
+    transform: translateY(-1px);
+    filter: drop-shadow(0 2px 5px rgb(0 0 0 / 0.22));
+}
+/* Settle back under the press, so the card follows the click rather than staying lifted. */
+body.platform-mac .store-item:active {
+    transform: none;
+    filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.18));
+}

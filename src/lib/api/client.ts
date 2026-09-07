@@ -8,6 +8,23 @@ interface RequestOptions {
 }
 
 /**
+ * An error carrying the HTTP status that produced it.
+ *
+ * Some endpoints answer a perfectly ordinary state with a non-2xx status — `/users/me/subscription`
+ * returns 404 for anyone on the free plan — so a caller has to be able to tell that apart from a
+ * genuine failure. Callers that only care about the message can keep catching `Error`.
+ */
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    readonly status: number
+  ) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
+
+/**
  * Extracts a human-readable error message from a failed API response, preferring
  * FastAPI's `{ detail }` payload so messages like "File exceeds the limit" surface.
  */
@@ -27,9 +44,9 @@ async function extractErrorMessage(response: Response): Promise<string> {
  * bearer token and the current UI locale (`lang`) to every call.
  *
  * @template T - The expected type of the parsed JSON response (`undefined` for 204)
- * @throws {Error} If the network request fails or the server returns a non-2xx status
- *   (the server's `detail` message is used when present). A 401 additionally clears the stored
- *   session, since the token can never recover.
+ * @throws {ApiError} If the server returns a non-2xx status (the server's `detail` message is used
+ *   when present, and `status` carries the code). A 401 additionally clears the stored session,
+ *   since the token can never recover. A network failure still throws a plain `Error` from `fetch`.
  */
 async function request<T>(endpoint: string, token: string, options: RequestOptions = {}): Promise<T> {
   const { method = 'GET', body, params = {} } = options;
@@ -53,11 +70,11 @@ async function request<T>(endpoint: string, token: string, options: RequestOptio
 
   if (response.status === 401) {
     await clearSession();
-    throw new Error(t('auth_error_session_expired'));
+    throw new ApiError(t('auth_error_session_expired'), 401);
   }
 
   if (!response.ok) {
-    throw new Error(await extractErrorMessage(response));
+    throw new ApiError(await extractErrorMessage(response), response.status);
   }
 
   if (response.status === 204) {

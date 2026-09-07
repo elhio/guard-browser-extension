@@ -2,6 +2,21 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>CFBundleURLName</key>
+			<string>com.elhio.guard</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>elhio-guard</string>
+			</array>
+		</dict>
+	</array>
+	<key>CFBundleVersion</key>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>SFSafariWebExtensionConverterVersion</key>
 	<string>26.6</string>
 	<key>UIApplicationSceneManifest</key>
@@ -23,7 +38,5 @@
 			</array>
 		</dict>
 	</dict>
-	<key>CFBundleVersion</key>
-	<string>$(CURRENT_PROJECT_VERSION)</string>
 </dict>
 </plist>

@@ -1,0 +1,95 @@
+{
+  "identifier": "B5FE92B0-950F-4564-B506-C96C4F23EA70",
+  "nonRenewingSubscriptions": [],
+  "products": [
+    {
+      "displayPrice": "10.99",
+      "familyShareable": false,
+      "internalID": "16734A9B-D186-4BEF-982D-9B5CFDE56DC8",
+      "localizations": [
+        {
+          "description": "A small top up for an occasional burst of activity",
+          "displayName": "Starter 2,500 Tokens",
+          "locale": "en_US"
+        },
+        {
+          "description": "Ein kleines Guthaben für gelegentliche Nutzung",
+          "displayName": "Starter 2.500 Token",
+          "locale": "de_DE"
+        }
+      ],
+      "productID": "com.elhio.guard.bundle.starter",
+      "referenceName": "Starter",
+      "type": "Consumable"
+    },
+    {
+      "displayPrice": "24.99",
+      "familyShareable": false,
+      "internalID": "7AE43E3E-6F10-431F-8EAA-136605710956",
+      "localizations": [
+        {
+          "description": "A larger top up for regular activity beyond the monthly quota",
+          "displayName": "Plus 7,500 Tokens",
+          "locale": "en_US"
+        },
+        {
+          "description": "Ein größeres Guthaben für regelmäßige Nutzung über das Monatskontingent hinaus",
+          "displayName": "Plus 7.500 Token",
+          "locale": "de_DE"
+        }
+      ],
+      "productID": "com.elhio.guard.bundle.plus",
+      "referenceName": "Plus",
+      "type": "Consumable"
+    },
+    {
+      "displayPrice": "59.99",
+      "familyShareable": false,
+      "internalID": "09F0413A-4E17-4FA9-9540-CF1783C3FCAF",
+      "localizations": [
+        {
+          "description": "A substantial top up for heavy or sustained activity",
+          "displayName": "Pro 20,000 Tokens",
+          "locale": "en_US"
+        },
+        {
+          "description": "Ein umfangreiches Guthaben für intensive oder dauerhafte Nutzung",
+          "displayName": "Pro 20.000 Token",
+          "locale": "de_DE"
+        }
+      ],
+      "productID": "com.elhio.guard.bundle.pro",
+      "referenceName": "Pro",
+      "type": "Consumable"
+    },
+    {
+      "displayPrice": "99.99",
+      "familyShareable": false,
+      "internalID": "714B70EF-2C12-43E0-A848-6AA04D319CA3",
+      "localizations": [
+        {
+          "description": "Our largest top up, at the best price per token",
+          "displayName": "Max 40,000 Tokens",
+          "locale": "en_US"
+        },
+        {
+          "description": "Unser größtes Guthaben, zum besten Preis pro Token",
+          "displayName": "Max 40.000 Token",
+          "locale": "de_DE"
+        }
+      ],
+      "productID": "com.elhio.guard.bundle.max",
+      "referenceName": "Max",
+      "type": "Consumable"
+    }
+  ],
+  "settings": {
+    "_askToBuyEnabled": false,
+    "_storeKitErrors": []
+  },
+  "subscriptionGroups": [],
+  "version": {
+    "major": 4,
+    "minor": 0
+  }
+}

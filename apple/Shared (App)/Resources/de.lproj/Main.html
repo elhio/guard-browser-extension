@@ -78,6 +78,70 @@
         </div>
     </section>
 
+    <section class="screen screen-store">
+        <h1>Tokens kaufen</h1>
+
+        <div class="store-state store-state-loading">
+            <p>Wird geladen…</p>
+            <div class="spinner" aria-hidden="true"></div>
+        </div>
+
+        <div class="store-state store-state-ready">
+            <p>Kaufe ein Token Paket, um weiterzuarbeiten, auch wenn das Kontingent deines Plans
+               aufgebraucht ist.</p>
+            <!-- Von Script.js gefüllt. Namen und Preise kommen zur Laufzeit aus dem App Store. -->
+            <div class="stack store-items"></div>
+        </div>
+
+        <div class="store-state store-state-buying">
+            <p>Dein Kauf wird abgeschlossen…</p>
+            <div class="spinner" aria-hidden="true"></div>
+        </div>
+
+        <div class="store-state store-state-pending">
+            <p class="store-reason store-reason-reporting">Deine Zahlung war erfolgreich. Deine Tokens
+               werden in wenigen Augenblicken gutgeschrieben.</p>
+            <p class="store-reason store-reason-approval">Dein Kauf wartet noch auf eine Freigabe.
+               Sobald sie da ist, werden deine Tokens gutgeschrieben.</p>
+            <div class="icon icon-pending" aria-hidden="true"></div>
+        </div>
+
+        <div class="store-state store-state-success">
+            <p>Vielen Dank. Deine Tokens wurden deinem Konto gutgeschrieben.</p>
+            <div class="icon icon-success" aria-hidden="true"></div>
+        </div>
+
+        <div class="store-state store-state-error">
+            <p class="store-reason store-reason-session">Öffne die Einstellungen in Safari und
+               starte den Kauf dort über "Tokens kaufen".</p>
+            <p class="store-reason store-reason-notReported">Guard wurde in Safari noch nicht
+               ausgeführt. Öffne einmal Safari und starte den Kauf dann dort.</p>
+            <p class="store-reason store-reason-network">Wir konnten Elhio nicht erreichen. Prüfe
+               deine Verbindung und versuche es erneut.</p>
+            <p class="store-reason store-reason-plan">Dein Tarif enthält keine Token-Pakete.</p>
+            <p class="store-reason store-reason-restricted">Dieses Konto kann derzeit keine
+               Token-Pakete kaufen. Bitte wende dich an den Support.</p>
+            <p class="store-reason store-reason-unavailable">Zurzeit sind keine Token-Pakete
+               verfügbar.</p>
+            <p class="store-reason store-reason-payment">Der Kauf wurde nicht abgeschlossen. Es wurde
+               dir nichts berechnet.</p>
+            <p class="store-reason store-reason-unsettled">Dir wurde etwas berechnet, aber die Tokens
+               konnten deinem Konto nicht gutgeschrieben werden. Bitte wende dich an den Support, wir
+               bringen das in Ordnung.</p>
+            <div class="icon icon-error" aria-hidden="true"></div>
+            <button class="primary store-retry" data-action="store-retry">Erneut versuchen</button>
+        </div>
+    </section>
+
+    <template id="store-item">
+        <button class="wide store-item" type="button">
+            <span class="store-item-name"></span>
+            <span class="store-item-description"></span>
+            <span class="store-item-detail"><span class="store-item-amount"></span> Tokens
+                · <span class="store-item-price"></span></span>
+        </button>
+    </template>
+
     <section class="screen screen-about">
         <h1>Über</h1>
         <p>Guard ist ein Produkt von Elhio. Es ist eine Browser-Erweiterung, die Deepfakes und alle

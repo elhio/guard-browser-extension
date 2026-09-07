@@ -21,6 +21,7 @@ function backTargetFor(screen) {
         case 'step-2': return setupComplete ? 'home' : 'step-1';
         case 'step-3': return 'step-2';
         case 'about': return 'home';
+        case 'store': return 'home';
         default: return undefined;
     }
 }
@@ -30,7 +31,11 @@ function send(action) {
 }
 
 function showScreen(screen) {
-    for (const name of ['step-1', 'step-2', 'step-3', 'home', 'about']) {
+    // Swift keeps the store on screen across an app switch, so it has to be told when the user
+    // finally leaves it — otherwise returning to the app would strand them here.
+    if (document.body.dataset.screen === 'store' && screen !== 'store') send('store-closed');
+
+    for (const name of ['step-1', 'step-2', 'step-3', 'home', 'about', 'store']) {
         document.body.classList.toggle(`screen-${name}`, name === screen);
     }
 
@@ -67,6 +72,49 @@ function render({ platform, screen, permissionsGranted, setupComplete: done, mod
     if (version) document.querySelector('.version').textContent = `v${version}`;
 
     if (screen) showScreen(screen);
+}
+
+/**
+ * Called by ViewController whenever the token store changes state.
+ *
+ * The store is the one screen whose content isn't known when this page is written: bundle names come
+ * from the API and prices from the App Store, both at runtime. Everything else it says — including
+ * every failure message — is still written out in the localized Main.html and merely selected here,
+ * so nothing user-visible is built from a string in this file.
+ *
+ * @param state  Which block to show: loading, ready, buying, deferred, success, error or failed.
+ * @param items  The bundles on sale, for the ready state. Each carries productId, name, description,
+ *        tokenAmount and displayPrice — the description already in the app's language, and the price
+ *        already formatted for the user's storefront by StoreKit.
+ * @param reason  Which failure message to show, for the error and failed states.
+ */
+function renderStore({ state, items, reason }) {
+    document.body.dataset.storeState = state;
+    document.body.dataset.storeReason = reason ?? '';
+
+    if (items) {
+        const list = document.querySelector('.store-items');
+        const template = document.querySelector('#store-item');
+
+        list.replaceChildren(...items.map((item) => {
+            const row = template.content.cloneNode(true);
+            row.querySelector('.store-item').dataset.action = `buy:${item.productId}`;
+            row.querySelector('.store-item-name').textContent = item.name;
+            row.querySelector('.store-item-amount').textContent = item.tokenAmount.toLocaleString();
+
+            // The server resolves the description into the requested language and falls back to
+            // English, so an empty one means the bundle simply has none. Hidden rather than left
+            // blank, or the card would carry the gap of a line that isn't there.
+            const description = row.querySelector('.store-item-description');
+            description.textContent = item.description ?? '';
+            description.hidden = !description.textContent;
+
+            row.querySelector('.store-item-price').textContent = item.displayPrice;
+            return row;
+        }));
+    }
+
+    showScreen('store');
 }
 
 document.addEventListener('click', (event) => {

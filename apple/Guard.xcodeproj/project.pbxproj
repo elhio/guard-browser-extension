@@ -59,6 +59,10 @@
 		F8D5F9123007950B00BEC2E6 /* GuardAppGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8D5F9103007950B00BEC2E6 /* GuardAppGroup.swift */; };
 		F8D5F9133007950B00BEC2E6 /* GuardAppGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8D5F9103007950B00BEC2E6 /* GuardAppGroup.swift */; };
 		F8D5F9143007950B00BEC2E6 /* GuardAppGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8D5F9103007950B00BEC2E6 /* GuardAppGroup.swift */; };
+		F8DE9E11304F00010055DCB8 /* GuardApi.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8DE9E01304F00010055DCB8 /* GuardApi.swift */; };
+		F8DE9E12304F00010055DCB8 /* GuardApi.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8DE9E01304F00010055DCB8 /* GuardApi.swift */; };
+		F8DE9E13304F00010055DCB8 /* GuardStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8DE9E02304F00010055DCB8 /* GuardStore.swift */; };
+		F8DE9E14304F00010055DCB8 /* GuardStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8DE9E02304F00010055DCB8 /* GuardStore.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -143,6 +147,9 @@
 		F8D5F9033007950B00BEC2E6 /* iOS.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = iOS.entitlements; sourceTree = "<group>"; };
 		F8D5F9043007950B00BEC2E6 /* macOS.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = macOS.entitlements; sourceTree = "<group>"; };
 		F8D5F9103007950B00BEC2E6 /* GuardAppGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuardAppGroup.swift; sourceTree = "<group>"; };
+		F8DE9E01304F00010055DCB8 /* GuardApi.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuardApi.swift; sourceTree = "<group>"; };
+		F8DE9E02304F00010055DCB8 /* GuardStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuardStore.swift; sourceTree = "<group>"; };
+		F8DE9E03304F00010055DCB8 /* Guard.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = Guard.storekit; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -183,6 +190,7 @@
 				F8D5F9043007950B00BEC2E6 /* macOS.entitlements */,
 				F8D5F9033007950B00BEC2E6 /* iOS.entitlements */,
 				F8D5F9013007950B00BEC2E6 /* Version.xcconfig */,
+				F8DE9E03304F00010055DCB8 /* Guard.storekit */,
 				F8D5F3213007950A00BEC2E6 /* Shared (App) */,
 				F8D5F32A3007950B00BEC2E6 /* Shared (Extension) */,
 				F8D5F3323007950B00BEC2E6 /* iOS (App) */,
@@ -198,6 +206,8 @@
 			children = (
 				F8D5F3283007950A00BEC2E6 /* ViewController.swift */,
 				F8D5F9103007950B00BEC2E6 /* GuardAppGroup.swift */,
+				F8DE9E01304F00010055DCB8 /* GuardApi.swift */,
+				F8DE9E02304F00010055DCB8 /* GuardStore.swift */,
 				F8D5F3293007950B00BEC2E6 /* Assets.xcassets */,
 				F8D5F3223007950A00BEC2E6 /* Resources */,
 			);
@@ -500,6 +510,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				F8D5F9113007950B00BEC2E6 /* GuardAppGroup.swift in Sources */,
+				F8DE9E11304F00010055DCB8 /* GuardApi.swift in Sources */,
+				F8DE9E13304F00010055DCB8 /* GuardStore.swift in Sources */,
 				F8D5F3663007950B00BEC2E6 /* ViewController.swift in Sources */,
 				F8D5F3343007950B00BEC2E6 /* AppDelegate.swift in Sources */,
 				F8D5F3363007950B00BEC2E6 /* SceneDelegate.swift in Sources */,
@@ -511,6 +523,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				F8D5F9123007950B00BEC2E6 /* GuardAppGroup.swift in Sources */,
+				F8DE9E12304F00010055DCB8 /* GuardApi.swift in Sources */,
+				F8DE9E14304F00010055DCB8 /* GuardStore.swift in Sources */,
 				F8D5F3673007950B00BEC2E6 /* ViewController.swift in Sources */,
 				F8D5F3453007950B00BEC2E6 /* AppDelegate.swift in Sources */,
 			);

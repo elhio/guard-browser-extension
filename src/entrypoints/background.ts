@@ -15,6 +15,10 @@ import {
 } from '@/lib/messaging/verifyMessages';
 import { isOpenTabRequest } from '@/lib/messaging/openTab';
 import { isAppHandoffRequest } from '@/lib/messaging/appHandoff';
+import {
+  isStoreHandoverRequest,
+  type StoreHandoverResponse
+} from '@/lib/messaging/storeHandover';
 import { respondAsync } from '@/lib/messaging/respondAsync';
 import { isSubmitReactionRequest } from '@/lib/messaging/reactionMessages';
 import { isCreateShareRequest, type CreateShareResponse } from '@/lib/messaging/shareMessages';
@@ -311,6 +315,17 @@ export default defineBackground({
           console.warn('[Guard] Blocked OPEN_TAB for unsafe URL:', message.url);
         }
         return undefined;
+      }
+
+      // PATH 3.2: the settings page is about to open the container app's token store (Safari only).
+      // The credentials have to be parked before the app launches, and only the background may talk
+      // to the native handler, so the page asks us and waits for the answer.
+      if (import.meta.env.SAFARI && isStoreHandoverRequest(message)) {
+        const work = (async (): Promise<StoreHandoverResponse> => {
+          const { handOverSessionToApp } = await import('@/lib/native/openStore');
+          return { success: await handOverSessionToApp() };
+        })();
+        return respondAsync(work, sendResponse);
       }
 
       // PATH 3.5: the website handed over a token after a login. Stored here rather than in an

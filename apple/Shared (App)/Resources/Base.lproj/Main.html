@@ -77,6 +77,68 @@
         </div>
     </section>
 
+    <section class="screen screen-store">
+        <h1>Buy Tokens</h1>
+
+        <div class="store-state store-state-loading">
+            <p>Loading…</p>
+            <div class="spinner" aria-hidden="true"></div>
+        </div>
+
+        <div class="store-state store-state-ready">
+            <p>Buy a bundle of tokens to continue working, even when your plan's allowance is
+               exhausted.</p>
+            <div class="stack store-items"></div>
+        </div>
+
+        <div class="store-state store-state-buying">
+            <p>Completing your purchase…</p>
+            <div class="spinner" aria-hidden="true"></div>
+        </div>
+
+        <div class="store-state store-state-pending">
+            <p class="store-reason store-reason-reporting">Your payment went through. Your tokens will
+               appear on your account in a few moments.</p>
+            <p class="store-reason store-reason-approval">Your purchase is waiting to be approved. Your
+               tokens will be added as soon as it is.</p>
+            <div class="icon icon-pending" aria-hidden="true"></div>
+        </div>
+
+        <div class="store-state store-state-success">
+            <p>Thank you. Your tokens have been added to your account.</p>
+            <div class="icon icon-success" aria-hidden="true"></div>
+        </div>
+
+        <div class="store-state store-state-error">
+            <p class="store-reason store-reason-session">Open Settings in Safari and press Buy tokens
+               there to start a purchase.</p>
+            <p class="store-reason store-reason-notReported">Guard hasn't run in Safari yet. Open
+               Safari once, then press Buy tokens there.</p>
+            <p class="store-reason store-reason-network">We couldn't reach Elhio. Check your connection
+               and try again.</p>
+            <p class="store-reason store-reason-plan">Your plan doesn't include token bundles.</p>
+            <p class="store-reason store-reason-restricted">This account can't buy token bundles at the
+               moment. Please contact support.</p>
+            <p class="store-reason store-reason-unavailable">There are no token bundles on sale right
+               now.</p>
+            <p class="store-reason store-reason-payment">The purchase didn't go through. You have not
+               been charged.</p>
+            <p class="store-reason store-reason-unsettled">You were charged, but the tokens couldn't be
+               added to your account. Please contact support and we'll put it right.</p>
+            <div class="icon icon-error" aria-hidden="true"></div>
+            <button class="primary store-retry" data-action="store-retry">Try again</button>
+        </div>
+    </section>
+
+    <template id="store-item">
+        <button class="wide store-item" type="button">
+            <span class="store-item-name"></span>
+            <span class="store-item-description"></span>
+            <span class="store-item-detail"><span class="store-item-amount"></span> Tokens
+                · <span class="store-item-price"></span></span>
+        </button>
+    </template>
+
     <section class="screen screen-about">
         <h1>About</h1>
         <p>Guard is a product of Elhio. It is a browser extension to detect deepfakes and any other

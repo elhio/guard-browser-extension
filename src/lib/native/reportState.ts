@@ -1,5 +1,6 @@
 import { browser } from 'wxt/browser';
 import { settings } from '@/lib/settings';
+import { NATIVE_APPLICATION_ID } from './nativeApplication';
 
 /**
  * Safari-only bridge between the extension and the container app.
@@ -16,9 +17,6 @@ import { settings } from '@/lib/settings';
  * Only the background script may talk to the native handler, and only with the `nativeMessaging`
  * permission — which is why both this module and that permission are gated to Safari.
  */
-
-/** Safari routes native messages to the containing app's handler and ignores this identifier. */
-const NATIVE_APPLICATION_ID = 'application.id';
 
 interface NativeReply {
   /** The app's "Setup" button was pressed while it had no way to open the page itself. */
@@ -88,7 +86,8 @@ export async function reportStateToApp(): Promise<AppCommand | null> {
       // The app has no way to know which site this build talks to — it's baked in here at build time
       // and differs between a dev server and production. It matters: the app opens this URL to hand
       // off to us, and the content script only honours the handoff marker on this exact host.
-      websiteUrl: import.meta.env.VITE_WEBSITE_URL
+      websiteUrl: import.meta.env.VITE_WEBSITE_URL,
+      apiUrl: import.meta.env.VITE_API_URL
     })) as NativeReply | undefined;
 
     if (reply?.openSetup) return 'openSetup';

@@ -1,13 +1,12 @@
 import { useEffect, useState, useCallback } from 'react';
-import { LuExternalLink } from 'react-icons/lu';
 import { useQuery } from '@tanstack/react-query';
 
 import SettingsSection from '@/components/ui/SettingsSection';
 import SettingsRow from '@/components/ui/SettingsRow';
 import { t, type MessageKey } from '@/lib/i18n';
-import { settings } from '@/lib/settings';
+import { settings, isTokenExpired } from '@/lib/settings';
 import type { TasksState } from '@/lib/detection';
-import { fetchUserProfile, fetchUserSpaces } from '@/lib/api';
+import { fetchUserProfile, fetchUserSpaces, isSessionRejected } from '@/lib/api';
 import {
   checkSpaceEligibility,
   formatSpaceDescription,
@@ -49,22 +48,36 @@ export function VerificationSettingsCard() {
     };
   }, []);
 
-  const { data: user, isLoading: isUserLoading } = useQuery({
+  const isTokenUsable = !!token && !isTokenExpired(token);
+
+  const {
+    data: user,
+    isLoading: isUserLoading,
+    isError: isUserError,
+    error: userError,
+  } = useQuery({
     queryKey: ['userProfile', token],
     queryFn: () => fetchUserProfile(token!),
-    enabled: !!token,
+    enabled: isTokenUsable,
     staleTime: 1000 * 60 * 10,
   });
 
-  const { data: spaces = [], isLoading: isSpacesLoading } = useQuery({
+  const { data: spaces = [], isLoading: isSpacesLoading, isError: isSpacesError } = useQuery({
     queryKey: ['userSpaces', token, user?.id],
     queryFn: () => fetchUserSpaces(token!, user!.id),
-    enabled: !!token && !!user?.id,
+    enabled: isTokenUsable && !!user?.id,
     staleTime: 1000 * 60 * 10,
   });
 
-  const isAuthenticated = !!token;
-  const isLoading = token === undefined || isUserLoading || isSpacesLoading;
+  // Same split as the account card: only a refused token means the session is over. See
+  // `isSessionRejected`
+  const isAuthenticated = isTokenUsable && !(isUserError && isSessionRejected(userError));
+
+  // Without the profile there is no id to list spaces with, so the spaces query never runs and the
+  // render fell through to "no workspaces found"
+  const isUnavailable = isAuthenticated && (isUserError || isSpacesError);
+
+  const isLoading = token === undefined || (isTokenUsable && (isUserLoading || isSpacesLoading));
 
   const handleSelectSpace = useCallback(async (spaceId: string) => {
     const currentSettings = await settings.getValue();
@@ -99,25 +112,8 @@ export function VerificationSettingsCard() {
 
   const baseCheckboxClasses = "h-4 w-4 shrink-0 rounded border-gray-300 text-teal-600 accent-teal-500 focus:outline-none transition-all";
 
-  const manageSpacesAction = (
-    <a
-      href={isAuthenticated ? `${import.meta.env.VITE_WEBSITE_URL || ''}/spaces` : undefined}
-      target="_blank"
-      rel="noopener noreferrer"
-      className={`flex items-center justify-center transition-colors focus:outline-none -mr-0.5 ${
-        isAuthenticated 
-          ? 'text-gray-500 hover:text-gray-700 cursor-pointer' 
-          : 'text-gray-500 pointer-events-none opacity-50'
-      }`}
-      title={isAuthenticated ? t('settings_verification_manage_title') : t('settings_verification_manage_disabled_title')}
-      aria-label={t('settings_verification_manage_aria')}
-    >
-      <LuExternalLink size={18} />
-    </a>
-  );
-
   return (
-    <SettingsSection title={t('settings_verification_title')} action={manageSpacesAction}>
+    <SettingsSection title={t('settings_verification_title')}>
 
       {isLoading ? (
         <div className="flex flex-col animate-pulse">
@@ -131,8 +127,12 @@ export function VerificationSettingsCard() {
           ))}
         </div>
       ) : !isAuthenticated ? (
-        <p className="text-sm text-gray-500 py-3">
+        <p className="text-sm text-gray-500 py-3" data-testid="verification-login-required">
           {t('settings_verification_login_required')}
+        </p>
+      ) : isUnavailable ? (
+        <p className="text-sm text-gray-500 py-3" data-testid="verification-unavailable">
+          {t('settings_verification_unavailable')}
         </p>
       ) : spaces.length === 0 ? (
         <p className="text-sm text-gray-500 py-3">

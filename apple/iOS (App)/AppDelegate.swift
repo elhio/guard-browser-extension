@@ -13,7 +13,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Override point for customization after application launch.
+        // Before any UI: this is the App Store's retry channel for a charge that was taken but never
+        // reported, and it has to be listening from the moment the app is alive.
+        GuardStore.shared.startListeningForTransactions()
         return true
     }
 
