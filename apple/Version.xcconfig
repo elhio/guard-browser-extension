@@ -2,5 +2,5 @@
 // Only the last two digits of CURRENT_PROJECT_VERSION are meant to be edited by hand: bump them for
 // each re-upload of the same MARKETING_VERSION, since App Store Connect rejects a build number it
 // has already seen. Re-running the script resets them to 00.
-MARKETING_VERSION = 0.0.2
-CURRENT_PROJECT_VERSION = 201
+MARKETING_VERSION = 0.0.3
+CURRENT_PROJECT_VERSION = 300
