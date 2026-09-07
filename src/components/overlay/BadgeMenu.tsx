@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 import { t } from '@/lib/i18n';
 import type { DetectionCategory } from '@/lib/detection';
@@ -63,7 +63,6 @@ export function BadgeMenu() {
 
   const tabs = CATEGORY_ORDER.filter((category) => settings.tasks[category]);
   const src = openTarget?.src ?? null;
-  const element = entry?.element ?? null;
   const verifying = entry?.verify.state === 'pending';
 
   // On open (new image), jump to the tripped tab and reset any in-progress mode.
@@ -127,31 +126,17 @@ export function BadgeMenu() {
     };
   }, [mode, feedbackCtx]);
 
-  // Anchor to the image's top-right; reposition on scroll/resize; close if the image is gone.
-  useEffect(() => {
-    if (!openTarget || !element) return;
+  // Anchor to the top-right of the image's *visible* box
+  useLayoutEffect(() => {
+    const anchor = openTarget?.anchor;
+    if (!anchor) return;
 
-    const reposition = () => {
-      if (!element.isConnected) {
-        closeMenu();
-        return;
-      }
-      const rect = element.getBoundingClientRect();
-      const height = menuRef.current?.offsetHeight ?? 240;
-      const left = Math.max(8, Math.min(rect.right - MENU_WIDTH, window.innerWidth - MENU_WIDTH - 8));
-      let top = rect.top + 32;
-      if (top + height > window.innerHeight - 8) top = Math.max(8, window.innerHeight - height - 8);
-      setPos({ top, left });
-    };
-
-    reposition();
-    window.addEventListener('scroll', reposition, { passive: true, capture: true });
-    window.addEventListener('resize', reposition);
-    return () => {
-      window.removeEventListener('scroll', reposition, { capture: true } as EventListenerOptions);
-      window.removeEventListener('resize', reposition);
-    };
-  }, [openTarget, element]);
+    const height = menuRef.current?.offsetHeight ?? 240;
+    const left = Math.max(8, Math.min(anchor.right - MENU_WIDTH, window.innerWidth - MENU_WIDTH - 8));
+    let top = anchor.top + 32;
+    if (top + height > window.innerHeight - 8) top = Math.max(8, window.innerHeight - height - 8);
+    setPos({ top, left });
+  }, [openTarget?.anchor]);
 
   // Proximity auto-close (suspended while verifying or in a form) + Escape.
   useEffect(() => {

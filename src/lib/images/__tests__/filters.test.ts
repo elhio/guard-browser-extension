@@ -14,11 +14,13 @@ function candidate(
   fileExtension = '',
   element?: Partial<HTMLImageElement>
 ): ImageCandidate {
+  const el = element as HTMLImageElement | undefined;
   return {
     src,
     fileName: '',
     fileExtension,
-    element: element as HTMLImageElement | undefined,
+    element: el,
+    elements: el ? [el] : [],
   };
 }
 

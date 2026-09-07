@@ -16,13 +16,13 @@ export function showBadgeError(src: string, element: HTMLImageElement, message: 
  */
 export function markBadgesProcessing(
   candidates: readonly ImageCandidate[],
-  elementsBySrc: ReadonlyMap<string, HTMLImageElement | undefined>
+  elementsBySrc: ReadonlyMap<string, readonly HTMLImageElement[]>
 ): void {
   for (const candidate of candidates) {
-    const element = elementsBySrc.get(candidate.src);
-    if (!element) continue;
-    attachBadge(element, candidate.src).setStatus('processing');
-    markProcessing(candidate.src, element);
+    for (const element of elementsBySrc.get(candidate.src) ?? []) {
+      attachBadge(element, candidate.src).setStatus('processing');
+      markProcessing(candidate.src, element);
+    }
   }
 }
 
@@ -32,22 +32,22 @@ export function markBadgesProcessing(
  */
 export function updateBadges(
   results: readonly ClassifyImageResult[],
-  elementsBySrc: ReadonlyMap<string, HTMLImageElement | undefined>
+  elementsBySrc: ReadonlyMap<string, readonly HTMLImageElement[]>
 ): void {
   for (const result of results) {
-    const element = elementsBySrc.get(result.src);
-    if (!element) continue;
+    // One classification, but every element showing that URL gets its own ring updated
+    for (const element of elementsBySrc.get(result.src) ?? []) {
+      const badge = attachBadge(element, result.src);
 
-    const badge = attachBadge(element, result.src);
+      if (result.status === 'error') {
+        badge.setStatus('error');
+        setErrorState(result.src, element, result.error || t('badge_error_analyze'));
+        continue;
+      }
 
-    if (result.status === 'error') {
-      badge.setStatus('error');
-      setErrorState(result.src, element, result.error || t('badge_error_analyze'));
-      continue;
+      const isAlert = isImageFlagged(result.categories);
+      badge.setStatus(isAlert ? 'alert' : 'idle');
+      setResult(result.src, element, result, isAlert);
     }
-
-    const isAlert = isImageFlagged(result.categories);
-    badge.setStatus(isAlert ? 'alert' : 'idle');
-    setResult(result.src, element, result, isAlert);
   }
 }

@@ -27,14 +27,26 @@ export interface WatchPageImagesOptions extends ScanPageImagesOptions {
  */
 export function watchPageImages(options: WatchPageImagesOptions): () => void {
   const { onNewCandidates, debounceMs = 500, ...scanOptions } = options;
-  const reportedSrc = new Set<string>();
+
+  // Element to the URL it was last reported with, rather than a set of URLs
+  const reported = new WeakMap<HTMLImageElement, string>();
 
   function scanAndReportNew(): void {
-    const candidates = scanPageImages(scanOptions);
-    const newCandidates = candidates.filter((candidate) => !reportedSrc.has(candidate.src));
-    if (newCandidates.length === 0) return;
+    const newCandidates: ImageCandidate[] = [];
 
-    for (const candidate of newCandidates) reportedSrc.add(candidate.src);
+    for (const candidate of scanPageImages(scanOptions)) {
+      const fresh = candidate.elements.filter((element) => reported.get(element) !== candidate.src);
+      if (fresh.length === 0) continue;
+
+      for (const element of fresh) reported.set(element, candidate.src);
+
+      // Narrowed to the unbadged elements so an already-classified copy is not reset to `processing`.
+      candidate.elements = fresh;
+      candidate.element = fresh[0];
+      newCandidates.push(candidate);
+    }
+
+    if (newCandidates.length === 0) return;
     onNewCandidates(newCandidates);
   }
 

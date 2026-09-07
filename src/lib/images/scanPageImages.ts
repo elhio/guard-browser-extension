@@ -14,29 +14,40 @@ export interface ScanPageImagesOptions {
 }
 
 /**
- * Scans the specified DOM tree for `<img>` elements, converts each into an `ImageCandidate`, de-duplicates them based on their resolved source URL, and applies the provided filters.
+ * Scans the specified DOM tree for `<img>` elements, converts each into an `ImageCandidate`, groups them
+ * by their resolved source URL, and applies the provided filters.
+ *
+ * One candidate is produced per distinct URL, so a URL is still classified exactly once, but the
+ * candidate carries every element showing it in `elements` so each of them can be badged. A repeated
+ * element only needs to pass the filters on its own account to join the group — the size filter in
+ * particular is per-element, since the same URL can be a thumbnail in one place and a hero in another.
  *
  * @param options - Configuration options dictating the root element to scan and the filters to apply
- * @returns An array of unique, filtered `ImageCandidate` objects found within the target root
+ * @returns An array of filtered `ImageCandidate` objects, one per distinct URL within the target root
  */
 export function scanPageImages(options: ScanPageImagesOptions = {}): ImageCandidate[] {
   const { filters = [], root = document } = options;
   const passesFilters = combineFilters(filters);
 
   const elements = Array.from(root.querySelectorAll('img'));
-  const seenSrc = new Set<string>();
+  const bySrc = new Map<string, ImageCandidate>();
   const candidates: ImageCandidate[] = [];
 
   for (const element of elements) {
     const src = element.currentSrc || element.src;
-    if (!src || seenSrc.has(src)) continue;
-
-    seenSrc.add(src);
+    if (!src) continue;
 
     const candidate = toImageCandidate(src, element);
-    if (passesFilters(candidate)) {
-      candidates.push(candidate);
+    if (!passesFilters(candidate)) continue;
+
+    const existing = bySrc.get(src);
+    if (existing) {
+      existing.elements.push(element);
+      continue;
     }
+
+    bySrc.set(src, candidate);
+    candidates.push(candidate);
   }
 
   return candidates;
