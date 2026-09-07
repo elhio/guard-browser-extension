@@ -63,7 +63,8 @@ describe('reportStateToApp', () => {
       expect.objectContaining({
         hasCompletedSetup: false,
         hasSiteAccess: true,
-        websiteUrl: import.meta.env.VITE_WEBSITE_URL
+        websiteUrl: import.meta.env.VITE_WEBSITE_URL,
+        apiUrl: import.meta.env.VITE_API_URL
       })
     );
   });

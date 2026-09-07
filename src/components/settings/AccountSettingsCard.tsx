@@ -127,6 +127,61 @@ function UsageSummary({ children }: { children: ReactNode }) {
 }
 
 /**
+ * The call to action under the usage bar, which is where the two purchase routes part company.
+ *
+ * Everywhere but Safari it stays what it always was: a link to the billing page, carrying the bundle
+ * parameter so the site opens on the right card. The Safari build may not link out at all — review
+ * guideline 3.1.1(a) forbids an App Store app pointing customers at another way to pay — so it opens
+ * the container app instead, which is the only place StoreKit can present a payment sheet.
+ *
+ * When a Safari user's plan forbids bundles there is nothing honest left to offer, so nothing is
+ * rendered. The other builds still show "Upgrade your plan" and link to it.
+ *
+ * @property label - "Buy tokens" or "Upgrade your plan", already chosen by the caller
+ * @property allowBundlePurchase - Whether the plan allows buying bundles at all
+ * @property onBuyInApp - Hands the session to the container app and launches it. Safari only
+ */
+function PurchaseCall({
+  label,
+  allowBundlePurchase,
+  onBuyInApp,
+}: {
+  label: string;
+  allowBundlePurchase: boolean;
+  onBuyInApp: () => void;
+}) {
+  const className =
+    'mt-2 inline-block text-xs font-medium text-gray-900 hover:underline underline-offset-2 focus:outline-none';
+
+  if (import.meta.env.SAFARI) {
+    if (!allowBundlePurchase) return null;
+
+    return (
+      <button
+        type="button"
+        onClick={onBuyInApp}
+        data-testid="account-buy-tokens"
+        className={`${className} cursor-pointer`}
+      >
+        {label}
+      </button>
+    );
+  }
+
+  return (
+    <a
+      href={websiteBillingUrl({ bundle: allowBundlePurchase })}
+      target="_blank"
+      rel="noopener noreferrer"
+      data-testid="account-buy-tokens"
+      className={className}
+    >
+      {label}
+    </a>
+  );
+}
+
+/**
  * The account section of the settings page, mirroring the website's user menu.
  *
  * Renders one of four states, decided by whether there is a usable token and what the profile call
@@ -137,6 +192,8 @@ function UsageSummary({ children }: { children: ReactNode }) {
 export function AccountSettingsCard() {
   const [token, setToken] = useState<string | null | undefined>(undefined);
   const [isWaitingAuth, setIsWaitingAuth] = useState(false);
+  // Safari only: set when the container app has been sent to, so returning here refreshes the balance
+  const [isBuyingInApp, setIsBuyingInApp] = useState(false);
 
   const loginUrl = websiteAuthUrl('login');
 
@@ -255,6 +312,45 @@ export function AccountSettingsCard() {
   // yanking the user out of a site they may have open in another tab is the surprising behaviour;
   // the sync runs the other way (see `clearSession`'s callers).
   const handleLogout = () => clearSession();
+
+  // Safari only. The purchase itself belongs to the container app: StoreKit will not present a
+  // payment sheet from the extension's native handler, which has no window to anchor one to. So the
+  // session is handed over first and the app is launched second — awaiting is what puts them in that
+  // order. Navigating to the app's scheme hands off without unloading this page.
+  //
+  // Dynamically imported inside the build guard so none of it reaches the Chrome or Firefox bundles,
+  // where there is no app to hand anything to.
+  const handleBuyTokens = async () => {
+    if (!import.meta.env.SAFARI) return;
+
+    setIsBuyingInApp(true);
+
+    const [{ requestStoreHandover }, { APP_STORE_URL }] = await Promise.all([
+      import('@/lib/messaging/storeHandover'),
+      import('@/lib/native/nativeApplication'),
+    ]);
+
+    await requestStoreHandover();
+    window.location.href = APP_STORE_URL;
+  };
+
+  // A purchase happens outside this page, so nothing here would otherwise notice it. The queries opt
+  // out of refetching on focus (see `createQueryClient`), which is right for every other case and
+  // wrong for this one, so the balance is refreshed by hand on the way back from the app.
+  useEffect(() => {
+    if (!import.meta.env.SAFARI || !isBuyingInApp) return;
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState !== 'visible') return;
+      setIsBuyingInApp(false);
+      void refetchUser();
+      void refetchUsage();
+      void refetchSubscription();
+    };
+
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', onVisibilityChange);
+  }, [isBuyingInApp, refetchUser, refetchUsage, refetchSubscription]);
 
   return (
     <SettingsSection title={t('settings_account_title')}>
@@ -391,14 +487,11 @@ export function AccountSettingsCard() {
                         {ctaLabel}
                       </span>
                     ) : (
-                      <a
-                        href={websiteBillingUrl({ bundle: allowBundlePurchase })}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="mt-2 inline-block text-xs font-medium text-gray-900 hover:underline underline-offset-2 focus:outline-none"
-                      >
-                        {ctaLabel}
-                      </a>
+                      <PurchaseCall
+                        label={ctaLabel}
+                        allowBundlePurchase={allowBundlePurchase}
+                        onBuyInApp={() => void handleBuyTokens()}
+                      />
                     )}
                   </>
                 )}
@@ -419,12 +512,6 @@ export function AccountSettingsCard() {
               label={t('settings_account_settings')}
               href={websiteAccountUrl()}
             />
-            <MenuRow
-              icon={<LuLogOut size={18} className="text-gray-700 group-hover:text-gray-900 transition-colors shrink-0" />}
-              label={t('settings_account_logout')}
-              onClick={handleLogout}
-            />
-
             {/* Safari only. Apple's review guideline 5.1.1(v) requires an app that creates accounts to
                 let users start deleting one from inside it, so the Safari build has to carry this row. */}
             {import.meta.env.SAFARI && (
@@ -435,6 +522,11 @@ export function AccountSettingsCard() {
                 title={t('settings_account_delete_title')}
               />
             )}
+            <MenuRow
+              icon={<LuLogOut size={18} className="text-gray-700 group-hover:text-gray-900 transition-colors shrink-0" />}
+              label={t('settings_account_logout')}
+              onClick={handleLogout}
+            />
           </div>
 
         </div>

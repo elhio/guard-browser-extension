@@ -12,6 +12,7 @@ export function settingsDashboard(page: Page, extensionId: string) {
     accountIdentityName: () => page.getByTestId("account-identity-name"),
     accountUnavailable: () => page.getByTestId("account-unavailable"),
     accountRetry: () => page.getByTestId("account-retry"),
+    accountBuyTokens: () => page.getByTestId("account-buy-tokens"),
     verificationLoginRequired: () => page.getByTestId("verification-login-required"),
     verificationUnavailable: () => page.getByTestId("verification-unavailable"),
 

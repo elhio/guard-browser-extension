@@ -32,12 +32,20 @@ class ViewController: PlatformViewController, WKNavigationDelegate, WKScriptMess
 
     private var isPageLoaded = false
 
+    /// True while the token store is on screen, so a return to the foreground leaves it alone.
+    ///
+    /// Every other screen is safe to replace with home on activation; the store is not. The user
+    /// leaves this app to look at a payment sheet and comes back expecting to still be buying.
+    private var isShowingStore = false
+
     override func viewDidLoad() {
         super.viewDidLoad()
 
         self.webView.navigationDelegate = self
 
 #if os(iOS)
+        // Off by default: the wizard is a fixed vertical flow, and a page that bounces under a
+        // step-by-step instruction reads as broken. The store turns it back on for itself.
         self.webView.scrollView.isScrollEnabled = false
 #endif
 
@@ -57,6 +65,13 @@ class ViewController: PlatformViewController, WKNavigationDelegate, WKScriptMess
             self, selector: #selector(refresh),
             name: NSApplication.didBecomeActiveNotification, object: nil)
 #endif
+
+        // The extension asks for the store by opening `elhio-guard://store`. Arriving while we are
+        // already running, that lands here; arriving cold, it is waiting as a flag by the time the
+        // page has loaded (see `webView(_:didFinish:)`).
+        NotificationCenter.default.addObserver(
+            self, selector: #selector(storeRequested),
+            name: GuardStoreRequest.notification, object: nil)
     }
 
 #if os(macOS)
@@ -73,6 +88,17 @@ class ViewController: PlatformViewController, WKNavigationDelegate, WKScriptMess
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         isPageLoaded = true
         render(initial: true)
+
+        // A cold launch from the extension's Buy button: the URL was handled before there was a page
+        // to show it on, so the request has been sitting as a flag until now.
+        if GuardStoreRequest.take() { openStore() }
+    }
+
+    @objc private func storeRequested() {
+        // Left standing when there is no page yet, so `webView(_:didFinish:)` still finds it. Taking
+        // it here would drop the request on the floor for a launch that was only just beginning.
+        guard isPageLoaded, GuardStoreRequest.take() else { return }
+        openStore()
     }
 
     /// Re-evaluate when the app comes back to the front — granting permissions and running setup both
@@ -122,6 +148,9 @@ class ViewController: PlatformViewController, WKNavigationDelegate, WKScriptMess
         // the permission state below, so step 2's button can turn into Continue.
         let screen: String?
         switch (setupDone, permissionsGranted) {
+        // Never over the store. Coming back from the payment sheet, or from anywhere else, must not
+        // throw away a purchase the user is in the middle of.
+        case _ where isShowingStore: screen = nil
         case (true, _): screen = "home"
         case (false, _): screen = initial ? "step-1" : nil
         }
@@ -157,7 +186,18 @@ class ViewController: PlatformViewController, WKNavigationDelegate, WKScriptMess
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         guard let action = message.body as? String else { return }
 
+        // Buying carries the chosen product, so it is a prefix rather than a bare action.
+        if let productId = action.dropPrefix("buy:") {
+            buy(productId: String(productId))
+            return
+        }
+
         switch action {
+        case "store-closed":
+            isShowingStore = false
+            setScrolling(false)
+        case "store-retry":
+            openStore()
         case "open-website":
             openWebsite()
         // The app can't open the extension's own pages — iOS refuses safari-web-extension:// URLs
@@ -184,6 +224,89 @@ class ViewController: PlatformViewController, WKNavigationDelegate, WKScriptMess
         default:
             return
         }
+    }
+
+    /// Shows the store and fills it in.
+    ///
+    /// Reached only from the extension's Buy tokens button — the app offers no way in of its own,
+    /// because the session it needs is handed over by that very button and nothing else provides one.
+    private func openStore() {
+        isShowingStore = true
+        setScrolling(true)
+        renderStore(["state": "loading"])
+
+        Task { @MainActor in
+            switch await GuardStore.shared.open() {
+            case .success(let items):
+                self.renderStore([
+                    "state": "ready",
+                    "items": items.map {
+                        [
+                            "productId": $0.productId,
+                            "name": $0.name,
+                            "description": $0.description,
+                            "tokenAmount": $0.tokenAmount,
+                            "displayPrice": $0.displayPrice,
+                        ]
+                    },
+                ])
+            case .failure(let reason):
+                self.renderStore(["state": "error", "reason": reason.rawValue])
+            }
+        }
+    }
+
+    /// Buys one bundle, and reports what came of it.
+    ///
+    /// Everything hard happens in `GuardStore`: the charge is not treated as done until the server has
+    /// credited it, so a success here means the tokens are already on the account.
+    private func buy(productId: String) {
+        renderStore(["state": "buying"])
+
+        Task { @MainActor in
+            switch await GuardStore.shared.buy(productId: productId) {
+            case .credited:
+                self.renderStore(["state": "success"])
+            case .cancelled:
+                // Backing out of the payment sheet is not a failure; put the list back.
+                self.openStore()
+            case .pending(let reason):
+                self.renderStore(["state": "pending", "reason": reason.rawValue])
+            case .failed(let reason):
+                self.renderStore(["state": "error", "reason": reason.rawValue])
+            }
+        }
+    }
+
+    /// Lets the page scroll while the store is open.
+    ///
+    /// The bundle list is the only thing in this app whose length isn't known when the page is
+    /// written — it grows with however many bundles are on sale — so it is also the only screen that
+    /// can outgrow an iPhone. Scrolling is turned on for its sake alone and off again on the way out,
+    /// with the offset reset so the next screen doesn't start halfway down. macOS scrolls a web view
+    /// on its own and needs none of this.
+    ///
+    /// The top of the page is *not* offset zero. The scroll view adjusts itself for the safe area, so
+    /// its resting position is minus that inset; scrolling to zero instead drags the page up under the
+    /// status bar by the height of the notch, and with scrolling switched off again on the way out
+    /// there is no way back down — which is exactly how the back button became unreachable.
+    private func setScrolling(_ enabled: Bool) {
+#if os(iOS)
+        let scrollView = webView.scrollView
+        scrollView.isScrollEnabled = enabled
+
+        let inset = scrollView.adjustedContentInset
+        scrollView.setContentOffset(CGPoint(x: -inset.left, y: -inset.top), animated: false)
+#endif
+    }
+
+    /// Hands the store's state to the page, which owns every string it shows.
+    private func renderStore(_ payload: [String: Any]) {
+        guard isPageLoaded,
+              let json = try? JSONSerialization.data(withJSONObject: payload),
+              let literal = String(data: json, encoding: .utf8) else { return }
+
+        webView.evaluateJavaScript("renderStore(\(literal))")
     }
 
     /// The site this build talks to, as reported by the extension; the constant is only a fallback.
@@ -282,4 +405,13 @@ class ViewController: PlatformViewController, WKNavigationDelegate, WKScriptMess
     }
 #endif
 
+}
+
+private extension String {
+    /// The remainder after `prefix`, or `nil` when the string does not start with it.
+    ///
+    /// Keeps the parameterised actions ("buy:<product id>") readable next to the bare ones.
+    func dropPrefix(_ prefix: String) -> Substring? {
+        hasPrefix(prefix) ? dropFirst(prefix.count) : nil
+    }
 }
