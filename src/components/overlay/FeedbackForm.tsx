@@ -8,20 +8,20 @@ const FIELD_CLASS =
 
 interface FeedbackFormProps {
   isPositive: boolean;
-  taskLabel: string;
+  targetLabel: string;
   reactions: Record<number, string>;
   onSave: (keyValue: number | null, description: string | null) => void;
   onClose: () => void;
 }
 
 /** Post-verification feedback: thank-you + optional expected result + description → Save. */
-export function FeedbackForm({ isPositive, taskLabel, reactions, onSave, onClose }: FeedbackFormProps) {
+export function FeedbackForm({ isPositive, targetLabel, reactions, onSave, onClose }: FeedbackFormProps) {
   const [expected, setExpected] = useState('');
   const [description, setDescription] = useState('');
 
   const prompt = t(isPositive ? 'menu_feedback_prompt_correct' : 'menu_feedback_prompt_incorrect').replace(
-    '{task}',
-    taskLabel
+    '{target}',
+    targetLabel
   );
   const reactionEntries = Object.entries(reactions);
 

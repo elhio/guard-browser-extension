@@ -34,10 +34,9 @@ export interface Subscription {
 /**
  * Retrieves the authenticated user's token usage for the current cycle.
  *
- * @param token - A valid authentication token
  */
-export async function fetchUserUsage(token: string): Promise<UserUsage> {
-  return fetchWithAuth<UserUsage>('/api/v1/users/me/usage', token);
+export async function fetchUserUsage(): Promise<UserUsage> {
+  return fetchWithAuth<UserUsage>('/api/v1/users/me/usage');
 }
 
 /**
@@ -48,11 +47,10 @@ export async function fetchUserUsage(token: string): Promise<UserUsage> {
  * free account off the error path, where React Query would retry it and the card would have to treat
  * a real outage and a free plan identically.
  *
- * @param token - A valid authentication token
  */
-export async function fetchSubscription(token: string): Promise<Subscription | null> {
+export async function fetchSubscription(): Promise<Subscription | null> {
   try {
-    return await fetchWithAuth<Subscription>('/api/v1/users/me/subscription', token);
+    return await fetchWithAuth<Subscription>('/api/v1/users/me/subscription');
   } catch (error) {
     if (error instanceof ApiError && error.status === 404) return null;
     throw error;

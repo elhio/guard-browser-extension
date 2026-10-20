@@ -1,22 +1,14 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { fakeBrowser } from 'wxt/testing';
+import { fakeBrowser } from 'wxt/testing/fake-browser';
 
 import { fetchSubscription, fetchUserUsage } from '../usage';
-import { settings, defaultSettings } from '@/lib/settings/store';
-
-function respondWith(status: number, body: unknown = { detail: 'nope' }) {
-  return vi.fn().mockResolvedValue(
-    new Response(JSON.stringify(body), {
-      status,
-      headers: { 'Content-Type': 'application/json' },
-    })
-  );
-}
+import { settings } from '@/lib/settings/store';
+import { ACCESS_TOKEN, respondWith, seedSignedIn } from '@/test-utils/session';
 
 describe('fetchSubscription', () => {
   beforeEach(async () => {
     fakeBrowser.reset();
-    await settings.setValue({ ...defaultSettings, token: 'a-token', isLoggedIn: true });
+    await seedSignedIn();
   });
 
   // The API has no "no subscription" body — a free user simply 404s. Surfacing that as an error would
@@ -24,16 +16,16 @@ describe('fetchSubscription', () => {
   it('resolves to null on 404', async () => {
     vi.stubGlobal('fetch', respondWith(404, { detail: 'No active subscription found' }));
 
-    await expect(fetchSubscription('a-token')).resolves.toBeNull();
+    await expect(fetchSubscription()).resolves.toBeNull();
     // Guards the scoping of the identity rule: a 404 ends the session on `/users/me` and must go on
     // meaning "free plan" here
-    expect((await settings.getValue()).token).toBe('a-token');
+    expect((await settings.getValue()).token).toBe(ACCESS_TOKEN);
   });
 
   it('returns the subscription on success', async () => {
     vi.stubGlobal('fetch', respondWith(200, { plan_name: 'Individual', allow_bundle_purchases: true }));
 
-    await expect(fetchSubscription('a-token')).resolves.toEqual({
+    await expect(fetchSubscription()).resolves.toEqual({
       plan_name: 'Individual',
       allow_bundle_purchases: true,
     });
@@ -43,13 +35,13 @@ describe('fetchSubscription', () => {
   it.each([429, 500])('still throws on %i', async (status) => {
     vi.stubGlobal('fetch', respondWith(status));
 
-    await expect(fetchSubscription('a-token')).rejects.toThrow();
+    await expect(fetchSubscription()).rejects.toThrow();
   });
 
   it('still clears the session on 401', async () => {
     vi.stubGlobal('fetch', respondWith(401));
 
-    await expect(fetchSubscription('a-token')).rejects.toThrow();
+    await expect(fetchSubscription()).rejects.toThrow();
 
     expect((await settings.getValue()).token).toBeNull();
   });
@@ -58,7 +50,7 @@ describe('fetchSubscription', () => {
 describe('fetchUserUsage', () => {
   beforeEach(async () => {
     fakeBrowser.reset();
-    await settings.setValue({ ...defaultSettings, token: 'a-token', isLoggedIn: true });
+    await seedSignedIn();
   });
 
   it('returns the token counts', async () => {
@@ -70,6 +62,6 @@ describe('fetchUserUsage', () => {
     };
     vi.stubGlobal('fetch', respondWith(200, usage));
 
-    await expect(fetchUserUsage('a-token')).resolves.toEqual(usage);
+    await expect(fetchUserUsage()).resolves.toEqual(usage);
   });
 });

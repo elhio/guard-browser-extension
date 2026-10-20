@@ -12,7 +12,7 @@ export const DEFAULT_LOCALE: SupportedLocale = 'en';
  */
 export function getAppLocale(): SupportedLocale {
   try {
-    const browserLang = browser.i18n.getUILanguage().split('-')[0].toLowerCase();
+    const browserLang = browser.i18n.getUILanguage().split('-')[0]!.toLowerCase();
 
     if (SUPPORTED_LOCALES.includes(browserLang as SupportedLocale)) {
       return browserLang as SupportedLocale;

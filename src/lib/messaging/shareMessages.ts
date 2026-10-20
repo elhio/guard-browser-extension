@@ -5,8 +5,8 @@ export const CREATE_SHARE_MESSAGE = 'CREATE_SHARE';
 
 export interface CreateShareRequest {
   type: typeof CREATE_SHARE_MESSAGE;
-  activityId: string;
-  taskId: string;
+  predictionId: string;
+  targetId: string;
   /** Days the link stays valid (1-7). */
   expiresIn: number;
 }
@@ -17,7 +17,7 @@ export function isCreateShareRequest(message: unknown): message is CreateShareRe
     typeof message === 'object' &&
     message !== null &&
     (message as Record<string, unknown>).type === CREATE_SHARE_MESSAGE &&
-    typeof (message as Record<string, unknown>).activityId === 'string'
+    typeof (message as Record<string, unknown>).predictionId === 'string'
   );
 }
 
@@ -27,14 +27,14 @@ export type CreateShareResponse =
 
 /** Asks the background to create a share link and resolves with its URL (or an error). */
 export async function requestShare(payload: {
-  activityId: string;
-  taskId: string;
+  predictionId: string;
+  targetId: string;
   expiresIn: number;
 }): Promise<CreateShareResponse> {
   return (await browser.runtime.sendMessage({
     type: CREATE_SHARE_MESSAGE,
-    activityId: payload.activityId,
-    taskId: payload.taskId,
+    predictionId: payload.predictionId,
+    targetId: payload.targetId,
     expiresIn: payload.expiresIn,
   } satisfies CreateShareRequest)) as CreateShareResponse;
 }

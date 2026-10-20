@@ -123,7 +123,7 @@ struct GuardApi {
 
     /// Every bundle on sale. Public, but sent with the token anyway so the API sees one caller.
     func bundles() async throws -> [GuardBundle] {
-        let list: GuardBundleList = try await get("/api/v1/bundles/")
+        let list: GuardBundleList = try await get("/api/v1/bundles")
         return list.data
     }
 

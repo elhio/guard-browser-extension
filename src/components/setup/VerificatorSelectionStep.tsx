@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { RadioCard } from '@/components/ui/RadioCard';
 import { t, type MessageKey } from '@/lib/i18n';
 import { fetchUserProfile, fetchUserSpaces } from '@/lib/api';
-import type { TasksState } from '@/lib/detection';
+import type { TargetsState } from '@/lib/detection';
 import {
   checkSpaceEligibility,
   formatSpaceDescription,
@@ -13,16 +13,16 @@ import {
 
 const REASON_KEYS: Record<EligibilityReason, MessageKey> = {
   media: 'setup_verificator_error_media',
-  aiGenerated: 'setup_verificator_error_task_ai',
-  violent: 'setup_verificator_error_task_violent',
-  explicit: 'setup_verificator_error_task_explicit',
+  aiGenerated: 'setup_verificator_error_target_ai',
+  violent: 'setup_verificator_error_target_violent',
+  explicit: 'setup_verificator_error_target_explicit',
 };
 
 interface VerificatorSelectionStepProps {
   token: string | null;
   isAuthenticated: boolean;
   selectedSpace: string | null;
-  tasks: TasksState;
+  targets: TargetsState;
   onSelect: (spaceId: string) => void;
 }
 
@@ -30,19 +30,19 @@ export function VerificatorSelectionStep({
   token,
   isAuthenticated,
   selectedSpace,
-  tasks,
+  targets,
   onSelect
 }: VerificatorSelectionStepProps) {
   const { data: user, isLoading: isUserLoading } = useQuery({
     queryKey: ['userProfile', token],
-    queryFn: () => fetchUserProfile(token!),
+    queryFn: () => fetchUserProfile(),
     enabled: !!token && isAuthenticated,
     staleTime: 1000 * 60 * 5,
   });
 
   const { data: spaces = [], isLoading: isSpacesLoading } = useQuery({
     queryKey: ['userSpaces', token, user?.id],
-    queryFn: () => fetchUserSpaces(token!, user!.id),
+    queryFn: () => fetchUserSpaces(user!.id),
     enabled: !!token && !!user?.id && isAuthenticated,
     staleTime: 1000 * 60 * 5,
   });
@@ -62,7 +62,7 @@ export function VerificatorSelectionStep({
     if (selectedSpace && spaces.length > 0) {
       const activeSpace = spaces.find(s => s.id === selectedSpace);
       if (activeSpace) {
-        const { eligible } = checkSpaceEligibility(activeSpace, tasks);
+        const { eligible } = checkSpaceEligibility(activeSpace, targets);
         if (!eligible) {
           queueMicrotask(() => {
             onSelect('');
@@ -70,7 +70,7 @@ export function VerificatorSelectionStep({
         }
       }
     }
-  }, [selectedSpace, spaces, tasks, onSelect]);
+  }, [selectedSpace, spaces, targets, onSelect]);
 
   return (
     <div className="animate-in fade-in slide-in-from-right-2 duration-300">
@@ -89,7 +89,7 @@ export function VerificatorSelectionStep({
             </div>
           ) : spaces.length > 0 ? (
             spaces.map((space) => {
-              const { eligible, reason } = checkSpaceEligibility(space, tasks);
+              const { eligible, reason } = checkSpaceEligibility(space, targets);
 
               return (
                 <RadioCard

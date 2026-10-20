@@ -34,31 +34,31 @@
   "login_cancel": {
     "message": "Abbrechen"
   },
-  "setup_tasks_heading": {
+  "setup_targets_heading": {
     "message": "Was soll Guard erkennen?"
   },
-  "setup_tasks_subheading": {
+  "setup_targets_subheading": {
     "message": "Wähle aus, welche Arten von Bildern automatisch auf Webseiten analysiert und markiert werden sollen."
   },
-  "setup_task_ai_title": {
+  "setup_target_ai_title": {
     "message": "KI-Generiert"
   },
-  "setup_task_ai_desc": {
+  "setup_target_ai_desc": {
     "message": "Erkennt Bilder, die von generativer KI erstellt oder manipuliert wurden."
   },
-  "setup_task_violent_title": {
+  "setup_target_violent_title": {
     "message": "Gewalttätig"
   },
-  "setup_task_violent_desc": {
+  "setup_target_violent_desc": {
     "message": "Identifiziert drastische, gewalttätige oder blutige Inhalte."
   },
-  "setup_task_explicit_title": {
+  "setup_target_explicit_title": {
     "message": "Explizit"
   },
-  "setup_task_explicit_desc": {
+  "setup_target_explicit_desc": {
     "message": "Erkennt nicht jugendfreie, obszöne oder pornografische Inhalte."
   },
-  "setup_tasks_tooltip_empty": {
+  "setup_targets_tooltip_empty": {
     "message": "Bitte wähle mindestens eine Kategorie aus, um fortzufahren."
   },
   "setup_action_heading": {
@@ -118,17 +118,17 @@
   "setup_verificator_error_media": {
     "message": "Dieser Workspace unterstützt keine Bilder."
   },
-  "setup_verificator_error_task_ai": {
+  "setup_verificator_error_target_ai": {
     "message": "Dieser Workspace unterstützt keine KI-Erkennung."
   },
-  "setup_verificator_error_task_violent": {
+  "setup_verificator_error_target_violent": {
     "message": "Dieser Workspace unterstützt keine Gewalterkennung."
   },
-  "setup_verificator_error_task_explicit": {
+  "setup_verificator_error_target_explicit": {
     "message": "Dieser Workspace unterstützt keine Explizit-Erkennung."
   },
   "space_desc_template": {
-    "message": "Erkennt {tasks} auf {media} mit {predictor}."
+    "message": "Erkennt {targets} auf {media} mit {predictor}."
   },
   "space_conj_and": {
     "message": " und "
@@ -151,7 +151,7 @@
   "setup_summary_account": {
     "message": "Account"
   },
-  "setup_summary_tasks": {
+  "setup_summary_targets": {
     "message": "Ausgewählte Kategorien"
   },
   "setup_summary_action": {
@@ -172,13 +172,13 @@
   "setup_summary_metadata_lens": {
     "message": "Metadaten + Lens Mobile"
   },
-  "setup_summary_task_ai": {
+  "setup_summary_target_ai": {
     "message": "KI-Generiert"
   },
-  "setup_summary_task_violent": {
+  "setup_summary_target_violent": {
     "message": "Gewalttätig"
   },
-  "setup_summary_task_explicit": {
+  "setup_summary_target_explicit": {
     "message": "Explizit"
   },
   "setup_summary_unknown_space": {
@@ -374,34 +374,34 @@
   "settings_general_update_store_error": {
     "message": "Der App Store konnte nicht auf Updates geprüft werden. Bitte versuche es später erneut."
   },
-  "settings_tasks_title": {
-    "message": "Ausgewählte Aufgaben"
+  "settings_targets_title": {
+    "message": "Ausgewählte Kategorien"
   },
-  "settings_tasks_ai_label": {
+  "settings_targets_ai_label": {
     "message": "KI-generiert"
   },
-  "settings_tasks_ai_desc": {
+  "settings_targets_ai_desc": {
     "message": "Erkennt Bilder, die von generativer KI erstellt oder manipuliert wurden."
   },
-  "settings_tasks_ai_aria": {
+  "settings_targets_ai_aria": {
     "message": "KI-Erkennung umschalten"
   },
-  "settings_tasks_violent_label": {
+  "settings_targets_violent_label": {
     "message": "Gewalt"
   },
-  "settings_tasks_violent_desc": {
+  "settings_targets_violent_desc": {
     "message": "Erkennt drastische, gewalttätige oder blutige Inhalte."
   },
-  "settings_tasks_violent_aria": {
+  "settings_targets_violent_aria": {
     "message": "Gewalt-Erkennung umschalten"
   },
-  "settings_tasks_explicit_label": {
+  "settings_targets_explicit_label": {
     "message": "Explizit"
   },
-  "settings_tasks_explicit_desc": {
+  "settings_targets_explicit_desc": {
     "message": "Erkennt nicht jugendfreie, obszöne oder pornografische Inhalte."
   },
-  "settings_tasks_explicit_aria": {
+  "settings_targets_explicit_aria": {
     "message": "Explizit-Erkennung umschalten"
   },
   "settings_verification_title": {
@@ -429,7 +429,7 @@
     "message": "einem Modell"
   },
   "settings_verification_desc_template": {
-    "message": "Erkennt {tasks} in {media} unter Verwendung von {predictor}."
+    "message": "Erkennt {targets} in {media} unter Verwendung von {predictor}."
   },
   "settings_verification_no_desc_fallback": {
     "message": "Keine Beschreibung verfügbar."
@@ -437,14 +437,14 @@
   "settings_verification_error_media": {
     "message": "Dieser Space unterstützt keine Bildanalyse."
   },
-  "settings_verification_error_task_ai": {
-    "message": "Deine Aufgaben erfordern KI-Erkennung."
+  "settings_verification_error_target_ai": {
+    "message": "Deine Kategorien erfordern KI-Erkennung."
   },
-  "settings_verification_error_task_violent": {
-    "message": "Deine Aufgaben erfordern Gewalterkennung."
+  "settings_verification_error_target_violent": {
+    "message": "Deine Kategorien erfordern Gewalterkennung."
   },
-  "settings_verification_error_task_explicit": {
-    "message": "Deine Aufgaben erfordern Explizit-Erkennung."
+  "settings_verification_error_target_explicit": {
+    "message": "Deine Kategorien erfordern Explizit-Erkennung."
   },
   "settings_verification_select_aria": {
     "message": "Auswählen:"
@@ -464,22 +464,22 @@
   "popover_status_disabled": {
     "message": "Deaktiviert"
   },
-  "popover_tasks_label": {
-    "message": "Aufgaben"
+  "popover_targets_label": {
+    "message": "Kategorien"
   },
-  "popover_tasks_none": {
-    "message": "Keine Aufgaben ausgewählt"
+  "popover_targets_none": {
+    "message": "Keine Kategorien ausgewählt"
   },
   "popover_more": {
     "message": "weitere"
   },
-  "popover_task_ai": {
+  "popover_target_ai": {
     "message": "KI-generiert"
   },
-  "popover_task_nsfw": {
+  "popover_target_nsfw": {
     "message": "NSFW"
   },
-  "popover_task_violent": {
+  "popover_target_violent": {
     "message": "Gewalt"
   },
   "popover_handling_label": {
@@ -545,6 +545,9 @@
   "verify_error_unsupported_media": {
     "message": "Dieser Medientyp kann nicht verifiziert werden"
   },
+  "verify_error_too_large": {
+    "message": "Dieses Bild ist zu groß für die Überprüfung."
+  },
   "verify_error_timeout": {
     "message": "Verifizierung fehlgeschlagen (Zeitüberschreitung)"
   },
@@ -564,15 +567,15 @@
   "menu_action_signin": { "message": "Zum Verifizieren anmelden" },
   "menu_action_choose_space": { "message": "Space auswählen" },
   "menu_close": { "message": "Schließen" },
-  "menu_scroll_left": { "message": "Aufgaben nach links scrollen" },
-  "menu_scroll_right": { "message": "Aufgaben nach rechts scrollen" },
+  "menu_scroll_left": { "message": "Kategorien nach links scrollen" },
+  "menu_scroll_right": { "message": "Kategorien nach rechts scrollen" },
   "menu_more_actions": { "message": "Weitere Aktionen" },
   "menu_action_mark_correct": { "message": "Als korrekt markieren" },
   "menu_action_mark_incorrect": { "message": "Als falsch markieren" },
   "menu_action_share": { "message": "Teilen" },
   "menu_feedback_thanks": { "message": "Vielen Dank für dein Feedback! 🎉" },
-  "menu_feedback_prompt_correct": { "message": "Möchtest du uns helfen, noch besser zu werden? Bitte sag uns, warum das Ergebnis für {task} bei diesem Medium deiner Meinung nach korrekt ist." },
-  "menu_feedback_prompt_incorrect": { "message": "Möchtest du uns helfen, noch besser zu werden? Bitte sag uns, warum das Ergebnis für {task} bei diesem Medium deiner Meinung nach falsch ist." },
+  "menu_feedback_prompt_correct": { "message": "Möchtest du uns helfen, noch besser zu werden? Bitte sag uns, warum das Ergebnis für {target} bei diesem Medium deiner Meinung nach korrekt ist." },
+  "menu_feedback_prompt_incorrect": { "message": "Möchtest du uns helfen, noch besser zu werden? Bitte sag uns, warum das Ergebnis für {target} bei diesem Medium deiner Meinung nach falsch ist." },
   "menu_feedback_expected_label": { "message": "Erwartetes Ergebnis" },
   "menu_feedback_description_label": { "message": "Beschreibung" },
   "menu_action_save": { "message": "Speichern" },

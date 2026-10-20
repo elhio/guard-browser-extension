@@ -22,7 +22,7 @@ and WebAssembly. To save system resources, you can disable the AI model and rely
 **🌐 Deep Scan Verification:** Not sure about a local result? Click the “Verify” button on the badge to send the image 
 to our advanced API models for a highly accurate secondary verification.
 
-**⚙️ Granular Control:** Toggle specific detection tasks (e.g., turn off violence detection but keep AI detection), 
+**⚙️ Granular Control:** Toggle specific detection targets (e.g., turn off violence detection but keep AI detection), 
 choose how the extension reacts to flagged content (mark, blur, or hide), or whitelist specific websites.
 
 ## Installation

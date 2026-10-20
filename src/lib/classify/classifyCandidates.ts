@@ -3,7 +3,7 @@ import {
   passesThreshold,
   type DetectionCategory,
   type SignalKind,
-  type TasksState,
+  type TargetsState,
   type ImageAnalysisResult
 } from '@/lib/detection';
 import { fetchWithTimeout } from '@/lib/net/fetchWithTimeout';
@@ -36,10 +36,10 @@ const MODEL_LABELS: Record<DetectionCategory, string> = {
 function mergeModelScores(
   analysis: ImageAnalysisResult,
   scores: LocalModelScores,
-  tasks: TasksState
+  targets: TargetsState
 ): void {
   for (const category of Object.keys(MODEL_KINDS) as DetectionCategory[]) {
-    if (!tasks[category]) continue;
+    if (!targets[category]) continue;
 
     const score = scores[category];
     const percent = Math.round(score * 100);
@@ -80,13 +80,13 @@ function mergeModelScores(
  */
 export async function classifyCandidates(
   candidates: SerializableImageCandidate[],
-  tasks: TasksState,
+  targets: TargetsState,
   useDetectorLocalModel: boolean
 ): Promise<ClassifyImageResult[]> {
   const finalResults: ClassifyImageResult[] = [];
 
   let classifyImage: ((blob: Blob) => Promise<LocalModelScores | null>) | null = null;
-  if (useDetectorLocalModel && (tasks.aiGenerated || tasks.violent || tasks.explicit)) {
+  if (useDetectorLocalModel && (targets.aiGenerated || targets.violent || targets.explicit)) {
     const runner = await import('@/lib/localModel/runner');
     classifyImage = runner.classifyImage;
   }
@@ -109,7 +109,7 @@ export async function classifyCandidates(
         try {
           // Best-effort: a model failure must never discard the metadata result.
           const scores = await classifyImage(blob);
-          if (scores) mergeModelScores(analysis, scores, tasks);
+          if (scores) mergeModelScores(analysis, scores, targets);
         } catch (modelError) {
           console.warn('[Guard] Local model inference failed:', modelError);
         }
@@ -118,7 +118,7 @@ export async function classifyCandidates(
       // Only surface categories the user still has enabled.
       const categories: ImageAnalysisResult['categories'] = {};
       for (const category of Object.keys(analysis.categories) as DetectionCategory[]) {
-        if (tasks[category]) categories[category] = analysis.categories[category];
+        if (targets[category]) categories[category] = analysis.categories[category];
       }
 
       finalResults.push({ status: 'success', src: analysis.src, categories });

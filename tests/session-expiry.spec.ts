@@ -3,22 +3,18 @@ import {
   expect,
   seedSettings,
   readSettings,
+  signedIn,
   API_ORIGIN,
   type Settings,
 } from "./fixtures";
 import { settingsDashboard } from "./pages/settings";
 import type { BrowserContext } from "@playwright/test";
 
-/**
- * A token the API will refuse. Deliberately not shaped like a JWT, so these specs exercise the
- * network path rather than the local expiry short-circuit — that one is covered by the unit tests
- * for `isTokenExpired` and by the `expired token` case at the bottom.
- */
+/** A token the API will refuse, with ten minutes left on its clock so no renewal goes out first. */
 const DEAD_TOKEN = "e2e-dead-token";
 
 const SIGNED_IN: Partial<Settings> = {
-  token: DEAD_TOKEN,
-  isLoggedIn: true,
+  ...signedIn(DEAD_TOKEN),
   verificatorSpace: "e2e-space",
   hasCompletedSetup: true,
   isActive: true,
@@ -26,8 +22,9 @@ const SIGNED_IN: Partial<Settings> = {
 
 /**
  * Answers `/users/me` with one status and everything else with an empty success, so each spec varies
- * only the thing under test. The catch-all is registered first because Playwright matches routes in
- * reverse registration order.
+ * only the thing under test. A refused token is renewed once before the session is called over, and
+ * the renewal is refused too: the session really is gone. The catch-all is registered first because
+ * Playwright matches routes in reverse registration order.
  */
 async function stubIdentity(
   context: BrowserContext,
@@ -36,6 +33,15 @@ async function stubIdentity(
 ): Promise<void> {
   await context.route(`${API_ORIGIN}/**`, (route) =>
     route.fulfill({ status: 200, contentType: "application/json", body: "{}" })
+  );
+  await context.route(
+    (url) => url.origin === API_ORIGIN && url.pathname === "/api/v1/auth/refresh",
+    (route) =>
+      route.fulfill({
+        status: 401,
+        contentType: "application/json",
+        body: JSON.stringify({ detail: "Session expired, please log in again" }),
+      })
   );
   await context.route(
     (url) => url.origin === API_ORIGIN && url.pathname === "/api/v1/users/me",
@@ -168,36 +174,54 @@ test("retrying an unreachable API restores the account", async ({
 });
 
 /**
- * A token whose own deadline has passed needs no round trip to be recognised. This is what makes the
- * signed-out state correct for a user who is offline, and immediate for everyone else.
+ * An access token that ran out is the normal state after ten minutes, not a signed-out user: the
+ * extension renews it with the refresh token and carries on.
  */
-test("a token past its expiry is recognised without calling the API", async ({
+test("an access token past its expiry is renewed, not signed out", async ({
   page,
   context,
   extensionId,
   serviceWorker,
 }) => {
-  const encode = (value: unknown) =>
-    Buffer.from(JSON.stringify(value)).toString("base64url");
-  const expiredToken = [
-    encode({ alg: "HS256", typ: "JWT" }),
-    encode({ sub: "u1", exp: Math.floor(Date.now() / 1000) - 60 * 60 * 24 }),
-    "signature",
-  ].join(".");
+  await seedSettings(serviceWorker, { ...SIGNED_IN, tokenExpiresAt: Date.now() - 60_000 });
 
-  await seedSettings(serviceWorker, { ...SIGNED_IN, token: expiredToken });
-
-  const identityCalls: string[] = [];
+  const calls: string[] = [];
   await context.route(`${API_ORIGIN}/**`, (route) => {
-    identityCalls.push(new URL(route.request().url()).pathname);
-    return route.fulfill({ status: 200, contentType: "application/json", body: "{}" });
+    const path = new URL(route.request().url()).pathname;
+    calls.push(path);
+    if (path === "/api/v1/auth/refresh") {
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          access_token: "e2e-renewed-token",
+          expires_in: 600,
+          refresh_token: "rt_e2e_second",
+        }),
+      });
+    }
+    return route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body:
+        path === "/api/v1/users/me"
+          ? JSON.stringify({
+              id: "u1",
+              name: "ada",
+              full_name: "Ada Lovelace",
+              active_plan_name: "Individual",
+              is_restricted: false,
+            })
+          : "{}",
+    });
   });
 
   const dashboard = settingsDashboard(page, extensionId);
   await dashboard.goto();
 
-  await expectSignedOut(dashboard);
-
-  expect(identityCalls).not.toContain("/api/v1/users/me");
-  expect((await readSettings(serviceWorker)).token).toBeNull();
+  await expect(dashboard.accountIdentityName()).toHaveText("Ada Lovelace");
+  expect(calls[0]).toBe("/api/v1/auth/refresh");
+  const after = await readSettings(serviceWorker);
+  expect(after.token).toBe("e2e-renewed-token");
+  expect(after.refreshToken).toBe("rt_e2e_second");
 });

@@ -1,6 +1,6 @@
 import { browser } from 'wxt/browser';
 import type { SerializableImageCandidate } from '@/lib/images';
-import type { TasksState } from '@/lib/detection';
+import type { TargetsState } from '@/lib/detection';
 import type { ClassifyImageResult } from '@/lib/messaging/classifyMessages';
 import {
   isOffscreenIframeReply,
@@ -80,7 +80,7 @@ function startListening(): void {
  */
 export async function classifyViaOffscreenIframe(
   candidates: SerializableImageCandidate[],
-  tasks: TasksState,
+  targets: TargetsState,
   useDetectorLocalModel: boolean
 ): Promise<ClassifyImageResult[]> {
   startListening();
@@ -98,7 +98,7 @@ export async function classifyViaOffscreenIframe(
     __guardOffscreenRequest: true,
     id,
     candidates,
-    tasks,
+    targets,
     useDetectorLocalModel
   };
   iframe.contentWindow?.postMessage(request, '*');

@@ -1,5 +1,5 @@
 import type { SerializableImageCandidate } from '@/lib/images';
-import type { TasksState, ImageAnalysisResult } from '@/lib/detection';
+import type { TargetsState, ImageAnalysisResult } from '@/lib/detection';
 
 /**
  * The unique identifier used by content scripts to request image classification
@@ -7,7 +7,7 @@ import type { TasksState, ImageAnalysisResult } from '@/lib/detection';
 export const CLASSIFY_IMAGE_MESSAGE = 'CLASSIFY_IMAGE_MESSAGE';
 
 /**
- * The unique identifier used by the background script to forward heavy tasks
+ * The unique identifier used by the background script to forward heavy targets
  */
 export const CLASSIFY_IMAGE_OFFSCREEN_MESSAGE = 'CLASSIFY_IMAGE_OFFSCREEN_MESSAGE';
 
@@ -23,7 +23,7 @@ export const CLASSIFY_RESULT_MESSAGE = 'CLASSIFY_RESULT_MESSAGE';
  *
  * @property type - The routing identifier for this message
  * @property candidates - An array of serializable image candidates to be analyzed
- * @property tasks - The user's active moderation settings (AI, violent, explicit)
+ * @property targets - The user's active moderation settings (AI, violent, explicit)
  * @property useDetectorLocalModel - Flag indicating if the local model should be run alongside metadata checks
  */
 export interface ClassifyImageRequest {
@@ -31,7 +31,7 @@ export interface ClassifyImageRequest {
   /** Correlates the Firefox result push back to the awaiting caller (unused on Chrome). */
   requestId: string;
   candidates: SerializableImageCandidate[];
-  tasks: TasksState;
+  targets: TargetsState;
   useDetectorLocalModel: boolean;
 }
 
@@ -41,7 +41,7 @@ export interface ClassifyImageRequest {
 export interface OffscreenClassifyImageRequest {
   type: typeof CLASSIFY_IMAGE_OFFSCREEN_MESSAGE;
   candidates: SerializableImageCandidate[];
-  tasks: TasksState;
+  targets: TargetsState;
   useDetectorLocalModel: boolean;
 }
 

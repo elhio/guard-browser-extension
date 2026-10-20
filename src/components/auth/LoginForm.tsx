@@ -3,13 +3,9 @@ import { browser } from 'wxt/browser';
 
 import { t } from '@/lib/i18n';
 import { websiteAuthUrl } from '@/lib/website/urls';
+import { isTokenReceived } from '@/lib/messaging/sessionMessages';
 import ElhioLogo from '@/assets/elhio.svg?react';
 import { Button } from '@/components/ui/Button';
-
-interface TokenMessage {
-  type: string;
-  token?: string;
-}
 
 interface LoginFormProps {
   onSuccess: (token: string) => void;
@@ -30,8 +26,8 @@ export function LoginForm({ onSuccess, onSkip }: LoginFormProps) {
   }, []);
 
   useEffect(() => {
-    const handleMessage = (message: TokenMessage) => {
-      if (message.type === 'TOKEN_RECEIVED' && message.token) {
+    const handleMessage = (message: unknown) => {
+      if (isTokenReceived(message)) {
         void focusWizard();
         onSuccess(message.token);
       }

@@ -2,9 +2,9 @@ import { useState } from 'react';
 
 import { t } from '@/lib/i18n';
 import { settings, type DetectionAction } from '@/lib/settings';
-import type { TasksState } from '@/lib/detection';
+import type { TargetsState } from '@/lib/detection';
 import { LoginForm } from '@/components/auth/LoginForm';
-import { TaskSelectionStep } from '@/components/setup/TaskSelectionStep';
+import { TargetSelectionStep } from '@/components/setup/TargetSelectionStep';
 import { ActionSelectionStep } from '@/components/setup/ActionSelectionStep';
 import { DetectorSelectionStep } from '@/components/setup/DetectorSelectionStep';
 import { VerificatorSelectionStep } from '@/components/setup/VerificatorSelectionStep';
@@ -19,22 +19,30 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
   const [step, setStep] = useState(1);
   const [token, setToken] = useState<string | null>(null);
   const [hasSkippedAuth, setHasSkippedAuth] = useState(false);
-  const [tasks, setTasks] = useState<TasksState>({ aiGenerated: true, violent: true, explicit: true});
+  const [targets, setTargets] = useState<TargetsState>({ aiGenerated: true, violent: true, explicit: true});
   const [detectionAction, setDetectionAction] = useState<DetectionAction>('mark');
   const [useDetectorLocalModel, setUseDetectorLocalModel] = useState(false);
   const [verificatorSpace, setVerificatorSpace] = useState<string | null>(null);
 
-  const isStep2Valid = tasks.aiGenerated || tasks.violent || tasks.explicit;
+  const isStep2Valid = targets.aiGenerated || targets.violent || targets.explicit;
   const isAuthenticated = !!token && !hasSkippedAuth;
 
   const handleNext = () => setStep((prev) => prev + 1);
   const handleBack = () => setStep((prev) => prev - 1);
 
   const handleFinish = async () => {
+    const current = await settings.getValue();
+    const session = isAuthenticated
+      ? {
+          token: current.token,
+          refreshToken: current.refreshToken,
+          tokenExpiresAt: current.tokenExpiresAt,
+          isLoggedIn: !!current.refreshToken,
+        }
+      : { token: null, refreshToken: null, tokenExpiresAt: null, isLoggedIn: false };
     await settings.setValue({
-      token: isAuthenticated ? token : null,
-      isLoggedIn: isAuthenticated,
-      tasks,
+      ...session,
+      targets,
       detectionAction,
       useDetectorLocalModel,
       verificatorSpace: isAuthenticated ? verificatorSpace : null,
@@ -47,10 +55,10 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
     window.close();
   };
 
-  const toggleTask = (taskId: keyof typeof tasks) => {
-    setTasks((prev) => ({
+  const toggleTarget = (targetId: keyof typeof targets) => {
+    setTargets((prev) => ({
       ...prev,
-      [taskId]: !prev[taskId],
+      [targetId]: !prev[targetId],
     }));
   };
 
@@ -82,9 +90,9 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
                 />
               </div>
             )}
-            {/* Step 2: Task Selection */}
+            {/* Step 2: Target Selection */}
             {step === 2 && (
-              <TaskSelectionStep tasks={tasks} onToggle={toggleTask} />
+              <TargetSelectionStep targets={targets} onToggle={toggleTarget} />
             )}
             {/* Step 3: Detection Action */}
             {step === 3 && (
@@ -106,7 +114,7 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
                 token={token}
                 isAuthenticated={isAuthenticated}
                 selectedSpace={verificatorSpace}
-                tasks={tasks}
+                targets={targets}
                 onSelect={setVerificatorSpace}
               />
             )}
@@ -115,7 +123,7 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
               <SummaryStep
                 token={token}
                 isAuthenticated={isAuthenticated}
-                tasks={tasks}
+                targets={targets}
                 detectionAction={detectionAction}
                 useDetectorLocalModel={useDetectorLocalModel}
                 verificatorSpace={verificatorSpace}

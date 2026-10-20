@@ -120,11 +120,13 @@ async function openFixture(page: Page, context: BrowserContext, html: string): P
 /** Asserts two measurements describe the same layout, within a pixel. */
 function expectSameLayout(before: Measurement, after: Measurement): void {
   for (const key of Object.keys(before.rects)) {
-    const b = before.rects[key];
+    const b = before.rects[key]!;
     const a = after.rects[key];
     expect(a, `no measurement for ${key}`).toBeTruthy();
     for (const [index, label] of ["x", "y", "width", "height"].entries()) {
-      expect(Math.abs(a[index] - b[index]), `${key}.${label}: ${b[index]} -> ${a[index]}`)
+      const from = b[index]!;
+      const to = a![index]!;
+      expect(Math.abs(to - from), `${key}.${label}: ${from} -> ${to}`)
         .toBeLessThanOrEqual(1);
     }
   }

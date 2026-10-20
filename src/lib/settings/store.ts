@@ -1,4 +1,4 @@
-import type { TasksState } from '@/lib/detection';
+import type { TargetsState } from '@/lib/detection';
 
 /**
  * The visual action taken when content is flagged
@@ -8,9 +8,14 @@ export type DetectionAction = 'mark' | 'blur' | 'hide';
 /**
  * The unified configuration state for the entire extension
  *
- * @property token - The authentication token for the external API, if the user is logged in
+ * @property token - The access token for the external API, if the user is logged in. It lives for
+ *   minutes only; `lib/auth/session.ts` renews it with `refreshToken` and is the one place that should
+ *   read it for a request
+ * @property refreshToken - The refresh token of the extension's own session, rotated on every
+ *   renewal. Present exactly while the user is signed in
+ * @property tokenExpiresAt - When `token` runs out, in milliseconds since the epoch
  * @property isLoggedIn - True if the user has successfully authenticated
- * @property tasks - Defines which specific moderation checks (AI, Violence, Explicit) are currently active
+ * @property targets - Defines which specific moderation checks (AI, Violence, Explicit) are currently active
  * @property detectionAction - The visual action to take when content is flagged ('mark', 'blur', 'hide')
  * @property useDetectorLocalModel - True if the extension should run inference also on local model
  * @property verificatorSpace - The ID of the selected workspace/environment used for API verification
@@ -23,8 +28,10 @@ export type DetectionAction = 'mark' | 'blur' | 'hide';
  */
 export interface Settings {
   token: string | null;
+  refreshToken: string | null;
+  tokenExpiresAt: number | null;
   isLoggedIn: boolean;
-  tasks: TasksState;
+  targets: TargetsState;
   detectionAction: DetectionAction;
   useDetectorLocalModel: boolean;
   verificatorSpace: string | null;
@@ -39,8 +46,10 @@ export interface Settings {
  */
 export const defaultSettings: Settings = {
   token: null,
+  refreshToken: null,
+  tokenExpiresAt: null,
   isLoggedIn: false,
-  tasks: { aiGenerated: true, violent: true, explicit: true },
+  targets: { aiGenerated: true, violent: true, explicit: true },
   detectionAction: 'mark',
   useDetectorLocalModel: false,
   verificatorSpace: null,
@@ -59,6 +68,25 @@ export const settings = storage.defineItem<Settings>(
   'local:settings',
   {
     fallback: defaultSettings,
+    version: 2,
+    migrations: {
+      // 0.0.4: the API's tasks became targets, and its long-lived access token a short one renewed
+      // with a refresh token. A session from before has no refresh token and its token is refused,
+      // so it ends here, with the workspace that belonged to it (as `clearSession` does)
+      2: (old: Record<string, unknown>): Settings => {
+        const { tasks, ...rest } = old;
+        return {
+          ...defaultSettings,
+          ...(rest as Partial<Settings>),
+          targets: (tasks as Settings['targets'] | undefined) ?? defaultSettings.targets,
+          token: null,
+          refreshToken: null,
+          tokenExpiresAt: null,
+          isLoggedIn: false,
+          verificatorSpace: null,
+        };
+      },
+    },
   }
 );
 
@@ -74,11 +102,20 @@ export const settings = storage.defineItem<Settings>(
 export async function clearSession(): Promise<void> {
   const current = await settings.getValue();
 
-  if (!current.token && !current.isLoggedIn && !current.verificatorSpace) return;
+  if (
+    !current.token &&
+    !current.refreshToken &&
+    !current.isLoggedIn &&
+    !current.verificatorSpace
+  ) {
+    return;
+  }
 
   await settings.setValue({
     ...current,
     token: null,
+    refreshToken: null,
+    tokenExpiresAt: null,
     isLoggedIn: false,
     verificatorSpace: null,
   });

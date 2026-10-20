@@ -1,14 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { t } from '@/lib/i18n';
-import type { TasksState } from '@/lib/detection';
+import type { TargetsState } from '@/lib/detection';
 import type { DetectionAction } from '@/lib/settings';
 import { fetchUserProfile, fetchUserSpaces } from '@/lib/api';
 
 interface SummaryStepProps {
   token: string | null | undefined;
   isAuthenticated: boolean;
-  tasks: TasksState;
+  targets: TargetsState;
   detectionAction: DetectionAction;
   useDetectorLocalModel: boolean;
   verificatorSpace: string | null;
@@ -17,30 +17,30 @@ interface SummaryStepProps {
 export function SummaryStep({
   token,
   isAuthenticated,
-  tasks,
+  targets,
   detectionAction,
   useDetectorLocalModel,
   verificatorSpace,
 }: SummaryStepProps) {
   const { data: user, isLoading: isUserLoading, isError: isUserError } = useQuery({
     queryKey: ['userProfile', token],
-    queryFn: () => fetchUserProfile(token!),
+    queryFn: () => fetchUserProfile(),
     enabled: !!token && isAuthenticated,
     staleTime: 1000 * 60 * 10,
   });
 
   const { data: spaces = [], isLoading: isSpacesLoading } = useQuery({
     queryKey: ['userSpaces', token, user?.id],
-    queryFn: () => fetchUserSpaces(token!, user!.id),
+    queryFn: () => fetchUserSpaces(user!.id),
     enabled: !!token && !!user?.id && isAuthenticated,
     staleTime: 1000 * 60 * 10,
   });
 
-  const getTasksString = () => {
+  const getTargetsString = () => {
     const selected = [];
-    if (tasks.aiGenerated) selected.push(t('setup_summary_task_ai'));
-    if (tasks.violent) selected.push(t('setup_summary_task_violent'));
-    if (tasks.explicit) selected.push(t('setup_summary_task_explicit'));
+    if (targets.aiGenerated) selected.push(t('setup_summary_target_ai'));
+    if (targets.violent) selected.push(t('setup_summary_target_violent'));
+    if (targets.explicit) selected.push(t('setup_summary_target_explicit'));
     return selected.join(', ');
   };
 
@@ -81,8 +81,8 @@ export function SummaryStep({
         </div>
 
         <div className="flex flex-col">
-          <span className="text-xs text-gray-500 uppercase tracking-wide">{t('setup_summary_tasks')}</span>
-          <span className="text-sm font-semibold text-gray-900">{getTasksString()}</span>
+          <span className="text-xs text-gray-500 uppercase tracking-wide">{t('setup_summary_targets')}</span>
+          <span className="text-sm font-semibold text-gray-900">{getTargetsString()}</span>
         </div>
 
         <div className="flex flex-col">

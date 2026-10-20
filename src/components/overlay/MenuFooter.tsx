@@ -24,7 +24,7 @@ interface MenuAction {
 interface MenuFooterProps {
   entry: OverlayEntry;
   settings: OverlaySettings;
-  /** Whether feedback/share actions can be offered (a verified task is on the active tab). */
+  /** Whether feedback/share actions can be offered (a verified target is on the active tab). */
   canFeedback: boolean;
   onFeedback: (isPositive: boolean) => void;
   onShare: () => void;
@@ -89,7 +89,7 @@ export function MenuFooter({ entry, settings, canFeedback, onFeedback, onShare }
   if (rehidable) secondaries.push(hideAction);
   if (!signedIn && primary.kind !== 'signin') secondaries.push(signinAction);
 
-  // Post-verification feedback + share (only when the active tab has a verified task).
+  // Post-verification feedback + share (only when the active tab has a verified target).
   if (canFeedback) {
     secondaries.push({ kind: 'mark_correct', label: t('menu_action_mark_correct'), run: () => onFeedback(true) });
     secondaries.push({ kind: 'mark_incorrect', label: t('menu_action_mark_incorrect'), run: () => onFeedback(false) });

@@ -1,9 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { fakeBrowser } from 'wxt/testing';
+import { fakeBrowser } from 'wxt/testing/fake-browser';
 import { browser } from 'wxt/browser';
 
 import { settings, defaultSettings } from '@/lib/settings';
 import { handOverSessionToApp } from '../openStore';
+import { refreshed, respondWith, seedSignedIn } from '@/test-utils/session';
 
 /**
  * The handover is what makes a purchase possible: the container app runs the payment sheet, and it
@@ -23,19 +24,24 @@ describe('handOverSessionToApp', () => {
     sendNativeMessage = vi.fn().mockResolvedValue({ handoverAccepted: true });
     (browser.runtime as unknown as Record<string, unknown>).sendNativeMessage = sendNativeMessage;
 
-    await settings.setValue({ ...defaultSettings, token: 'a-token', isLoggedIn: true });
+    await seedSignedIn();
+    vi.stubGlobal('fetch', respondWith(200, refreshed()));
   });
 
-  it('hands over the token and the API url', async () => {
+  // Renewed right before, so the app gets the access token's whole lifetime. The refresh token stays
+  // with the extension: two holders rotating it would take each other for a thief
+  it('hands over a just-renewed access token and the API url, never the refresh token', async () => {
     await expect(handOverSessionToApp()).resolves.toBe(true);
 
     expect(sendNativeMessage).toHaveBeenCalledWith(
       expect.any(String),
       expect.objectContaining({
-        authToken: 'a-token',
+        authToken: refreshed().access_token,
         apiUrl: import.meta.env.VITE_API_URL
       })
     );
+    const [, payload] = sendNativeMessage.mock.calls[0] as [string, Record<string, unknown>];
+    expect(JSON.stringify(payload)).not.toContain('rt_');
   });
 
   it('does not report the extension state', async () => {
@@ -47,7 +53,7 @@ describe('handOverSessionToApp', () => {
   });
 
   it('sends nothing when there is no session to hand over', async () => {
-    await settings.setValue({ ...defaultSettings, token: null, isLoggedIn: false });
+    await settings.setValue({ ...defaultSettings });
 
     await expect(handOverSessionToApp()).resolves.toBe(false);
     expect(sendNativeMessage).not.toHaveBeenCalled();

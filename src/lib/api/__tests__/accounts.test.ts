@@ -1,9 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { fakeBrowser } from 'wxt/testing';
+import { fakeBrowser } from 'wxt/testing/fake-browser';
 
 import { ApiError } from '../client';
-import { fetchUserProfile, getUserId, isSessionRejected } from '../accounts';
-import { settings, defaultSettings } from '@/lib/settings/store';
+import { fetchUserProfile, isSessionRejected } from '../accounts';
+import { settings } from '@/lib/settings/store';
+import { ACCESS_TOKEN, respondWith, seedSignedIn } from '@/test-utils/session';
 
 const PROFILE = {
   id: 'u1',
@@ -12,25 +13,6 @@ const PROFILE = {
   active_plan_name: 'Individual',
   is_restricted: false,
 };
-
-function respondWith(status: number, body: unknown = { detail: 'nope' }) {
-  return vi.fn().mockResolvedValue(
-    new Response(JSON.stringify(body), {
-      status,
-      headers: { 'Content-Type': 'application/json' },
-    })
-  );
-}
-
-async function seedSignedIn() {
-  await settings.setValue({
-    ...defaultSettings,
-    token: 'a-token',
-    isLoggedIn: true,
-    verificatorSpace: 'space-1',
-    hasCompletedSetup: true,
-  });
-}
 
 describe('fetchUserProfile', () => {
   beforeEach(async () => {
@@ -46,7 +28,7 @@ describe('fetchUserProfile', () => {
   ])('ends the session on %i', async (status, detail) => {
     vi.stubGlobal('fetch', respondWith(status, { detail }));
 
-    await expect(fetchUserProfile('a-token')).rejects.toThrow();
+    await expect(fetchUserProfile()).rejects.toThrow();
 
     const after = await settings.getValue();
     expect(after.token).toBeNull();
@@ -61,17 +43,17 @@ describe('fetchUserProfile', () => {
   it.each([403, 429, 500])('keeps the session on %i', async (status) => {
     vi.stubGlobal('fetch', respondWith(status));
 
-    await expect(fetchUserProfile('a-token')).rejects.toThrow();
+    await expect(fetchUserProfile()).rejects.toThrow();
 
-    expect((await settings.getValue()).token).toBe('a-token');
+    expect((await settings.getValue()).token).toBe(ACCESS_TOKEN);
   });
 
   it('keeps the session on success', async () => {
     vi.stubGlobal('fetch', respondWith(200, PROFILE));
 
-    await expect(fetchUserProfile('a-token')).resolves.toEqual(PROFILE);
+    await expect(fetchUserProfile()).resolves.toEqual(PROFILE);
 
-    expect((await settings.getValue()).token).toBe('a-token');
+    expect((await settings.getValue()).token).toBe(ACCESS_TOKEN);
   });
 });
 
@@ -91,38 +73,5 @@ describe('isSessionRejected', () => {
     ['nothing', undefined],
   ])('is false for %s', (_label, error) => {
     expect(isSessionRejected(error)).toBe(false);
-  });
-});
-
-describe('getUserId', () => {
-  beforeEach(async () => {
-    fakeBrowser.reset();
-    await seedSignedIn();
-  });
-
-  it('memoizes the id per token', async () => {
-    const fetchMock = respondWith(200, PROFILE);
-    vi.stubGlobal('fetch', fetchMock);
-
-    await expect(getUserId('a-token')).resolves.toBe('u1');
-    await expect(getUserId('a-token')).resolves.toBe('u1');
-
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-  });
-
-  // The memo must not outlive the account it describes. A rejected profile fetch drops it, so the
-  // next lookup asks the API again instead of handing back an id for a user it has disowned
-  it('drops the memo when the identity is rejected', async () => {
-    vi.stubGlobal('fetch', respondWith(200, PROFILE));
-    await expect(getUserId('a-token')).resolves.toBe('u1');
-
-    vi.stubGlobal('fetch', respondWith(400, { detail: 'Inactive user' }));
-    await expect(fetchUserProfile('a-token')).rejects.toThrow();
-
-    const refetch = respondWith(200, PROFILE);
-    vi.stubGlobal('fetch', refetch);
-    await expect(getUserId('a-token')).resolves.toBe('u1');
-
-    expect(refetch).toHaveBeenCalledTimes(1);
   });
 });

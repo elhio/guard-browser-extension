@@ -49,7 +49,9 @@ import {
   type OverlaySettings,
 } from '@/lib/overlay';
 
-import { settings, clearSession, type Settings } from '@/lib/settings';
+import { settings, type Settings } from '@/lib/settings';
+import { isSessionTokens } from '@/lib/auth/session';
+import { relaySession, requestEndSession } from '@/lib/messaging/sessionMessages';
 import { t } from '@/lib/i18n';
 
 /** Max images classified in parallel (bounds concurrent fetch/metadata/C2PA work). */
@@ -169,7 +171,7 @@ async function classifyCandidate(
     type: CLASSIFY_IMAGE_MESSAGE,
     requestId: crypto.randomUUID(),
     candidates: [toSerializableCandidate(candidate)],
-    tasks: currentSettings.tasks,
+    targets: currentSettings.targets,
     useDetectorLocalModel: currentSettings.useDetectorLocalModel
   };
 
@@ -202,7 +204,7 @@ async function classifyCandidate(
 /** Projects the full settings object down to what the menu store needs. */
 function toOverlaySettings(state: Settings): OverlaySettings {
   return {
-    tasks: state.tasks,
+    targets: state.targets,
     token: state.token,
     verificatorSpace: state.verificatorSpace,
     detectionAction: state.detectionAction,
@@ -229,7 +231,7 @@ async function runWithConcurrency<T>(
   let cursor = 0;
   const runners = Array.from({ length: Math.min(limit, items.length) }, async () => {
     while (cursor < items.length) {
-      await worker(items[cursor++]);
+      await worker(items[cursor++]!);
     }
   });
   await Promise.all(runners);
@@ -237,8 +239,8 @@ async function runWithConcurrency<T>(
 
 async function verifyWithExternalApi(src: string): Promise<VerifyImageResponse> {
   const request: VerifyImageRequest = { type: VERIFY_IMAGE_MESSAGE, src };
-  // The background runs the full activity lifecycle; it must not be retried (that would
-  // create duplicate activities), so this is a plain one-shot message, not a react-query.
+  // The background runs the full prediction lifecycle; it must not be retried (that would
+  // create duplicate predictions), so this is a plain one-shot message, not a react-query.
   return (await browser.runtime.sendMessage(request)) as VerifyImageResponse;
 }
 
@@ -279,16 +281,14 @@ function watchForAuthHandoff(): void {
     if (event.source !== window) return;
     if (!isWebsiteOrigin(event.origin)) return;
 
-    if (event.data?.type === 'EXT_AUTH_SUCCESS' && event.data.token) {
-      void browser.runtime.sendMessage({
-        type: 'TOKEN_RECEIVED',
-        token: event.data.token
-      });
+    // Only a whole session is taken: an access token alone would sign the user out within minutes
+    if (event.data?.type === 'EXT_AUTH_SUCCESS' && isSessionTokens(event.data)) {
+      relaySession(event.data);
       return;
     }
 
     if (event.data?.type === 'EXT_AUTH_LOGOUT') {
-      void clearSession();
+      requestEndSession();
     }
   });
 }

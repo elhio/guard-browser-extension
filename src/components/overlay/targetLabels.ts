@@ -1,7 +1,7 @@
 import type { MessageKey } from '@/lib/i18n';
 import type { DetectionCategory } from '@/lib/detection';
 
-/** i18n key for each detection category's short tab/task label. */
+/** i18n key for each detection category's short tab/target label. */
 export const TAB_LABEL_KEYS: Record<DetectionCategory, MessageKey> = {
   aiGenerated: 'badge_category_ai',
   violent: 'badge_category_violent',

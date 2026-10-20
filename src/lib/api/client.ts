@@ -1,27 +1,14 @@
+import { getAccessToken, refreshSession } from '@/lib/auth/session';
 import { getAppLocale, t } from '@/lib/i18n';
 import { clearSession } from '@/lib/settings/store';
+import { ApiError } from './errors';
+
+export { ApiError } from './errors';
 
 interface RequestOptions {
   method?: 'GET' | 'POST';
   body?: unknown;
   params?: Record<string, string>;
-}
-
-/**
- * An error carrying the HTTP status that produced it.
- *
- * Some endpoints answer a perfectly ordinary state with a non-2xx status — `/users/me/subscription`
- * returns 404 for anyone on the free plan — so a caller has to be able to tell that apart from a
- * genuine failure. Callers that only care about the message can keep catching `Error`.
- */
-export class ApiError extends Error {
-  constructor(
-    message: string,
-    readonly status: number
-  ) {
-    super(message);
-    this.name = 'ApiError';
-  }
 }
 
 /**
@@ -40,15 +27,20 @@ async function extractErrorMessage(response: Response): Promise<string> {
 }
 
 /**
- * Makes an authenticated request to the application's external API, attaching the
- * bearer token and the current UI locale (`lang`) to every call.
+ * Makes an authenticated request to the application's external API, attaching a fresh access token
+ * and the current UI locale (`lang`) to every call.
+ *
+ * A 401 means the access token was refused before it ran out (a rotated signing key, a revoked
+ * session), so the session is renewed once and the request sent again. Only when that fails too is
+ * the session over.
  *
  * @template T - The expected type of the parsed JSON response (`undefined` for 204)
  * @throws {ApiError} If the server returns a non-2xx status (the server's `detail` message is used
- *   when present, and `status` carries the code). A 401 additionally clears the stored session,
- *   since the token can never recover. A network failure still throws a plain `Error` from `fetch`.
+ *   when present, and `status` carries the code), or 401 when there is no session or it could not be
+ *   renewed, in which case it has been cleared. A network failure still throws a plain `Error` from
+ *   `fetch`.
  */
-async function request<T>(endpoint: string, token: string, options: RequestOptions = {}): Promise<T> {
+async function request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
   const { method = 'GET', body, params = {} } = options;
   const baseUrl = import.meta.env.VITE_API_URL || '';
   const locale = getAppLocale();
@@ -59,14 +51,21 @@ async function request<T>(endpoint: string, token: string, options: RequestOptio
     url.searchParams.append(key, value);
   }
 
-  const response = await fetch(url.toString(), {
-    method,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-  });
+  const send = (token: string) =>
+    fetch(url.toString(), {
+      method,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+
+  const token = await getAccessToken();
+  let response = await send(token);
+  if (response.status === 401) {
+    response = await send(await refreshSession(token));
+  }
 
   if (response.status === 401) {
     await clearSession();
@@ -88,30 +87,26 @@ async function request<T>(endpoint: string, token: string, options: RequestOptio
  * Authenticated HTTP GET request. See {@link request}.
  *
  * @param endpoint - The relative API route (e.g., '/api/v1/users/me')
- * @param token - A valid bearer token
  * @param params - Optional query parameters
  */
 export async function fetchWithAuth<T>(
   endpoint: string,
-  token: string,
   params: Record<string, string> = {}
 ): Promise<T> {
-  return request<T>(endpoint, token, { params });
+  return request<T>(endpoint, { params });
 }
 
 /**
  * Authenticated HTTP POST request with an optional JSON body. See {@link request}.
  *
- * @param endpoint - The relative API route (e.g., '/api/v1/activities/')
- * @param token - A valid bearer token
+ * @param endpoint - The relative API route (e.g., '/api/v1/predictions')
  * @param body - Optional payload serialized as JSON
  * @param params - Optional query parameters
  */
 export async function postWithAuth<T>(
   endpoint: string,
-  token: string,
   body?: unknown,
   params: Record<string, string> = {}
 ): Promise<T> {
-  return request<T>(endpoint, token, { method: 'POST', body, params });
+  return request<T>(endpoint, { method: 'POST', body, params });
 }

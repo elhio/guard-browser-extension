@@ -13,9 +13,9 @@ test("completing the wizard (skip login) persists the chosen settings", async ({
   await expect(wizard.loginWebsiteButton()).toBeVisible();
   await wizard.skipLogin();
 
-  // Step 2: tasks — turn "explicit" off, leave AI + violent on, then continue.
-  await expect(wizard.taskCheckbox("aiGenerated")).toBeChecked();
-  await wizard.taskCheckbox("explicit").uncheck();
+  // Step 2: targets — turn "explicit" off, leave AI + violent on, then continue.
+  await expect(wizard.targetCheckbox("aiGenerated")).toBeChecked();
+  await wizard.targetCheckbox("explicit").uncheck();
   await wizard.next();
 
   // Step 3: action — choose "blur".
@@ -38,5 +38,5 @@ test("completing the wizard (skip login) persists the chosen settings", async ({
   const settings = await readSettings(serviceWorker);
   expect(settings.isLoggedIn).toBe(false);
   expect(settings.detectionAction).toBe("blur");
-  expect(settings.tasks).toEqual({ aiGenerated: true, violent: true, explicit: false });
+  expect(settings.targets).toEqual({ aiGenerated: true, violent: true, explicit: false });
 });
