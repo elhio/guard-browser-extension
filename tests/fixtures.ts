@@ -44,7 +44,25 @@ declare const chrome: {
       set(items: Record<string, unknown>): Promise<void>;
     };
   };
+  tabs: {
+    query(query: { url: string }): Promise<{ id?: number }[]>;
+    remove(tabIds: number[]): Promise<void>;
+  };
+  runtime: { getURL(path: string): string };
 };
+
+/**
+ * Waits out the background's one-time install handling, then closes the wizard tab it opened.
+ */
+async function settleInstall(worker: Worker): Promise<void> {
+  await expect(async () =>
+    expect((await readSettings(worker))?.hasPromptedSetup).toBe(true)
+  ).toPass({ timeout: 10_000 });
+  await worker.evaluate(async () => {
+    const tabs = await chrome.tabs.query({ url: chrome.runtime.getURL("/setup.html") });
+    await chrome.tabs.remove(tabs.flatMap((tab) => (tab.id === undefined ? [] : [tab.id])));
+  });
+}
 
 export const test = base.extend<{
   context: BrowserContext;
@@ -66,6 +84,7 @@ export const test = base.extend<{
   serviceWorker: async ({ context }, use) => {
     let [worker] = context.serviceWorkers();
     if (!worker) worker = await context.waitForEvent("serviceworker");
+    await settleInstall(worker);
     await use(worker);
   },
   extensionId: async ({ serviceWorker }, use) => {
