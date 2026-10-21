@@ -1,3 +1,4 @@
+import { Reader } from '@contentauth/c2pa-web';
 import { getC2pa } from './client';
 import { getManifestChain } from './manifestStore';
 import { detectAiGeneration } from '@/lib/c2pa/aiDetection';
@@ -31,7 +32,7 @@ export async function readManifestFor(
   let aiFromC2pa = detectAiGeneration([]);
   try {
     const c2pa = await getC2pa();
-    const reader = await c2pa.reader.fromBlob(blob.type, blob);
+    const reader = await Reader.fromBlob(c2pa, blob.type, blob);
     if (reader) {
       try {
         aiFromC2pa = detectAiGeneration(getManifestChain(await reader.manifestStore()));

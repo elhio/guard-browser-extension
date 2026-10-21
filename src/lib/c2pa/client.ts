@@ -1,4 +1,4 @@
-import { createC2pa, type C2paSdk } from '@contentauth/c2pa-web';
+import { createC2pa, type C2pa } from '@contentauth/c2pa-web';
 import { browser } from 'wxt/browser';
 import wasmUrl from '@contentauth/c2pa-web/resources/c2pa.wasm?url';
 import workerUrl from '@contentauth/c2pa-web/c2pa_worker?url';
@@ -8,7 +8,7 @@ import workerUrl from '@contentauth/c2pa-web/c2pa_worker?url';
  */
 const INIT_TIMEOUT_MS = 20_000;
 
-let c2paInstance: Promise<C2paSdk> | undefined;
+let c2paInstance: Promise<C2pa> | undefined;
 
 /**
  * Resolves a bundled asset to an absolute extension URL
@@ -74,7 +74,7 @@ async function compileWasm(): Promise<WebAssembly.Module> {
   }
 }
 
-async function initC2pa(): Promise<C2paSdk> {
+async function initC2pa(): Promise<C2pa> {
   const startedAt = Date.now();
   const sdk = await createC2pa({ wasmSrc: await compileWasm(), workerSrc: getWorkerSrc() });
   console.debug(`[Guard c2pa] SDK ready in ${Date.now() - startedAt}ms`);
@@ -87,9 +87,9 @@ async function initC2pa(): Promise<C2paSdk> {
  * A failed init clears the cached promise: without that, one transient failure is memoized and
  * silently disables C2PA for the remaining lifetime of the offscreen document.
  *
- * @returns A promise that resolves to the fully initialized `C2paSdk` instance ready for manifest reading
+ * @returns A promise that resolves to the fully initialized `C2pa` instance ready for manifest reading
  */
-export function getC2pa(): Promise<C2paSdk> {
+export function getC2pa(): Promise<C2pa> {
   if (!c2paInstance) {
     const started = withInitTimeout(initC2pa());
     c2paInstance = started.catch((error: unknown) => {
@@ -108,8 +108,8 @@ export function getC2pa(): Promise<C2paSdk> {
  * fresh one — on a browser where init is genuinely slow rather than broken, that would accumulate an
  * orphaned worker and its 8 MB wasm instance per retry.
  */
-function withInitTimeout(promise: Promise<C2paSdk>): Promise<C2paSdk> {
-  return new Promise<C2paSdk>((resolve, reject) => {
+function withInitTimeout(promise: Promise<C2pa>): Promise<C2pa> {
+  return new Promise<C2pa>((resolve, reject) => {
     let timedOut = false;
     const timer = setTimeout(() => {
       timedOut = true;
