@@ -5,8 +5,8 @@ export const SUBMIT_REACTION_MESSAGE = 'SUBMIT_REACTION';
 
 export interface SubmitReactionRequest {
   type: typeof SUBMIT_REACTION_MESSAGE;
-  activityId: string;
-  taskId: string;
+  predictionId: string;
+  targetId: string;
   isPositive: boolean;
   keyValue: number | null;
   description: string | null;
@@ -18,13 +18,13 @@ export function isSubmitReactionRequest(message: unknown): message is SubmitReac
     typeof message === 'object' &&
     message !== null &&
     (message as Record<string, unknown>).type === SUBMIT_REACTION_MESSAGE &&
-    typeof (message as Record<string, unknown>).activityId === 'string'
+    typeof (message as Record<string, unknown>).predictionId === 'string'
   );
 }
 
 export interface SubmitReactionPayload {
-  activityId: string;
-  taskId: string;
+  predictionId: string;
+  targetId: string;
   isPositive: boolean;
   keyValue?: number | null;
   description?: string | null;
@@ -34,8 +34,8 @@ export interface SubmitReactionPayload {
 export function submitReaction(payload: SubmitReactionPayload): void {
   void browser.runtime.sendMessage({
     type: SUBMIT_REACTION_MESSAGE,
-    activityId: payload.activityId,
-    taskId: payload.taskId,
+    predictionId: payload.predictionId,
+    targetId: payload.targetId,
     isPositive: payload.isPositive,
     keyValue: payload.keyValue ?? null,
     description: payload.description ?? null,

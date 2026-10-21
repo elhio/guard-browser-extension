@@ -3,17 +3,17 @@ import { LuChevronLeft, LuChevronRight, LuX } from 'react-icons/lu';
 
 import { t } from '@/lib/i18n';
 import type { DetectionCategory } from '@/lib/detection';
-import { TAB_LABEL_KEYS } from './taskLabels';
+import { TAB_LABEL_KEYS } from './targetLabels';
 
-interface TaskTabsProps {
+interface TargetTabsProps {
   tabs: DetectionCategory[];
   active: DetectionCategory;
   onSelect: (category: DetectionCategory) => void;
   onClose: () => void;
 }
 
-/** The menu header: scrollable task tabs (with overflow arrows) + a close button. */
-export function TaskTabs({ tabs, active, onSelect, onClose }: TaskTabsProps) {
+/** The menu header: scrollable target tabs (with overflow arrows) + a close button. */
+export function TargetTabs({ tabs, active, onSelect, onClose }: TargetTabsProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [overflow, setOverflow] = useState({ left: false, right: false });
 

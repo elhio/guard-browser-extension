@@ -64,10 +64,10 @@ export function intersectRects(a: Rect, b: Rect): Rect {
 
 /** Folds `intersectRects` over a list. The first entry is the base rectangle. */
 export function intersectAll(rects: readonly Rect[]): Rect {
-  if (rects.length === 0) return makeRect(0, 0, 0, 0);
   let result = rects[0];
+  if (!result) return makeRect(0, 0, 0, 0);
   for (let i = 1; i < rects.length; i++) {
-    result = intersectRects(result, rects[i]);
+    result = intersectRects(result, rects[i]!);
     // Once the overlap is empty it can never grow again.
     if (result.width === 0 || result.height === 0) return result;
   }

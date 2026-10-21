@@ -1,4 +1,5 @@
 import { browser } from 'wxt/browser';
+import { refreshSession } from '@/lib/auth/session';
 import { settings } from '@/lib/settings';
 import { NATIVE_APPLICATION_ID } from './nativeApplication';
 
@@ -6,8 +7,10 @@ import { NATIVE_APPLICATION_ID } from './nativeApplication';
  * Safari-only session handover to the container app for StoreKit purchases.
  *
  * StoreKit cannot present payment sheets from `SafariWebExtensionHandler` (extensions lack a window).
- * This passes the bearer token and API base URL to the native app, which completes the purchase.
+ * This passes an access token and the API base URL to the native app, which completes the purchase.
  * The token is parked temporarily for single-read collection, kept in memory, and expires automatically.
+ * It is renewed right before, so the app gets its whole lifetime. The refresh token stays here: two
+ * holders rotating it would take each other for a thief.
  */
 
 /**
@@ -18,8 +21,9 @@ import { NATIVE_APPLICATION_ID } from './nativeApplication';
  */
 export async function handOverSessionToApp(): Promise<boolean> {
   try {
-    const { token } = await settings.getValue();
-    if (!token) return false;
+    const { token: current, refreshToken } = await settings.getValue();
+    if (!refreshToken) return false;
+    const token = await refreshSession(current);
 
     const reply = (await browser.runtime.sendNativeMessage(NATIVE_APPLICATION_ID, {
       authToken: token,

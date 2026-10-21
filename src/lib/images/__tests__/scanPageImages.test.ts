@@ -34,16 +34,16 @@ describe('scanPageImages', () => {
     const candidates = scanPageImages({ root: rootOf([first, second, third]) });
 
     expect(candidates).toHaveLength(1);
-    expect(candidates[0].elements).toEqual([first, second, third]);
+    expect(candidates[0]!.elements).toEqual([first, second, third]);
     // `element` stays the first one so existing single-element callers are unaffected.
-    expect(candidates[0].element).toBe(first);
+    expect(candidates[0]!.element).toBe(first);
   });
 
   it('skips elements with no resolved source', () => {
     const candidates = scanPageImages({ root: rootOf([fakeImage(''), fakeImage('https://a/1.jpg')]) });
 
     expect(candidates).toHaveLength(1);
-    expect(candidates[0].src).toBe('https://a/1.jpg');
+    expect(candidates[0]!.src).toBe('https://a/1.jpg');
   });
 
   it('applies filters per element, so a too-small copy does not join the group', () => {
@@ -53,7 +53,7 @@ describe('scanPageImages', () => {
     const candidates = scanPageImages({ root: rootOf([big, tiny]), filters: [byMinRenderedSize(64)] });
 
     expect(candidates).toHaveLength(1);
-    expect(candidates[0].elements).toEqual([big]);
+    expect(candidates[0]!.elements).toEqual([big]);
   });
 
   it('drops a URL entirely when its only element fails a filter', () => {

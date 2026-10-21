@@ -26,7 +26,7 @@ if (import.meta.env.MANIFEST_VERSION === 2) {
       try {
         results = await classifyCandidates(
           request.candidates,
-          request.tasks,
+          request.targets,
           request.useDetectorLocalModel
         );
       } catch (error) {
@@ -53,7 +53,7 @@ if (import.meta.env.MANIFEST_VERSION === 2) {
         try {
           const results = await classifyCandidates(
             message.candidates,
-            message.tasks,
+            message.targets,
             message.useDetectorLocalModel
           );
           return { results };

@@ -212,9 +212,9 @@ async function letterbox(image: RawImage, size: number): Promise<RawImage> {
       const sx = Math.min(Math.max(x - left, 0), width - 1);
       const s = (sy * width + sx) * 3;
       const d = (y * size + x) * 3;
-      out[d] = src[s];
-      out[d + 1] = src[s + 1];
-      out[d + 2] = src[s + 2];
+      out[d] = src[s]!;
+      out[d + 1] = src[s + 1]!;
+      out[d + 2] = src[s + 2]!;
     }
   }
 

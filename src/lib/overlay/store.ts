@@ -1,7 +1,7 @@
 import type { ClassifyImageResult } from '@/lib/messaging/classifyMessages';
 import type { TabStats } from '@/lib/messaging/tabStatsMessages';
 import type { VerifyImageData, VerifyImageResponse } from '@/lib/messaging/verifyMessages';
-import type { TasksState } from '@/lib/detection';
+import type { TargetsState } from '@/lib/detection';
 import type { DetectionAction } from '@/lib/settings';
 
 /** Visual status of a per-image badge ring (also drives the menu's loading/error chrome). */
@@ -41,7 +41,7 @@ export interface OpenTarget {
 
 /** The snapshot of extension settings the menu needs to decide its actions. */
 export interface OverlaySettings {
-  tasks: TasksState;
+  targets: TargetsState;
   token: string | null;
   verificatorSpace: string | null;
   detectionAction: DetectionAction;
@@ -57,7 +57,7 @@ export interface MenuSnapshot {
 const entries = new Map<string, OverlayEntry>();
 let openTarget: OpenTarget | null = null;
 let settings: OverlaySettings = {
-  tasks: { aiGenerated: true, violent: true, explicit: true },
+  targets: { aiGenerated: true, violent: true, explicit: true },
   token: null,
   verificatorSpace: null,
   detectionAction: 'mark',

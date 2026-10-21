@@ -3,6 +3,8 @@ import {
   expect,
   seedSettings,
   readSettings,
+  signedIn,
+  API_ORIGIN,
   WEBSITE_ORIGIN,
   WEBSITE_STUB_HTML,
 } from "./fixtures";
@@ -15,8 +17,7 @@ import {
 const FOREIGN_ORIGIN = "http://localhost:5199";
 
 const SIGNED_IN = {
-  token: "e2e-test-token",
-  isLoggedIn: true,
+  ...signedIn(),
   verificatorSpace: "e2e-space",
   hasCompletedSetup: true,
   hasPromptedSetup: true,
@@ -53,11 +54,36 @@ test.describe("website logout handoff", () => {
     await expect.poll(() => readSettings(serviceWorker).then((s) => s.token)).toBeNull();
 
     const after = await readSettings(serviceWorker);
+    expect(after.refreshToken).toBeNull();
     expect(after.isLoggedIn).toBe(false);
     // Bound to the account that just left — it must not carry over to whoever signs in next.
     expect(after.verificatorSpace).toBeNull();
     // Local preferences are not part of the session and must survive.
     expect(after.hasCompletedSetup).toBe(true);
+  });
+
+  // The extension's session is its own (the website started it for the extension), so the website
+  // logging out of its session leaves it running unless the extension ends it at the API too.
+  test("ends the extension's own session at the API", async ({ page, context, serviceWorker }) => {
+    const logouts: unknown[] = [];
+    await context.route(`${API_ORIGIN}/api/v1/auth/logout`, (route) => {
+      logouts.push({
+        body: route.request().postDataJSON(),
+        transport: route.request().headers()["x-token-transport"],
+      });
+      return route.fulfill({ status: 204 });
+    });
+    await seedSettings(serviceWorker, SIGNED_IN);
+
+    await page.goto(`${WEBSITE_ORIGIN}/`);
+    await page.waitForSelector("guard-menu", { state: "attached", timeout: 15_000 });
+
+    await page.evaluate(() => {
+      window.postMessage({ type: "EXT_AUTH_LOGOUT", reason: "logout" }, "*");
+    });
+
+    await expect.poll(() => logouts.length).toBe(1);
+    expect(logouts[0]).toEqual({ body: { refresh_token: "rt_e2e" }, transport: "body" });
   });
 
   test("clears the stored session after account deletion", async ({ page, serviceWorker }) => {

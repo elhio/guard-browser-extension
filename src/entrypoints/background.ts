@@ -23,13 +23,15 @@ import { respondAsync } from '@/lib/messaging/respondAsync';
 import { isSubmitReactionRequest } from '@/lib/messaging/reactionMessages';
 import { isCreateShareRequest, type CreateShareResponse } from '@/lib/messaging/shareMessages';
 import { settings } from '@/lib/settings';
+import { endSession, getUserId, startSession } from '@/lib/auth/session';
+import { isEndSessionRequest, isTokenReceived } from '@/lib/messaging/sessionMessages';
 import {
-  getUserId,
-  getSpaceTaskMeta,
+  ApiError,
+  getSpaceTargetMeta,
   runImageVerification,
   createReaction,
-  createActivityShare,
-  type SpaceTaskMeta
+  createPredictionShare,
+  type SpaceTargetMeta
 } from '@/lib/api';
 import { fetchWithTimeout } from '@/lib/net/fetchWithTimeout';
 import { t } from '@/lib/i18n';
@@ -49,22 +51,6 @@ function isSafeTabUrl(url: string): boolean {
   } catch {
     return false;
   }
-}
-
-/**
- * The token the website hands over after a login, relayed here by the content script.
- *
- * Kept as an inline shape rather than a shared message module: the matching `'TOKEN_RECEIVED'`
- * literals live in `content.ts` (sender) and `LoginForm.tsx` (the wizard's own listener).
- */
-function isTokenReceived(message: unknown): message is { type: 'TOKEN_RECEIVED'; token: string } {
-  const candidate = message as Record<string, unknown> | null;
-  return (
-    !!candidate &&
-    candidate.type === 'TOKEN_RECEIVED' &&
-    typeof candidate.token === 'string' &&
-    candidate.token.length > 0
-  );
 }
 
 /** Deduplicates concurrent calls within one background page load */
@@ -153,6 +139,7 @@ function toVerifyErrorMessage(error: unknown): string {
   const message = error instanceof Error ? error.message : String(error);
   if (message === 'unsupported-media') return t('verify_error_unsupported_media');
   if (message === 'timeout') return t('verify_error_timeout');
+  if (error instanceof ApiError && error.status === 413) return t('verify_error_too_large');
   return message;
 }
 
@@ -210,7 +197,7 @@ export default defineBackground({
               const { classifyViaOffscreenIframe } = await import('@/lib/offscreen/offscreenClient');
               return await classifyViaOffscreenIframe(
                 message.candidates,
-                message.tasks,
+                message.targets,
                 message.useDetectorLocalModel
               );
             } catch (error) {
@@ -246,7 +233,7 @@ export default defineBackground({
             const request: OffscreenClassifyImageRequest = {
               type: CLASSIFY_IMAGE_OFFSCREEN_MESSAGE,
               candidates: message.candidates,
-              tasks: message.tasks,
+              targets: message.targets,
               useDetectorLocalModel: message.useDetectorLocalModel
             };
 
@@ -258,15 +245,15 @@ export default defineBackground({
         return respondAsync(work, sendResponse);
       }
 
-      // PATH 2: external verification — full activity lifecycle
+      // PATH 2: external verification — full prediction lifecycle
       if (isVerifyImageRequest(message)) {
         const work = (async (): Promise<VerifyImageResponse> => {
           try {
-            const { token, verificatorSpace } = await settings.getValue();
-            if (!token) throw new Error(t('verify_error_not_signed_in'));
+            const { refreshToken, verificatorSpace } = await settings.getValue();
+            if (!refreshToken) throw new Error(t('verify_error_not_signed_in'));
             if (!verificatorSpace) throw new Error(t('verify_error_no_space'));
 
-            const userId = await getUserId(token);
+            const userId = await getUserId();
 
             // Download the image bytes to upload for verification.
             const imageResponse = await fetchWithTimeout(message.src, VERIFY_IMAGE_FETCH_TIMEOUT_MS);
@@ -275,23 +262,23 @@ export default defineBackground({
             }
             const blob = await imageResponse.blob();
 
-            const result = await runImageVerification(token, {
+            const result = await runImageVerification({
               spaceId: verificatorSpace,
               userId,
               blob
             });
 
-            // Result items only carry a task_id + outcome label, so resolve each task's
-            // detection category and feedback reactions via the space's (cached) task list.
-            const taskMeta: Record<string, SpaceTaskMeta> =
-              await getSpaceTaskMeta(token, verificatorSpace).catch(() => ({}));
+            // Result items only carry a target_id + outcome label, so resolve each target's
+            // detection category and feedback reactions via the space's (cached) target list.
+            const targetMeta: Record<string, SpaceTargetMeta> =
+              await getSpaceTargetMeta(verificatorSpace).catch(() => ({}));
 
             const data: VerifyImageData = {
-              activityId: result.activityId,
+              predictionId: result.predictionId,
               results: result.results.map((item) => ({
-                taskId: item.task_id,
-                category: taskMeta[item.task_id]?.category ?? null,
-                reactions: taskMeta[item.task_id]?.reactions ?? {},
+                targetId: item.target_id,
+                category: targetMeta[item.target_id]?.category ?? null,
+                reactions: targetMeta[item.target_id]?.reactions ?? {},
                 label: item.label,
                 score: item.score,
                 description: item.description ?? undefined
@@ -328,17 +315,16 @@ export default defineBackground({
         return respondAsync(work, sendResponse);
       }
 
-      // PATH 3.5: the website handed over a token after a login. Stored here rather than in an
+      // PATH 3.5: the website handed over a session after a login. Stored here rather than in an
       // extension page because the sign-in can start from the in-page badge menu — PATH 3 above
       // opens the tab and then no extension page is open to hear the result, so it used to be
       // dropped and the user stayed signed out with the login tab left behind.
       if (isTokenReceived(message)) {
         const tabId = sender.tab?.id;
         const work = (async () => {
-          const current = await settings.getValue();
-          // Merged over the current value: this must not disturb `hasCompletedSetup`, `tasks` or
+          // Merged over the current value: this must not disturb `hasCompletedSetup`, `targets` or
           // any other preference.
-          await settings.setValue({ ...current, token: message.token, isLoggedIn: true });
+          await startSession(message);
           // The website deliberately waits ~500ms after posting for us to do this.
           if (tabId != null) await browser.tabs.remove(tabId).catch(() => {});
         })();
@@ -347,15 +333,21 @@ export default defineBackground({
         return work.then(() => undefined);
       }
 
+      // PATH 3.6: the website signed out, relayed by the content script. Ended here, where the API
+      // can be called with the extension's own origin, rather than in the page.
+      if (isEndSessionRequest(message)) {
+        return endSession().then(() => undefined);
+      }
+
       // PATH 4: submit a feedback reaction (the response is just an acknowledgement)
       if (isSubmitReactionRequest(message)) {
         const work = (async (): Promise<undefined> => {
           try {
-            const { token } = await settings.getValue();
-            if (token) {
-              await createReaction(token, {
-                activityId: message.activityId,
-                taskId: message.taskId,
+            const { refreshToken } = await settings.getValue();
+            if (refreshToken) {
+              await createReaction({
+                predictionId: message.predictionId,
+                targetId: message.targetId,
                 isPositive: message.isPositive,
                 keyValue: message.keyValue,
                 description: message.description
@@ -373,11 +365,11 @@ export default defineBackground({
       if (isCreateShareRequest(message)) {
         const work = (async (): Promise<CreateShareResponse> => {
           try {
-            const { token } = await settings.getValue();
-            if (!token) throw new Error(t('verify_error_not_signed_in'));
-            const share = await createActivityShare(token, {
-              activityId: message.activityId,
-              taskId: message.taskId,
+            const { refreshToken } = await settings.getValue();
+            if (!refreshToken) throw new Error(t('verify_error_not_signed_in'));
+            const share = await createPredictionShare({
+              predictionId: message.predictionId,
+              targetId: message.targetId,
               expiresIn: message.expiresIn
             });
             return { success: true, shareUrl: share.share_url };

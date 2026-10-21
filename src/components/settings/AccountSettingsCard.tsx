@@ -18,7 +18,8 @@ import {
   websiteDashboardUrl,
   websiteProfileUrl,
 } from '@/lib/website/urls';
-import { settings, clearSession, isTokenExpired } from '@/lib/settings';
+import { settings } from '@/lib/settings';
+import { endSession, sessionKey } from '@/lib/auth/session';
 import { fetchSubscription, fetchUserProfile, fetchUserUsage, isSessionRejected } from '@/lib/api';
 
 /**
@@ -184,13 +185,13 @@ function PurchaseCall({
 /**
  * The account section of the settings page, mirroring the website's user menu.
  *
- * Renders one of four states, decided by whether there is a usable token and what the profile call
+ * Renders one of four states, decided by whether there is a session and what the profile call
  * answered: the loading skeleton, the sign-in button, the signed-in menu, or a notice that the
  * account could not be read. See `isSessionOver` for what separates the last two, which is the
  * difference between a session that has ended and a server that cannot be reached.
  */
 export function AccountSettingsCard() {
-  const [token, setToken] = useState<string | null | undefined>(undefined);
+  const [session, setSession] = useState<string | null | undefined>(undefined);
   const [isWaitingAuth, setIsWaitingAuth] = useState(false);
   // Safari only: set when the container app has been sent to, so returning here refreshes the balance
   const [isBuyingInApp, setIsBuyingInApp] = useState(false);
@@ -218,14 +219,14 @@ export function AccountSettingsCard() {
 
     settings.getValue().then((res) => {
       if (!isMounted) return;
-      setToken(res.token);
+      setSession(sessionKey(res));
     });
 
     const unwatch = settings.watch((newSettings) => {
       if (!newSettings || !isMounted) return;
-      setToken(newSettings.token);
-      // The background stores the token (see PATH 3.5); arriving here is what ends the wait.
-      if (newSettings.token) setIsWaitingAuth(false);
+      setSession(sessionKey(newSettings));
+      // The background stores the session; arriving here is what ends the wait.
+      if (newSettings.refreshToken) setIsWaitingAuth(false);
     });
 
     return () => {
@@ -234,14 +235,9 @@ export function AccountSettingsCard() {
     };
   }, []);
 
-  // A token past its own expiry buys nothing: every call it is attached to comes back refused
-  const isTokenUsable = !!token && !isTokenExpired(token);
-
-  // Storage still holds the dead token, and the rest of the extension reads storage. Clearing it
-  // keeps the in-page menu and the verify path agreeing with what this card already shows
-  useEffect(() => {
-    if (token && isTokenExpired(token)) void clearSession();
-  }, [token]);
+  // An access token that ran out is renewed by the request itself; only the API refusing the
+  // renewal ends the session
+  const isTokenUsable = !!session;
 
   const {
     data: userData,
@@ -250,8 +246,8 @@ export function AccountSettingsCard() {
     error: userError,
     refetch: refetchUser,
   } = useQuery({
-    queryKey: ['userProfile', token],
-    queryFn: () => fetchUserProfile(token!),
+    queryKey: ['userProfile', session],
+    queryFn: () => fetchUserProfile(),
     enabled: isTokenUsable,
     staleTime: 1000 * 60 * 5,
   });
@@ -262,15 +258,15 @@ export function AccountSettingsCard() {
     isError: isUsageError,
     refetch: refetchUsage,
   } = useQuery({
-    queryKey: ['userUsage', token],
-    queryFn: () => fetchUserUsage(token!),
+    queryKey: ['userUsage', session],
+    queryFn: () => fetchUserUsage(),
     enabled: isTokenUsable,
     staleTime: 1000 * 60 * 5,
   });
 
   const { data: subscription, refetch: refetchSubscription } = useQuery({
-    queryKey: ['subscription', token],
-    queryFn: () => fetchSubscription(token!),
+    queryKey: ['subscription', session],
+    queryFn: () => fetchSubscription(),
     enabled: isTokenUsable,
     staleTime: 1000 * 60 * 5,
   });
@@ -278,7 +274,7 @@ export function AccountSettingsCard() {
   const isSessionOver = isUserError && isSessionRejected(userError);
   const isAccountUnavailable = isUserError && !isSessionOver && !userData;
   const isAuthenticated = isTokenUsable && !isSessionOver;
-  const isLoading = token === undefined || (isTokenUsable && isUserLoading);
+  const isLoading = session === undefined || (isTokenUsable && isUserLoading);
 
   const handleRetry = () => {
     void refetchUser();
@@ -310,8 +306,9 @@ export function AccountSettingsCard() {
 
   // Signs out of the extension only — the website session is deliberately left alone. An extension
   // yanking the user out of a site they may have open in another tab is the surprising behaviour;
-  // the sync runs the other way (see `clearSession`'s callers).
-  const handleLogout = () => clearSession();
+  // the sync runs the other way (see `endSession`'s callers). The extension's own session is ended
+  // at the API too, so it leaves the user's session list on the website.
+  const handleLogout = () => endSession();
 
   // Safari only. The purchase itself belongs to the container app: StoreKit will not present a
   // payment sheet from the extension's native handler, which has no window to anchor one to. So the

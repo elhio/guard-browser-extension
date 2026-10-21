@@ -4,8 +4,9 @@ import { useQuery } from '@tanstack/react-query';
 import SettingsSection from '@/components/ui/SettingsSection';
 import SettingsRow from '@/components/ui/SettingsRow';
 import { t, type MessageKey } from '@/lib/i18n';
-import { settings, isTokenExpired } from '@/lib/settings';
-import type { TasksState } from '@/lib/detection';
+import { settings } from '@/lib/settings';
+import { sessionKey } from '@/lib/auth/session';
+import type { TargetsState } from '@/lib/detection';
 import { fetchUserProfile, fetchUserSpaces, isSessionRejected } from '@/lib/api';
 import {
   checkSpaceEligibility,
@@ -15,15 +16,16 @@ import {
 
 const REASON_KEYS: Record<EligibilityReason, MessageKey> = {
   media: 'settings_verification_error_media',
-  aiGenerated: 'settings_verification_error_task_ai',
-  violent: 'settings_verification_error_task_violent',
-  explicit: 'settings_verification_error_task_explicit',
+  aiGenerated: 'settings_verification_error_target_ai',
+  violent: 'settings_verification_error_target_violent',
+  explicit: 'settings_verification_error_target_explicit',
 };
 
 export function VerificationSettingsCard() {
   const [verificatorSpace, setVerificatorSpace] = useState<string | null>(null);
-  const [tasks, setTasks] = useState<TasksState>({ aiGenerated: true, violent: true, explicit: true });
-  const [token, setToken] = useState<string | null | undefined>(undefined);
+  const [targets, setTargets] = useState<TargetsState>({ aiGenerated: true, violent: true, explicit: true });
+  // Who is signed in (see `sessionKey`), `null` for nobody, `undefined` until storage answered
+  const [session, setSession] = useState<string | null | undefined>(undefined);
 
   useEffect(() => {
     let isMounted = true;
@@ -31,15 +33,15 @@ export function VerificationSettingsCard() {
     settings.getValue().then((res) => {
       if (!isMounted) return;
       setVerificatorSpace(res.verificatorSpace);
-      setTasks(res.tasks);
-      setToken(res.token);
+      setTargets(res.targets);
+      setSession(sessionKey(res));
     });
 
     const unwatch = settings.watch((newSettings) => {
       if (!newSettings || !isMounted) return;
       setVerificatorSpace(newSettings.verificatorSpace);
-      setTasks(newSettings.tasks);
-      setToken(newSettings.token);
+      setTargets(newSettings.targets);
+      setSession(sessionKey(newSettings));
     });
 
     return () => {
@@ -48,7 +50,7 @@ export function VerificationSettingsCard() {
     };
   }, []);
 
-  const isTokenUsable = !!token && !isTokenExpired(token);
+  const isTokenUsable = !!session;
 
   const {
     data: user,
@@ -56,15 +58,15 @@ export function VerificationSettingsCard() {
     isError: isUserError,
     error: userError,
   } = useQuery({
-    queryKey: ['userProfile', token],
-    queryFn: () => fetchUserProfile(token!),
+    queryKey: ['userProfile', session],
+    queryFn: () => fetchUserProfile(),
     enabled: isTokenUsable,
     staleTime: 1000 * 60 * 10,
   });
 
   const { data: spaces = [], isLoading: isSpacesLoading, isError: isSpacesError } = useQuery({
-    queryKey: ['userSpaces', token, user?.id],
-    queryFn: () => fetchUserSpaces(token!, user!.id),
+    queryKey: ['userSpaces', session, user?.id],
+    queryFn: () => fetchUserSpaces(user!.id),
     enabled: isTokenUsable && !!user?.id,
     staleTime: 1000 * 60 * 10,
   });
@@ -77,7 +79,7 @@ export function VerificationSettingsCard() {
   // render fell through to "no workspaces found"
   const isUnavailable = isAuthenticated && (isUserError || isSpacesError);
 
-  const isLoading = token === undefined || (isTokenUsable && (isUserLoading || isSpacesLoading));
+  const isLoading = session === undefined || (isTokenUsable && (isUserLoading || isSpacesLoading));
 
   const handleSelectSpace = useCallback(async (spaceId: string) => {
     const currentSettings = await settings.getValue();
@@ -100,7 +102,7 @@ export function VerificationSettingsCard() {
     if (verificatorSpace && spaces.length > 0) {
       const activeSpace = spaces.find(s => s.id === verificatorSpace);
       if (activeSpace) {
-        const { eligible } = checkSpaceEligibility(activeSpace, tasks);
+        const { eligible } = checkSpaceEligibility(activeSpace, targets);
         if (!eligible) {
           queueMicrotask(() => {
             handleSelectSpace(activeSpace.id);
@@ -108,7 +110,7 @@ export function VerificationSettingsCard() {
         }
       }
     }
-  }, [spaces, verificatorSpace, tasks, handleSelectSpace]);
+  }, [spaces, verificatorSpace, targets, handleSelectSpace]);
 
   const baseCheckboxClasses = "h-4 w-4 shrink-0 rounded border-gray-300 text-teal-600 accent-teal-500 focus:outline-none transition-all";
 
@@ -140,7 +142,7 @@ export function VerificationSettingsCard() {
         </p>
       ) : (
         spaces.map((space) => {
-          const { eligible, reason } = checkSpaceEligibility(space, tasks);
+          const { eligible, reason } = checkSpaceEligibility(space, targets);
           const reasonText = reason ? t(REASON_KEYS[reason]) : undefined;
 
           return (

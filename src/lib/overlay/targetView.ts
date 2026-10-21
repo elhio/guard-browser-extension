@@ -3,8 +3,8 @@ import type { DetectionCategory } from '@/lib/detection';
 import { t, type MessageKey } from '@/lib/i18n';
 import type { OverlayEntry } from './store';
 
-/** The resolved view of one task tab (score/label/description), for the menu to render. */
-export interface TaskView {
+/** The resolved view of one target tab (score/label/description), for the menu to render. */
+export interface TargetView {
   score: number;
   isAlert: boolean;
   label: string;
@@ -39,10 +39,10 @@ function tierLabel(category: DetectionCategory, score: number): string {
 }
 
 /**
- * Resolves what a task tab should show. A completed external verification replaces the
+ * Resolves what a target tab should show. A completed external verification replaces the
  * local/metadata result for any category its returned items map to.
  */
-export function resolveTaskView(category: DetectionCategory, entry: OverlayEntry | null): TaskView {
+export function resolveTargetView(category: DetectionCategory, entry: OverlayEntry | null): TargetView {
   const verify = entry?.verify;
 
   if (verify?.state === 'done' && verify.data) {

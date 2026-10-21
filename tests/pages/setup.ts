@@ -13,9 +13,9 @@ export function setupWizard(page: Page, extensionId: string) {
     loginWebsiteButton: () => page.getByTestId("login-website"),
     skipLogin: () => page.getByTestId("login-skip").click(),
 
-    // Step 2 — tasks (CheckboxCard -> checkbox-<taskId>)
-    taskCheckbox: (taskId: "aiGenerated" | "violent" | "explicit") =>
-      page.getByTestId(`checkbox-${taskId}`),
+    // Step 2 — targets (CheckboxCard -> checkbox-<targetId>)
+    targetCheckbox: (targetId: "aiGenerated" | "violent" | "explicit") =>
+      page.getByTestId(`checkbox-${targetId}`),
 
     // Step 3 — action (RadioCard -> radio-<action>)
     actionRadio: (action: "mark" | "blur" | "hide") => page.getByTestId(`radio-${action}`),

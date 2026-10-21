@@ -52,8 +52,6 @@ export function isSessionRejected(error: unknown): boolean {
   return error.status === 401 || IDENTITY_REJECTED_STATUSES.includes(error.status);
 }
 
-let cachedUserId: { token: string; id: string } | undefined;
-
 /**
  * Retrieves the profile details of the currently authenticated user
  *
@@ -61,36 +59,18 @@ let cachedUserId: { token: string; id: string } | undefined;
  * account keeps its token in storage forever, and every screen goes on drawing a signed-in shell
  * around a profile that will never arrive.
  *
- * @param token - A valid authentication token used to authorize the API request
  * @returns A promise that resolves to the user's profile data
  * @throws {ApiError} Rethrown from the request. A rejected identity is re-thrown carrying the same
  *   wording as a 401, so the reason shown to the user does not depend on which status caused it.
  */
-export async function fetchUserProfile(token: string): Promise<UserProfile> {
+export async function fetchUserProfile(): Promise<UserProfile> {
   try {
-    return await fetchWithAuth<UserProfile>('/api/v1/users/me', token);
+    return await fetchWithAuth<UserProfile>('/api/v1/users/me');
   } catch (error) {
     if (error instanceof ApiError && IDENTITY_REJECTED_STATUSES.includes(error.status)) {
-      // The memoized id belongs to an account the API has just disowned, so the next lookup must
-      // ask again rather than hand it back
-      cachedUserId = undefined;
       await clearSession();
       throw new ApiError(t('auth_error_session_expired'), error.status);
     }
     throw error;
   }
-}
-
-/**
- * Resolves the authenticated user's id, memoized per token so repeated calls
- * (e.g. one per image verification) don't refetch the profile.
- *
- * @param token - A valid authentication token
- * @returns The user's unique id
- */
-export async function getUserId(token: string): Promise<string> {
-  if (cachedUserId?.token === token) return cachedUserId.id;
-  const { id } = await fetchUserProfile(token);
-  cachedUserId = { token, id };
-  return id;
 }

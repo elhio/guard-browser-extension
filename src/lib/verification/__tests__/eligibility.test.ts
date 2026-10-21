@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 
-import { categoryForTaskLabel, checkSpaceEligibility } from '../eligibility';
+import { categoryForTargetName, checkSpaceEligibility } from '../eligibility';
 import type { SpacePublic } from '@/lib/api';
-import type { TasksState } from '@/lib/detection';
+import type { TargetsState } from '@/lib/detection';
 
 /** Builds a full SpacePublic with sensible defaults; override only what a test cares about. */
 function makeSpace(overrides: Partial<SpacePublic> = {}): SpacePublic {
@@ -23,52 +23,52 @@ function makeSpace(overrides: Partial<SpacePublic> = {}): SpacePublic {
     predictor_id: 'pred-1',
     predictor_name: 'Test Model',
     enabled_media: ['image'],
-    enabled_task_names: ['AI-Generated', 'Violent', 'Explicit'],
+    enabled_target_names: ['AI-Generated', 'Violent', 'Explicit'],
     ...overrides,
   };
 }
 
-const allTasks: TasksState = { aiGenerated: true, violent: true, explicit: true };
+const allTargets: TargetsState = { aiGenerated: true, violent: true, explicit: true };
 
-describe('categoryForTaskLabel', () => {
-  it('maps English task labels to categories', () => {
-    expect(categoryForTaskLabel('AI-Generated')).toBe('aiGenerated');
-    expect(categoryForTaskLabel('Violent')).toBe('violent');
-    expect(categoryForTaskLabel('Explicit')).toBe('explicit');
+describe('categoryForTargetName', () => {
+  it('maps English target labels to categories', () => {
+    expect(categoryForTargetName('AI-Generated')).toBe('aiGenerated');
+    expect(categoryForTargetName('Violent')).toBe('violent');
+    expect(categoryForTargetName('Explicit')).toBe('explicit');
   });
 
-  it('maps German task labels to categories', () => {
-    expect(categoryForTaskLabel('Gewalttätig')).toBe('violent');
-    expect(categoryForTaskLabel('Explizit')).toBe('explicit');
+  it('maps German target labels to categories', () => {
+    expect(categoryForTargetName('Gewalttätig')).toBe('violent');
+    expect(categoryForTargetName('Explizit')).toBe('explicit');
   });
 
   it('is trim- and case-insensitive', () => {
-    expect(categoryForTaskLabel('  ai-generated  ')).toBe('aiGenerated');
+    expect(categoryForTargetName('  ai-generated  ')).toBe('aiGenerated');
   });
 
   it('returns null for an unknown label', () => {
-    expect(categoryForTaskLabel('Deepfake')).toBeNull();
+    expect(categoryForTargetName('Deepfake')).toBeNull();
   });
 });
 
 describe('checkSpaceEligibility', () => {
-  it('is eligible when the space supports image media and every enabled task', () => {
-    expect(checkSpaceEligibility(makeSpace(), allTasks)).toEqual({ eligible: true });
+  it('is eligible when the space supports image media and every enabled target', () => {
+    expect(checkSpaceEligibility(makeSpace(), allTargets)).toEqual({ eligible: true });
   });
 
   it('is ineligible with reason "media" when images are not supported', () => {
     const space = makeSpace({ enabled_media: ['video'] });
-    expect(checkSpaceEligibility(space, allTasks)).toEqual({ eligible: false, reason: 'media' });
+    expect(checkSpaceEligibility(space, allTargets)).toEqual({ eligible: false, reason: 'media' });
   });
 
-  it('is ineligible with the category as the reason when an enabled task is not covered', () => {
-    const space = makeSpace({ enabled_task_names: ['AI-Generated', 'Explicit'] });
-    expect(checkSpaceEligibility(space, allTasks)).toEqual({ eligible: false, reason: 'violent' });
+  it('is ineligible with the category as the reason when an enabled target is not covered', () => {
+    const space = makeSpace({ enabled_target_names: ['AI-Generated', 'Explicit'] });
+    expect(checkSpaceEligibility(space, allTargets)).toEqual({ eligible: false, reason: 'violent' });
   });
 
-  it('ignores tasks the user has disabled', () => {
-    const space = makeSpace({ enabled_task_names: ['AI-Generated'] });
-    const tasks: TasksState = { aiGenerated: true, violent: false, explicit: false };
-    expect(checkSpaceEligibility(space, tasks)).toEqual({ eligible: true });
+  it('ignores targets the user has disabled', () => {
+    const space = makeSpace({ enabled_target_names: ['AI-Generated'] });
+    const targets: TargetsState = { aiGenerated: true, violent: false, explicit: false };
+    expect(checkSpaceEligibility(space, targets)).toEqual({ eligible: true });
   });
 });

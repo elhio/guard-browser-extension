@@ -4,7 +4,7 @@
   "author": "Elhio <hello@elhio.com>",
   "homepage": "https://elhio.com",
   "private": true,
-  "version": "0.0.3",
+  "version": "0.0.4",
   "type": "module",
   "scripts": {
     "dev": "wxt",
@@ -27,7 +27,7 @@
     "test:e2e:ui": "wxt build && playwright test --ui"
   },
   "dependencies": {
-    "@contentauth/c2pa-web": "^0.12.0",
+    "@contentauth/c2pa-web": "^0.15.4",
     "@huggingface/transformers": "^4.2.0",
     "@tailwindcss/vite": "^4.3.2",
     "@tanstack/react-query": "^5.101.2",
@@ -43,6 +43,7 @@
     "@types/react-dom": "^19.2.3",
     "@wxt-dev/auto-icons": "^1.1.1",
     "@wxt-dev/module-react": "^1.1.5",
+    "esbuild": "^0.28.1",
     "eslint": "^9.39.4",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.1.1",
@@ -50,8 +51,10 @@
     "globals": "^17.7.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.62.1",
+    "vite": "^8.3.4",
     "vite-plugin-svgr": "^5.2.0",
     "vitest": "^4.1.10",
-    "wxt": "^0.20.27"
+    "web-ext": "^10.8.0",
+    "wxt": "^0.21.4"
   }
 }

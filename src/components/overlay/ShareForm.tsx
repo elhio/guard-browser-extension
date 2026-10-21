@@ -8,13 +8,13 @@ const FIELD_CLASS =
   'w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900 focus:border-teal-500 focus:outline-none dark:border-gray-700 dark:bg-[#1a1a1a] dark:text-gray-100';
 
 interface ShareFormProps {
-  activityId: string;
-  taskId: string;
+  predictionId: string;
+  targetId: string;
   onClose: () => void;
 }
 
 /** Share flow: pick a validity, create a link, then copy it. */
-export function ShareForm({ activityId, taskId, onClose }: ShareFormProps) {
+export function ShareForm({ predictionId, targetId, onClose }: ShareFormProps) {
   const [expiresIn, setExpiresIn] = useState(7);
   const [creating, setCreating] = useState(false);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
@@ -24,7 +24,7 @@ export function ShareForm({ activityId, taskId, onClose }: ShareFormProps) {
   const handleCreate = async () => {
     setCreating(true);
     setError(null);
-    const response = await requestShare({ activityId, taskId, expiresIn });
+    const response = await requestShare({ predictionId, targetId, expiresIn });
     if (response.success) {
       setShareUrl(response.shareUrl);
     } else {

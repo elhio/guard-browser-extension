@@ -3,12 +3,12 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { t } from '@/lib/i18n';
 import type { DetectionCategory } from '@/lib/detection';
 import { closeMenu, type OverlayEntry } from '@/lib/overlay/store';
-import { resolveTaskView } from '@/lib/overlay/taskView';
+import { resolveTargetView } from '@/lib/overlay/targetView';
 import { submitReaction } from '@/lib/messaging/reactionMessages';
 import { useMenuSnapshot } from './useMenuSnapshot';
-import { TaskTabs } from './TaskTabs';
-import { TAB_LABEL_KEYS } from './taskLabels';
-import { TaskPanel } from './TaskPanel';
+import { TargetTabs } from './TargetTabs';
+import { TAB_LABEL_KEYS } from './targetLabels';
+import { TargetPanel } from './TargetPanel';
 import { MenuFooter } from './MenuFooter';
 import { FeedbackForm } from './FeedbackForm';
 import { ShareForm } from './ShareForm';
@@ -23,25 +23,25 @@ type MenuMode = 'result' | 'feedback' | 'share';
 
 interface FeedbackContext {
   isPositive: boolean;
-  taskId: string;
-  taskLabel: string;
+  targetId: string;
+  targetLabel: string;
   reactions: Record<number, string>;
-  activityId: string;
+  predictionId: string;
 }
 
 interface ShareContext {
-  taskId: string;
-  activityId: string;
+  targetId: string;
+  predictionId: string;
 }
 
 /**
- * On open, default to the highest-scoring task that crossed its threshold (the one that
+ * On open, default to the highest-scoring target that crossed its threshold (the one that
  * turned the badge red); if none did, fall back to the first tab.
  */
 function pickDefaultTab(tabs: DetectionCategory[], entry: OverlayEntry | null): DetectionCategory {
   let best: { category: DetectionCategory; score: number } | null = null;
   for (const category of tabs) {
-    const view = resolveTaskView(category, entry);
+    const view = resolveTargetView(category, entry);
     if (view.isAlert && (!best || view.score > best.score)) {
       best = { category, score: view.score };
     }
@@ -61,7 +61,7 @@ export function BadgeMenu() {
   const [feedbackCtx, setFeedbackCtx] = useState<FeedbackContext | null>(null);
   const [shareCtx, setShareCtx] = useState<ShareContext | null>(null);
 
-  const tabs = CATEGORY_ORDER.filter((category) => settings.tasks[category]);
+  const tabs = CATEGORY_ORDER.filter((category) => settings.targets[category]);
   const src = openTarget?.src ?? null;
   const verifying = entry?.verify.state === 'pending';
 
@@ -85,17 +85,17 @@ export function BadgeMenu() {
     reactedRef.current = false;
     setFeedbackCtx({
       isPositive,
-      taskId: activeItem.taskId,
-      taskLabel: t(TAB_LABEL_KEYS[activeTab]),
+      targetId: activeItem.targetId,
+      targetLabel: t(TAB_LABEL_KEYS[activeTab]),
       reactions: activeItem.reactions ?? {},
-      activityId: verifyData.activityId,
+      predictionId: verifyData.predictionId,
     });
     setMode('feedback');
   };
 
   const startShare = () => {
     if (!verifyData || !activeItem) return;
-    setShareCtx({ taskId: activeItem.taskId, activityId: verifyData.activityId });
+    setShareCtx({ targetId: activeItem.targetId, predictionId: verifyData.predictionId });
     setMode('share');
   };
 
@@ -103,8 +103,8 @@ export function BadgeMenu() {
     if (feedbackCtx && !reactedRef.current) {
       reactedRef.current = true;
       submitReaction({
-        activityId: feedbackCtx.activityId,
-        taskId: feedbackCtx.taskId,
+        predictionId: feedbackCtx.predictionId,
+        targetId: feedbackCtx.targetId,
         isPositive: feedbackCtx.isPositive,
         keyValue,
         description,
@@ -121,7 +121,7 @@ export function BadgeMenu() {
     return () => {
       if (!reactedRef.current) {
         reactedRef.current = true;
-        submitReaction({ activityId: ctx.activityId, taskId: ctx.taskId, isPositive: ctx.isPositive });
+        submitReaction({ predictionId: ctx.predictionId, targetId: ctx.targetId, isPositive: ctx.isPositive });
       }
     };
   }, [mode, feedbackCtx]);
@@ -202,17 +202,17 @@ export function BadgeMenu() {
       {mode === 'feedback' && feedbackCtx ? (
         <FeedbackForm
           isPositive={feedbackCtx.isPositive}
-          taskLabel={feedbackCtx.taskLabel}
+          targetLabel={feedbackCtx.targetLabel}
           reactions={feedbackCtx.reactions}
           onSave={handleSaveFeedback}
           onClose={closeMenu}
         />
       ) : mode === 'share' && shareCtx ? (
-        <ShareForm activityId={shareCtx.activityId} taskId={shareCtx.taskId} onClose={closeMenu} />
+        <ShareForm predictionId={shareCtx.predictionId} targetId={shareCtx.targetId} onClose={closeMenu} />
       ) : (
         <>
-          <TaskTabs tabs={tabs} active={activeTab} onSelect={setActive} onClose={closeMenu} />
-          <TaskPanel category={activeTab} entry={entry} />
+          <TargetTabs tabs={tabs} active={activeTab} onSelect={setActive} onClose={closeMenu} />
+          <TargetPanel category={activeTab} entry={entry} />
           {entry.verify.state === 'error' && (
             <div className="border-t border-gray-200 px-4 py-2 text-xs text-red-600 dark:border-gray-700 dark:text-red-400">
               ⚠ {entry.verify.error || t('badge_error_verify')}

@@ -54,8 +54,8 @@ describe('collectClipAncestors', () => {
   });
 
   function setRoots(nodes: FakeElement[]): void {
-    html = nodes[0];
-    body = nodes[1];
+    html = nodes[0]!;
+    body = nodes[1]!;
     (globalThis as { document?: unknown }).document = { documentElement: html, body };
   }
 

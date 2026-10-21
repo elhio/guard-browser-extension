@@ -5,18 +5,18 @@ import { LuListPlus, LuSettings } from 'react-icons/lu';
 import GuardLogo from '@/assets/guard.svg?react';
 import { settings, type DetectionAction } from '@/lib/settings';
 import { t } from '@/lib/i18n';
-import type { TasksState } from '@/lib/detection';
+import type { TargetsState } from '@/lib/detection';
 import { GET_TAB_STATS_MESSAGE, type TabStats } from '@/lib/messaging/tabStatsMessages';
 import { AnimatedCount } from '@/components/ui/AnimatedCount';
 
 function App() {
   const [isActive, setIsActive] = useState<boolean | null>(null);
-  const [tasks, setTasks] = useState<TasksState>({ aiGenerated: true, violent: true, explicit: true });
+  const [targets, setTargets] = useState<TargetsState>({ aiGenerated: true, violent: true, explicit: true });
   const [detectionAction, setDetectionAction] = useState<DetectionAction>('blur');
   const [useDetectorLocalModel, setUseDetectorLocalModel] = useState(false);
   const [exceptionSites, setExceptionSites] = useState<string[]>([]);
 
-  const [isTasksOpen, setIsTasksOpen] = useState(false);
+  const [isTargetsOpen, setIsTargetsOpen] = useState(false);
   const [isHandlingOpen, setIsHandlingOpen] = useState(false);
   const [isDetectionOpen, setIsDetectionOpen] = useState(false);
   const [currentHost, setCurrentHost] = useState<string | null>(null);
@@ -56,7 +56,7 @@ function App() {
     settings.getValue().then((res) => {
       if (!isMounted) return;
       setIsActive(res.isActive);
-      setTasks(res.tasks);
+      setTargets(res.targets);
       setDetectionAction(res.detectionAction || 'mark');
       setUseDetectorLocalModel(res.useDetectorLocalModel || false);
       setExceptionSites(res.exceptionSites || []);
@@ -65,7 +65,7 @@ function App() {
     const unwatch = settings.watch((newSettings) => {
       if (!newSettings || !isMounted) return;
       setIsActive(newSettings.isActive);
-      setTasks(newSettings.tasks);
+      setTargets(newSettings.targets);
       setDetectionAction(newSettings.detectionAction || 'mark');
       setUseDetectorLocalModel(newSettings.useDetectorLocalModel || false);
       setExceptionSites(newSettings.exceptionSites || []);
@@ -116,11 +116,11 @@ function App() {
     await settings.setValue({ ...current, isActive: next });
   };
 
-  const handleToggleTask = async (taskId: keyof TasksState) => {
-    const nextTasks = { ...tasks, [taskId]: !tasks[taskId] };
-    setTasks(nextTasks);
+  const handleToggleTarget = async (targetId: keyof TargetsState) => {
+    const nextTargets = { ...targets, [targetId]: !targets[targetId] };
+    setTargets(nextTargets);
     const current = await settings.getValue();
-    await settings.setValue({ ...current, tasks: nextTasks });
+    await settings.setValue({ ...current, targets: nextTargets });
   };
 
   const handleSetAction = async (action: DetectionAction) => {
@@ -144,10 +144,10 @@ function App() {
     await settings.setValue({ ...current, exceptionSites: nextSites });
   };
 
-  const taskOptions: { id: keyof TasksState; label: string }[] = [
-    { id: 'aiGenerated', label: t('popover_task_ai') },
-    { id: 'violent', label: t('popover_task_violent') },
-    { id: 'explicit', label: t('popover_task_nsfw') }
+  const targetOptions: { id: keyof TargetsState; label: string }[] = [
+    { id: 'aiGenerated', label: t('popover_target_ai') },
+    { id: 'violent', label: t('popover_target_violent') },
+    { id: 'explicit', label: t('popover_target_nsfw') }
   ];
 
   const handlingOptions: { id: DetectionAction; label: string }[] = [
@@ -159,15 +159,15 @@ function App() {
   const detectionOptions = [
     { id: 'metadata', label: t('popover_detection_metadata'), desc: '' },
     { id: 'lens', label: t('popover_detection_lens'), desc: t('popover_detection_lens_desc') }
-  ];
+  ] as const;
 
-  // Helper for Tasks Summary text
-  const getTaskSummary = () => {
-    const activeTasks = taskOptions.filter(tObj => tasks[tObj.id]);
-    if (activeTasks.length === 0) return t('popover_tasks_none');
-    return activeTasks.length > 1
-      ? `${activeTasks[0].label} +${activeTasks.length - 1} ${t('popover_more')}`
-      : activeTasks[0].label;
+  // Helper for Targets Summary text
+  const getTargetSummary = () => {
+    const [first, ...rest] = targetOptions.filter(tObj => targets[tObj.id]);
+    if (!first) return t('popover_targets_none');
+    return rest.length > 0
+      ? `${first.label} +${rest.length} ${t('popover_more')}`
+      : first.label;
   };
 
   // Render the localized stats sentence with each number as its own animated node. Splitting the
@@ -184,7 +184,7 @@ function App() {
 
   const currentHostWhitelisted = currentHost !== null && exceptionSites.includes(currentHost);
   const currentHandlingLabel = handlingOptions.find(h => h.id === detectionAction)?.label || detectionAction;
-  const activeTaskCount = Object.values(tasks).filter(Boolean).length;
+  const activeTargetCount = Object.values(targets).filter(Boolean).length;
 
   // While setup status is unknown, or when it's incomplete (we're redirecting to the wizard and about to
   // close), render nothing so the full popup UI never flashes.
@@ -223,27 +223,27 @@ function App() {
         </button>
       </div>
 
-      {/* 2. Tasks Dropdown */}
+      {/* 2. Targets Dropdown */}
       <div className="mb-2">
         <div className="mb-1">
-          <label className="text-xs font-bold text-gray-800 uppercase tracking-wider">{t('popover_tasks_label')}</label>
+          <label className="text-xs font-bold text-gray-800 uppercase tracking-wider">{t('popover_targets_label')}</label>
         </div>
-        <details className="relative" onToggle={(e) => setIsTasksOpen((e.target as HTMLDetailsElement).open)}>
+        <details className="relative" onToggle={(e) => setIsTargetsOpen((e.target as HTMLDetailsElement).open)}>
           <summary className="list-none cursor-pointer flex justify-between items-center p-2 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-700 hover:bg-gray-100 transition-colors">
-            <span>{getTaskSummary()}</span>
-            <span className="text-gray-400 text-xs">{isTasksOpen ? '▲' : '▼'}</span>
+            <span>{getTargetSummary()}</span>
+            <span className="text-gray-400 text-xs">{isTargetsOpen ? '▲' : '▼'}</span>
           </summary>
           <div className="absolute w-full mt-1 bg-white dark:bg-[#1a1a1a] border border-gray-200 rounded-md shadow-lg z-10 p-2">
-            {taskOptions.map(task => (
-              <label key={task.id} className="flex items-center gap-2 p-1 cursor-pointer hover:bg-gray-50 rounded">
+            {targetOptions.map(target => (
+              <label key={target.id} className="flex items-center gap-2 p-1 cursor-pointer hover:bg-gray-50 rounded">
                 <input
                   type="checkbox"
-                  checked={tasks[task.id]}
-                  disabled={activeTaskCount === 1 && tasks[task.id]} // Prevent unchecking the last option
-                  onChange={() => handleToggleTask(task.id)}
+                  checked={targets[target.id]}
+                  disabled={activeTargetCount === 1 && targets[target.id]} // Prevent unchecking the last option
+                  onChange={() => handleToggleTarget(target.id)}
                   className="accent-teal-500"
                 />
-                <span className="text-sm text-gray-700">{task.label}</span>
+                <span className="text-sm text-gray-700">{target.label}</span>
               </label>
             ))}
           </div>

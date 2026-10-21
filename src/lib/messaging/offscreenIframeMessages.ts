@@ -1,5 +1,5 @@
 import type { SerializableImageCandidate } from '@/lib/images';
-import type { TasksState } from '@/lib/detection';
+import type { TargetsState } from '@/lib/detection';
 import type { ClassifyImageResult } from './classifyMessages';
 
 /**
@@ -11,7 +11,7 @@ export interface OffscreenIframeRequest {
   __guardOffscreenRequest: true;
   id: number;
   candidates: SerializableImageCandidate[];
-  tasks: TasksState;
+  targets: TargetsState;
   useDetectorLocalModel: boolean;
 }
 

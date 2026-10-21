@@ -34,31 +34,31 @@
   "login_cancel": {
     "message": "Cancel"
   },
-  "setup_tasks_heading": {
+  "setup_targets_heading": {
     "message": "What should Guard detect?"
   },
-  "setup_tasks_subheading": {
+  "setup_targets_subheading": {
     "message": "Choose which types of images should be automatically analyzed and marked on websites."
   },
-  "setup_task_ai_title": {
+  "setup_target_ai_title": {
     "message": "AI-Generated"
   },
-  "setup_task_ai_desc": {
+  "setup_target_ai_desc": {
     "message": "Detects images created or manipulated by generative AI."
   },
-  "setup_task_violent_title": {
+  "setup_target_violent_title": {
     "message": "Violent"
   },
-  "setup_task_violent_desc": {
+  "setup_target_violent_desc": {
     "message": "Identifies graphic, violent, or gory content."
   },
-  "setup_task_explicit_title": {
+  "setup_target_explicit_title": {
     "message": "Explicit"
   },
-  "setup_task_explicit_desc": {
+  "setup_target_explicit_desc": {
     "message": "Detects adult, obscene, or pornographic content."
   },
-  "setup_tasks_tooltip_empty": {
+  "setup_targets_tooltip_empty": {
     "message": "Please select at least one category to continue."
   },
   "setup_action_heading": {
@@ -118,17 +118,17 @@
   "setup_verificator_error_media": {
     "message": "This workspace does not support images."
   },
-  "setup_verificator_error_task_ai": {
+  "setup_verificator_error_target_ai": {
     "message": "This workspace does not support AI detection."
   },
-  "setup_verificator_error_task_violent": {
+  "setup_verificator_error_target_violent": {
     "message": "This workspace does not support violence detection."
   },
-  "setup_verificator_error_task_explicit": {
+  "setup_verificator_error_target_explicit": {
     "message": "This workspace does not support explicit content detection."
   },
   "space_desc_template": {
-    "message": "Detects {tasks} on {media} with {predictor}."
+    "message": "Detects {targets} on {media} with {predictor}."
   },
   "space_conj_and": {
     "message": " and "
@@ -151,8 +151,8 @@
   "setup_summary_account": {
     "message": "Account"
   },
-  "setup_summary_tasks": {
-    "message": "Selected Tasks"
+  "setup_summary_targets": {
+    "message": "Selected Targets"
   },
   "setup_summary_action": {
     "message": "Action"
@@ -172,13 +172,13 @@
   "setup_summary_metadata_lens": {
     "message": "Metadata + Lens Mobile"
   },
-  "setup_summary_task_ai": {
+  "setup_summary_target_ai": {
     "message": "AI-Generated"
   },
-  "setup_summary_task_violent": {
+  "setup_summary_target_violent": {
     "message": "Violent"
   },
-  "setup_summary_task_explicit": {
+  "setup_summary_target_explicit": {
     "message": "Explicit"
   },
   "setup_summary_unknown_space": {
@@ -374,34 +374,34 @@
   "settings_general_update_store_error": {
     "message": "Couldn't check the App Store for updates. Please try again later."
   },
-  "settings_tasks_title": {
-    "message": "Selected Tasks"
+  "settings_targets_title": {
+    "message": "Selected Targets"
   },
-  "settings_tasks_ai_label": {
+  "settings_targets_ai_label": {
     "message": "AI-Generated"
   },
-  "settings_tasks_ai_desc": {
+  "settings_targets_ai_desc": {
     "message": "Detects images created or manipulated by generative AI."
   },
-  "settings_tasks_ai_aria": {
+  "settings_targets_ai_aria": {
     "message": "Toggle AI-Generated detection"
   },
-  "settings_tasks_violent_label": {
+  "settings_targets_violent_label": {
     "message": "Violent"
   },
-  "settings_tasks_violent_desc": {
+  "settings_targets_violent_desc": {
     "message": "Detects graphic, violent, or gory content."
   },
-  "settings_tasks_violent_aria": {
+  "settings_targets_violent_aria": {
     "message": "Toggle Violent detection"
   },
-  "settings_tasks_explicit_label": {
+  "settings_targets_explicit_label": {
     "message": "Explicit"
   },
-  "settings_tasks_explicit_desc": {
+  "settings_targets_explicit_desc": {
     "message": "Detects adult, obscene, or pornographic content."
   },
-  "settings_tasks_explicit_aria": {
+  "settings_targets_explicit_aria": {
     "message": "Toggle Explicit detection"
   },
   "settings_verification_title": {
@@ -429,7 +429,7 @@
     "message": "a model"
   },
   "settings_verification_desc_template": {
-    "message": "Detects {tasks} in {media} using {predictor}."
+    "message": "Detects {targets} in {media} using {predictor}."
   },
   "settings_verification_no_desc_fallback": {
     "message": "No description available."
@@ -437,14 +437,14 @@
   "settings_verification_error_media": {
     "message": "This space does not support image analysis."
   },
-  "settings_verification_error_task_ai": {
-    "message": "Your tasks require AI-Generated detection."
+  "settings_verification_error_target_ai": {
+    "message": "Your targets require AI-Generated detection."
   },
-  "settings_verification_error_task_violent": {
-    "message": "Your tasks require Violent detection."
+  "settings_verification_error_target_violent": {
+    "message": "Your targets require Violent detection."
   },
-  "settings_verification_error_task_explicit": {
-    "message": "Your tasks require Explicit detection."
+  "settings_verification_error_target_explicit": {
+    "message": "Your targets require Explicit detection."
   },
   "settings_verification_select_aria": {
     "message": "Select"
@@ -464,22 +464,22 @@
   "popover_status_disabled": {
     "message": "Disabled"
   },
-  "popover_tasks_label": {
-    "message": "Tasks"
+  "popover_targets_label": {
+    "message": "Targets"
   },
-  "popover_tasks_none": {
-    "message": "No tasks selected"
+  "popover_targets_none": {
+    "message": "No targets selected"
   },
   "popover_more": {
     "message": "more"
   },
-  "popover_task_ai": {
+  "popover_target_ai": {
     "message": "AI-Generated"
   },
-  "popover_task_nsfw": {
+  "popover_target_nsfw": {
     "message": "NSFW"
   },
-  "popover_task_violent": {
+  "popover_target_violent": {
     "message": "Violent"
   },
   "popover_handling_label": {
@@ -545,6 +545,9 @@
   "verify_error_unsupported_media": {
     "message": "This media type can't be verified"
   },
+  "verify_error_too_large": {
+    "message": "This image is too large to verify."
+  },
   "verify_error_timeout": {
     "message": "Verification timed out"
   },
@@ -564,15 +567,15 @@
   "menu_action_signin": { "message": "Sign in to verify" },
   "menu_action_choose_space": { "message": "Choose a space" },
   "menu_close": { "message": "Close" },
-  "menu_scroll_left": { "message": "Scroll tasks left" },
-  "menu_scroll_right": { "message": "Scroll tasks right" },
+  "menu_scroll_left": { "message": "Scroll targets left" },
+  "menu_scroll_right": { "message": "Scroll targets right" },
   "menu_more_actions": { "message": "More actions" },
   "menu_action_mark_correct": { "message": "Mark as correct" },
   "menu_action_mark_incorrect": { "message": "Mark as incorrect" },
   "menu_action_share": { "message": "Share" },
   "menu_feedback_thanks": { "message": "Thank you for your feedback! 🎉" },
-  "menu_feedback_prompt_correct": { "message": "Would you like to help us improve further? Please tell us why you believe the result for {task} is correct for this media." },
-  "menu_feedback_prompt_incorrect": { "message": "Would you like to help us improve further? Please tell us why you believe the result for {task} is incorrect for this media." },
+  "menu_feedback_prompt_correct": { "message": "Would you like to help us improve further? Please tell us why you believe the result for {target} is correct for this media." },
+  "menu_feedback_prompt_incorrect": { "message": "Would you like to help us improve further? Please tell us why you believe the result for {target} is incorrect for this media." },
   "menu_feedback_expected_label": { "message": "Expected Result" },
   "menu_feedback_description_label": { "message": "Description" },
   "menu_action_save": { "message": "Save" },

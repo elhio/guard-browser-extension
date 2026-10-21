@@ -19,31 +19,31 @@ export interface VerifyImageRequest {
 /**
  * A single scored result from the external verification API
  *
- * @property taskId - The id of the detection task this score belongs to
- * @property category - The detection category this task maps to, resolved from the space's
- *   task list (null when the task doesn't correspond to a known category)
+ * @property targetId - The id of the detection target this score belongs to
+ * @property category - The detection category this target maps to, resolved from the space's
+ *   target list (null when the target doesn't correspond to a known category)
  * @property label - The human-readable, already-localized outcome label (e.g. "No signs of AI generation")
- * @property score - The confidence score for this task, 0-100
+ * @property score - The confidence score for this target, 0-100
  * @property description - An optional localized explanation of the result
  */
 export interface VerifyResultItem {
-  taskId: string;
+  targetId: string;
   category: DetectionCategory | null;
   label: string;
   score: number;
   description?: string;
-  /** Predefined "expected result" reactions for this task: integer key → label. */
+  /** Predefined "expected result" reactions for this target: integer key → label. */
   reactions?: Record<number, string>;
 }
 
 /**
  * The data returned by the external verification API: one scored item per detection
- * task the verifying space runs (the set of tasks is space-specific, not a fixed trio).
+ * target the verifying space runs (the set of targets is space-specific, not a fixed trio).
  *
- * @property activityId - The created activity's id, needed to submit feedback / create a share
+ * @property predictionId - The created prediction's id, needed to submit feedback / create a share
  */
 export interface VerifyImageData {
-  activityId: string;
+  predictionId: string;
   results: VerifyResultItem[];
 }
 

@@ -1,6 +1,6 @@
 import { t } from '@/lib/i18n';
 import { GeneralSettingsCard } from '@/components/settings/GeneralSettingsCard';
-import { TasksSettingsCard } from '@/components/settings/TasksSettingsCard';
+import { TargetsSettingsCard } from '@/components/settings/TargetsSettingsCard';
 import { ActionSettingsCard } from '@/components/settings/ActionSettingsCard';
 import { DetectionSettingsCard } from '@/components/settings/DetectionSettingsCard';
 import { VerificationSettingsCard } from '@/components/settings/VerificationSettingsCard';
@@ -33,7 +33,7 @@ export default function SettingsDashboard() {
       {/* Main Settings Content */}
       <main className="flex flex-col gap-6">
         <GeneralSettingsCard />
-        <TasksSettingsCard />
+        <TargetsSettingsCard />
         <ActionSettingsCard />
         <DetectionSettingsCard />
         <VerificationSettingsCard />

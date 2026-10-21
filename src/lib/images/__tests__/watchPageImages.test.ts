@@ -57,7 +57,7 @@ describe('watchPageImages', () => {
     stop();
 
     expect(batches).toHaveLength(1);
-    expect(batches[0][0].elements).toEqual([first, second]);
+    expect(batches[0]![0]!.elements).toEqual([first, second]);
   });
 
   it('reports only the new element when a copy of a reported URL appears later', () => {
@@ -75,9 +75,9 @@ describe('watchPageImages', () => {
     stop();
 
     expect(batches).toHaveLength(2);
-    expect(batches[0][0].elements).toEqual([first]);
+    expect(batches[0]![0]!.elements).toEqual([first]);
     // Narrowed to the newcomer, so the already-classified copy is not reset to `processing`.
-    expect(batches[1][0].elements).toEqual([second]);
+    expect(batches[1]![0]!.elements).toEqual([second]);
   });
 
   it('stays silent on a rescan when nothing new appeared', () => {
@@ -91,7 +91,7 @@ describe('watchPageImages', () => {
     stop();
 
     expect(batches).toHaveLength(1);
-    expect(batches[0][0].element).toBe(image);
+    expect(batches[0]![0]!.element).toBe(image);
   });
 
   it('reports a recycled element again once its URL changes', () => {
@@ -106,6 +106,6 @@ describe('watchPageImages', () => {
     vi.advanceTimersByTime(500);
     stop();
 
-    expect(batches.map((batch) => batch[0].src)).toEqual(['https://a/first.jpg', 'https://a/second.jpg']);
+    expect(batches.map((batch) => batch[0]!.src)).toEqual(['https://a/first.jpg', 'https://a/second.jpg']);
   });
 });

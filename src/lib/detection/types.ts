@@ -5,9 +5,9 @@ export type DetectionCategory = 'aiGenerated' | 'violent' | 'explicit';
 
 /**
  * Which detection categories the user has enabled. Keyed by `DetectionCategory`,
- * so tasks and categories can never drift apart.
+ * so targets and categories can never drift apart.
  */
-export type TasksState = Record<DetectionCategory, boolean>;
+export type TargetsState = Record<DetectionCategory, boolean>;
 
 /**
  * Indicates the specific conclusion or evidence direction a signal provides
@@ -65,7 +65,7 @@ export interface CategoryDetectionResult {
 }
 
 /**
- * The comprehensive analysis payload for a single image, containing verdicts across all detection tasks
+ * The comprehensive analysis payload for a single image, containing verdicts across all detection targets
  *
  * @property src - The URL or source URI of the image that was analyzed
  * @property categories - The isolated detection verdicts. Only the requested categories will be present

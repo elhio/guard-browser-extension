@@ -1,16 +1,16 @@
 import { t } from '@/lib/i18n';
 import type { DetectionCategory } from '@/lib/detection';
-import { resolveTaskView } from '@/lib/overlay/taskView';
+import { resolveTargetView } from '@/lib/overlay/targetView';
 import type { OverlayEntry } from '@/lib/overlay/store';
 import { ProgressRing } from './ProgressRing';
 
-interface TaskPanelProps {
+interface TargetPanelProps {
   category: DetectionCategory;
   entry: OverlayEntry | null;
 }
 
 /** The body of the active tab: progress ring + label + (verified) description, with loading/error states. */
-export function TaskPanel({ category, entry }: TaskPanelProps) {
+export function TargetPanel({ category, entry }: TargetPanelProps) {
   const status = entry?.status ?? 'processing';
 
   if (status === 'processing') {
@@ -35,7 +35,7 @@ export function TaskPanel({ category, entry }: TaskPanelProps) {
     );
   }
 
-  const view = resolveTaskView(category, entry);
+  const view = resolveTargetView(category, entry);
   const pending = view.pending;
 
   return (

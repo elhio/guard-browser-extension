@@ -1,5 +1,5 @@
 import { fetchWithAuth } from './client';
-import { categoryForTaskLabel } from '@/lib/verification/eligibility';
+import { categoryForTargetName } from '@/lib/verification/eligibility';
 import type { DetectionCategory } from '@/lib/detection';
 
 /**
@@ -21,7 +21,7 @@ import type { DetectionCategory } from '@/lib/detection';
  * @property predictor_id - The unique identifier of the AI model or evaluation pipeline assigned to this space
  * @property predictor_name - The human-readable name of the assigned predictor model
  * @property enabled_media - An array of media types (e.g., 'image', 'video') supported by this specific space
- * @property enabled_task_names - An array of moderation tasks (e.g., 'AI-Generated', 'Explicit', 'Violent') enabled here
+ * @property enabled_target_names - An array of moderation targets (e.g., 'AI-Generated', 'Explicit', 'Violent') enabled here
  */
 export interface SpacePublic {
   id: string;
@@ -40,7 +40,7 @@ export interface SpacePublic {
   predictor_id: string;
   predictor_name: string | null;
   enabled_media: string[];
-  enabled_task_names: string[];
+  enabled_target_names: string[];
 }
 
 /**
@@ -57,17 +57,16 @@ export interface SpacesPublic {
 /**
  * Retrieves a list of all spaces associated with a specific user.
  *
- * @param token - A valid authentication token used to authorize the API request
  * @param userId - The unique identifier of the user whose spaces are being queried
  * @returns A promise that resolves to an array of public space objects
  */
-export async function fetchUserSpaces(token: string, userId: string): Promise<SpacePublic[]> {
-  const res = await fetchWithAuth<SpacesPublic>('/api/v1/spaces/', token, { user_id: userId });
+export async function fetchUserSpaces(userId: string): Promise<SpacePublic[]> {
+  const res = await fetchWithAuth<SpacesPublic>('/api/v1/spaces', { user_id: userId });
   return res.data || [];
 }
 
-/** A single detection task enabled on a space (name localized to the request locale). */
-export interface TaskPublic {
+/** A single detection target enabled on a space (name localized to the request locale). */
+export interface TargetPublic {
   id: string;
   name: string;
   description?: string;
@@ -75,46 +74,45 @@ export interface TaskPublic {
   reactions?: Record<number, string>;
 }
 
-/** Resolved per-task metadata used to interpret verification results and offer feedback. */
-export interface SpaceTaskMeta {
+/** Resolved per-target metadata used to interpret verification results and offer feedback. */
+export interface SpaceTargetMeta {
   category: DetectionCategory | null;
   reactions: Record<number, string>;
 }
 
-/** Detailed space, including the concrete task list needed to resolve verification results. */
+/** Detailed space, including the concrete target list needed to resolve verification results. */
 export interface SpaceDetailPublic {
   id: string;
   name: string;
-  enabled_tasks: TaskPublic[];
+  enabled_targets: TargetPublic[];
 }
 
 const SPACE_DETAIL_TTL_MS = 10 * 60 * 1000;
 const spaceDetailCache = new Map<string, { expires: number; detail: SpaceDetailPublic }>();
 
 /** Fetches a space's detail, memoized per space id for {@link SPACE_DETAIL_TTL_MS}. */
-export async function fetchSpaceDetail(token: string, spaceId: string): Promise<SpaceDetailPublic> {
+export async function fetchSpaceDetail(spaceId: string): Promise<SpaceDetailPublic> {
   const cached = spaceDetailCache.get(spaceId);
   if (cached && cached.expires > Date.now()) return cached.detail;
 
-  const detail = await fetchWithAuth<SpaceDetailPublic>(`/api/v1/spaces/${spaceId}`, token);
+  const detail = await fetchWithAuth<SpaceDetailPublic>(`/api/v1/spaces/${spaceId}`);
   spaceDetailCache.set(spaceId, { expires: Date.now() + SPACE_DETAIL_TTL_MS, detail });
   return detail;
 }
 
 /**
- * Builds a `task_id → { category, reactions }` map for a space, used to place verification
- * results on the right tab and to offer per-task "expected result" reactions in feedback.
+ * Builds a `target_id → { category, reactions }` map for a space, used to place verification
+ * results on the right tab and to offer per-target "expected result" reactions in feedback.
  */
-export async function getSpaceTaskMeta(
-  token: string,
+export async function getSpaceTargetMeta(
   spaceId: string
-): Promise<Record<string, SpaceTaskMeta>> {
-  const detail = await fetchSpaceDetail(token, spaceId);
-  const map: Record<string, SpaceTaskMeta> = {};
-  for (const task of detail.enabled_tasks ?? []) {
-    map[task.id] = {
-      category: categoryForTaskLabel(task.name),
-      reactions: task.reactions ?? {},
+): Promise<Record<string, SpaceTargetMeta>> {
+  const detail = await fetchSpaceDetail(spaceId);
+  const map: Record<string, SpaceTargetMeta> = {};
+  for (const target of detail.enabled_targets ?? []) {
+    map[target.id] = {
+      category: categoryForTargetName(target.name),
+      reactions: target.reactions ?? {},
     };
   }
   return map;
