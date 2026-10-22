@@ -16,7 +16,6 @@
     "zip": "wxt zip",
     "zip:firefox": "wxt zip -b firefox",
     "zip:safari": "wxt zip -b safari",
-    "apple:version": "node scripts/sync-apple-version.mjs",
     "compile": "tsc --noEmit",
     "postinstall": "wxt prepare",
     "lint": "eslint .",
