@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { fakeBrowser } from 'wxt/testing/fake-browser';
 import { browser } from 'wxt/browser';
 
-import { reportStateToApp, appCommandUrl } from '../reportState';
+import { reportStateToApp, appCommandUrl, containerAppVersion } from '../reportState';
 
 /**
  * `reportStateToApp` reports and returns; it must never open anything itself.
@@ -46,6 +46,21 @@ describe('reportStateToApp', () => {
     // Best-effort bridge: the app may never have launched. Detection has to carry on regardless.
     sendNativeMessage.mockRejectedValue(new Error('no handler'));
     await expect(reportStateToApp()).resolves.toBeNull();
+  });
+
+  it('remembers the app version the handler reports', async () => {
+    sendNativeMessage.mockResolvedValue({ appVersion: '0.1.0' });
+    await reportStateToApp();
+
+    await vi.waitFor(async () => expect(await containerAppVersion.getValue()).toBe('0.1.0'));
+  });
+
+  it('keeps the last known app version when a reply carries none', async () => {
+    await containerAppVersion.setValue('0.1.0');
+    sendNativeMessage.mockResolvedValue({ openSetup: true });
+
+    await expect(reportStateToApp()).resolves.toBe('openSetup');
+    expect(await containerAppVersion.getValue()).toBe('0.1.0');
   });
 
   it('opens no tabs, even when a command comes back', async () => {

@@ -55,7 +55,6 @@ This project is built using [WXT](https://wxt.dev/), the Next-gen Web Extension 
 
 * [Node.js](https://nodejs.org/) (v22 or higher recommended)
 * `npm`, `yarn`, or `pnpm`
-* *For Safari / Apple development:* A Mac running a recent version of macOS and [Xcode](https://developer.apple.com/xcode/)
 
 ### Setup: Web Extension (Chrome, Firefox)
 
@@ -85,36 +84,18 @@ This project is built using [WXT](https://wxt.dev/), the Next-gen Web Extension 
     npm run build
     ```
 
-### Setup: iOS & macOS Apps (Safari Extension)
+### Setup: iOS & macOS (Safari)
 
-Development for Apple platforms (including the Safari extension) is handled through Xcode using the dedicated `apple` 
-directory.
+Guard for Safari ships inside the Elhio app for iOS and macOS, which is developed in a separate repository and
+pulls this one in as a submodule. On this side there is only the extension build:
 
-1. Clone the repository (if you haven't already):
-    ```bash
-    git clone https://github.com/elhio/guard-browser-extension.git
-    cd guard-browser-extension
-    ```
+```bash
+npm run build:safari   # -> .output/safari-mv2, which the app's Xcode project embeds
+```
 
-2. Build the extension itself. Xcode bundles the output of this command — it does **not** run it for you:
-    ```bash
-    npm install
-    npm run build:safari
-    ```
-   
-3. Navigate into the `apple` directory:
-    ```bash
-    cd apple
-    ```
-
-4. Open the project in Xcode. You can do this by double-clicking the Xcode project file or running the following command 
-in your terminal:
-    ```bash
-    open .
-    ```
-
-5. Select your target device (e.g., "My Mac" or an iOS Simulator) from the Xcode toolbar.
-6. Click the **Run** button (or press `Cmd + R`) to build and run the native app and its bundled Safari extension.
+In Safari the background talks to the app through native messaging (`src/lib/native/`). The app depends on the
+message payloads, the `elhio-guard://store` URL and the `?guard-handoff=1` marker, so treat changes to those as
+breaking changes for the app.
 
 
 ## Contributing

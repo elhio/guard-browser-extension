@@ -17,14 +17,19 @@ export function GeneralSettingsCard() {
 
     // Safari has no `requestUpdateCheck`; extensions update via their App Store container app. Ask the
     // iTunes Lookup API for the latest published version and hand the user off to the store if newer.
+    // The store versions the app, which is released separately from this extension, so compare against
+    // the app's version as its native handler reported it, and only fall back to our own.
     // Dynamically imported so the lookup code folds out of the Chrome/Firefox bundles.
     if (import.meta.env.SAFARI) {
       try {
-        const { fetchAppStoreInfo, isNewerVersion } = await import('@/lib/update/appStore');
-        const info = await fetchAppStoreInfo();
+        const [{ fetchAppStoreInfo, isNewerVersion }, { containerAppVersion }] = await Promise.all([
+          import('@/lib/update/appStore'),
+          import('@/lib/native/reportState')
+        ]);
+        const [info, appVersion] = await Promise.all([fetchAppStoreInfo(), containerAppVersion.getValue()]);
         if (!info) {
           alert(t('settings_general_update_store_error'));
-        } else if (isNewerVersion(info.version, installed)) {
+        } else if (isNewerVersion(info.version, appVersion ?? installed)) {
           alert(`${t('settings_general_update_available')} v${info.version}. ${t('settings_general_update_open_store')}`);
           if (info.url) browser.tabs.create({ url: info.url });
         } else {

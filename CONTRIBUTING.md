@@ -19,15 +19,14 @@ Before you start writing code, make sure your development environment is set up 
 
 0. Fork the repository to your own GitHub account.
 
-1. Install prerequisites: Ensure you have Node.js (v22 or higher recommended) and Xcode (if working on Apple platforms) 
-installed.
+1. Install prerequisites: Ensure you have Node.js (v22 or higher recommended) installed.
 
 2. Clone your fork: `git clone [https://github.com/YOUR_USERNAME/guard-browser-extension.git](https://github.com/YOUR_USERNAME/guard-browser-extension.git)`
 
 3. Install dependencies: `npm install` (or yarn / pnpm)
 
-For detailed instructions on running the local development servers for Chrome/Firefox or setting up the Safari Xcode 
-project, please refer to the Development section in our `README.md`.
+For detailed instructions on running the local development servers for Chrome/Firefox, please refer to the
+Development section in our `README.md`.
 
 ## Branching Strategy
 
@@ -76,11 +75,6 @@ npm run test:e2e
 # run E2E tests with the interactive playwright ui
 npm run test:e2e:ui
 ```
-
-### Apple Native Apps (Xcode)
-
-* Make sure your project compiles successfully for both macOS and iOS targets in Xcode.
-* Do not commit unnecessary Xcode user data files (`xcuserdata`).
 
 ## Submitting a Pull Request
 

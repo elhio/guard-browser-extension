@@ -23,9 +23,23 @@ interface NativeReply {
   openSetup?: boolean;
   /** The app's "Settings" button was pressed. */
   openOptions?: boolean;
+  /** The container app's own version (`CFBundleShortVersionString`), sent with every reply. */
+  appVersion?: string;
 }
 
-/** A job the container app left for us, mirroring `GuardAppGroup.Command` on the native side. */
+/**
+ * The version of the container app this extension ships in, as its native handler last reported it.
+ *
+ * The App Store versions the app, not the extension, and the app is released from its own repository
+ * on its own schedule — so the Safari update check compares the store's version against this rather
+ * than against the manifest. `null` until the handler has answered once, or with an app build that
+ * predates the field; the update check then falls back to the manifest version.
+ */
+export const containerAppVersion = storage.defineItem<string | null>('local:containerAppVersion', {
+  fallback: null
+});
+
+/** A job the container app left for us, mirroring `GuardCommand` in the app's ElhioBridge module. */
 export type AppCommand = 'openSetup' | 'openOptions';
 
 /**
@@ -89,6 +103,13 @@ export async function reportStateToApp(): Promise<AppCommand | null> {
       websiteUrl: import.meta.env.VITE_WEBSITE_URL,
       apiUrl: import.meta.env.VITE_API_URL
     })) as NativeReply | undefined;
+
+    // Not awaited: this sits on the handoff's critical path, and nothing here depends on it landing.
+    if (typeof reply?.appVersion === 'string') {
+      containerAppVersion.setValue(reply.appVersion).catch((error) => {
+        console.warn('[Guard] Could not store the app version:', error);
+      });
+    }
 
     if (reply?.openSetup) return 'openSetup';
     if (reply?.openOptions) return 'openOptions';
