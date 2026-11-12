@@ -7,6 +7,7 @@ import { settings, type DetectionAction } from '@/lib/settings';
 import { t } from '@/lib/i18n';
 import type { TargetsState } from '@/lib/detection';
 import { GET_TAB_STATS_MESSAGE, type TabStats } from '@/lib/messaging/tabStatsMessages';
+import { APP_SYNC_MESSAGE, type AppSyncRequest } from '@/lib/messaging/appSync';
 import { AnimatedCount } from '@/components/ui/AnimatedCount';
 
 function App() {
@@ -23,6 +24,13 @@ function App() {
   const [stats, setStats] = useState<TabStats | null>(null);
   const [version] = useState(() => browser.runtime.getManifest().version);
   const [setupComplete, setSetupComplete] = useState<boolean | null>(null);
+
+  // On Safari, take a change made in the container app before showing the settings; the watcher
+  // below shows it as soon as it lands.
+  useEffect(() => {
+    if (!import.meta.env.SAFARI) return;
+    browser.runtime.sendMessage({ type: APP_SYNC_MESSAGE } satisfies AppSyncRequest).catch(() => {});
+  }, []);
 
   // Before showing anything, decide whether onboarding is done. If not, the extension isn't usable yet:
   // hand off to the wizard tab (the same `/setup.html` the background auto-opens). Opening it as the

@@ -15,11 +15,14 @@ import {
 } from '@/lib/messaging/verifyMessages';
 import { isOpenTabRequest } from '@/lib/messaging/openTab';
 import { isAppHandoffRequest } from '@/lib/messaging/appHandoff';
+import { createCheckGate, isAppSyncRequest } from '@/lib/messaging/appSync';
 import {
   isStoreHandoverRequest,
   type StoreHandoverResponse
 } from '@/lib/messaging/storeHandover';
 import { respondAsync } from '@/lib/messaging/respondAsync';
+import { isAppTokenRequest } from '@/lib/messaging/appToken';
+import { answerAppTokenRequest, markBackgroundContext } from '@/lib/native/appSession';
 import { isSubmitReactionRequest } from '@/lib/messaging/reactionMessages';
 import { isCreateShareRequest, type CreateShareResponse } from '@/lib/messaging/shareMessages';
 import { settings } from '@/lib/settings';
@@ -84,8 +87,39 @@ function openSetupOnce(): Promise<void> {
 
 /** Coalesces overlapping reports; see {@link runReport}. */
 let reportInFlight: Promise<void> | undefined;
+/** A report was asked for while one was on its way, so one more runs after it. */
+let reportAgain = false;
 /** The throwaway tab the container app opened, waiting for a command to navigate it to. */
 let handoffTabId: number | undefined;
+
+/** How often a page or the popup may make us check the container app for changes. */
+const APP_CHECK_INTERVAL_MS = 1000;
+/** Merges the checks of one moment: a return to Safari fires focus and visibility together. */
+const appCheckGate = createCheckGate(APP_CHECK_INTERVAL_MS);
+/** The check on its way, which a second ask joins. */
+let appCheckInFlight: Promise<void> | undefined;
+
+/**
+ * Takes the container app's changes at once (Safari only).
+ *
+ * A page opening, the user returning to Safari or a tab, and the popup opening all ask here. One
+ * small message tells whether the app changed anything since our last report; only then does the full
+ * report run and carry the change over. A report on its way already carries everything, so an ask
+ * during one just waits for it.
+ */
+function checkWithApp(): Promise<void> {
+  if (reportInFlight) return reportInFlight;
+  if (appCheckInFlight) return appCheckInFlight;
+  if (!appCheckGate.tryPass()) return Promise.resolve();
+
+  appCheckInFlight = (async () => {
+    const { checkAppForChanges } = await import('@/lib/native/appSync');
+    if (await checkAppForChanges()) await runReport();
+  })().finally(() => {
+    appCheckInFlight = undefined;
+  });
+  return appCheckInFlight;
+}
 
 /**
  * Reports to the container app and carries out whatever command comes back (Safari only).
@@ -103,6 +137,11 @@ let handoffTabId: number | undefined;
  */
 function runReport(tabId?: number): Promise<void> {
   if (tabId != null) handoffTabId = tabId;
+  // A report answers everything a cheap check would ask.
+  appCheckGate.mark();
+  // The settings may have changed after this report read them (taking the app's settings writes them),
+  // so the app hears about it in one more report rather than at the next unrelated one.
+  if (reportInFlight) reportAgain = true;
 
   reportInFlight ??= (async () => {
     const { reportStateToApp, appCommandUrl } = await import('@/lib/native/reportState');
@@ -129,6 +168,10 @@ function runReport(tabId?: number): Promise<void> {
     }
   })().finally(() => {
     reportInFlight = undefined;
+    if (reportAgain) {
+      reportAgain = false;
+      void runReport();
+    }
   });
 
   return reportInFlight;
@@ -147,11 +190,13 @@ export default defineBackground({
   persistent: { safari: false },
   main() {
     browser.runtime.onInstalled.addListener((details) => {
-      if (details.reason === 'install') void openSetupOnce();
+      if (details.reason === 'install' && !import.meta.env.SAFARI) void openSetupOnce();
     });
 
     if (import.meta.env.SAFARI) {
-      void openSetupOnce();
+      // Setup happens in the container app on Safari, so no setup tab opens here; the popup and
+      // `setup.html` send people to the app.
+      markBackgroundContext();
 
       void runReport();
       settings.watch(() => void runReport());
@@ -177,6 +222,12 @@ export default defineBackground({
         // Returning the promise keeps the non-persistent page alive until the navigation has
         // happened; otherwise Safari may unload us mid-handoff and the tap appears to do nothing.
         return runReport(sender.tab?.id).then(() => undefined);
+      }
+
+      // PATH 0.1: a page or the popup asks whether the container app changed something (Safari only).
+      // Returning the promise keeps the non-persistent page alive until the change is taken.
+      if (import.meta.env.SAFARI && isAppSyncRequest(message)) {
+        return checkWithApp().then(() => undefined);
       }
 
       // PATH 1: classification
@@ -302,6 +353,12 @@ export default defineBackground({
           console.warn('[Guard] Blocked OPEN_TAB for unsafe URL:', message.url);
         }
         return undefined;
+      }
+
+      // PATH 3.1: a page or the popup needs a token of the container app's session (Safari only); only
+      // the background may ask the native part.
+      if (import.meta.env.SAFARI && isAppTokenRequest(message)) {
+        return respondAsync(answerAppTokenRequest(message), sendResponse);
       }
 
       // PATH 3.2: the settings page is about to open the container app's token store (Safari only).

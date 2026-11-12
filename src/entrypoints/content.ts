@@ -29,6 +29,8 @@ import {
   type AppHandoffRequest
 } from '@/lib/messaging/appHandoff';
 import { isGetTabStatsRequest } from '@/lib/messaging/tabStatsMessages';
+import { APP_SYNC_MESSAGE, createCheckGate, type AppSyncRequest } from '@/lib/messaging/appSync';
+import type { ContentScriptContext } from 'wxt/utils/content-script-context';
 
 import {
   applyAction,
@@ -390,6 +392,36 @@ function watchForAppHandoff(): boolean {
 }
 
 /**
+ * Asks the background to take the container app's changes when they could matter (Safari only).
+ *
+ * The app can't message Guard on iOS, so Guard asks: when this page opens, when the user comes back to
+ * it (a tab switch or a return to Safari, which also brings the window into focus on the Mac), and
+ * when it is restored from the back/forward cache. It asks even while Guard is switched off: that is
+ * how switching Guard back on in the app reaches an open page. The background answers most asks with
+ * one small message to the app and merges asks that come together.
+ */
+function watchForAppChanges(ctx: ContentScriptContext): void {
+  if (window.top !== window) return;
+
+  const gate = createCheckGate(1000);
+  const ask = () => {
+    if (!gate.tryPass()) return;
+    browser.runtime.sendMessage({ type: APP_SYNC_MESSAGE } satisfies AppSyncRequest).catch(() => {
+      // The extension was reloaded or updated under this page; its next page asks again.
+    });
+  };
+
+  ask();
+  ctx.addEventListener(document, 'visibilitychange', () => {
+    if (document.visibilityState === 'visible') ask();
+  });
+  ctx.addEventListener(window, 'focus', ask);
+  ctx.addEventListener(window, 'pageshow', (event) => {
+    if (event.persisted) ask();
+  });
+}
+
+/**
  * Resolves once `document.body` exists.
  *
  * WXT's `mountUi` throws outright when its anchor is missing rather than waiting for it, and this
@@ -423,6 +455,7 @@ export default defineContentScript({
     // Nothing else is worth doing on a page we're about to leave: no shadow-root UI to mount, no
     // settings to read, no images to scan. Bailing keeps the handoff off the critical path.
     if (import.meta.env.SAFARI && watchForAppHandoff()) return;
+    if (import.meta.env.SAFARI) watchForAppChanges(ctx);
 
     const menuUi = await createShadowRootUi(ctx, {
       name: 'guard-menu',
