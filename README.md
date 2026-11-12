@@ -1,6 +1,6 @@
 <div align="center">
   <h1>
-    <img src="./src/assets/guard.svg" width="100" alt="Guard Logo"><br>
+    <img src="./src/assets/guard-lineart.svg" width="100" alt="Guard Logo"><br>
     Guard
   </h1>
   <p><em>A browser extension to detect deepfakes and any other visual content you choose to filter out, right on the webpage</em></p>
@@ -93,9 +93,10 @@ pulls this one in as a submodule. On this side there is only the extension build
 npm run build:safari   # -> .output/safari-mv2, which the app's Xcode project embeds
 ```
 
-In Safari the background talks to the app through native messaging (`src/lib/native/`). The app depends on the
-message payloads, the `elhio-guard://store` URL and the `?guard-handoff=1` marker, so treat changes to those as
-breaking changes for the app.
+In Safari the background talks to the app through native messaging (`src/lib/native/`). Guard's settings, setup
+and sign-in are shared with the app, so the settings and setup pages open the app instead. The app depends on the
+message payloads, the `elhio://` and `elhio-guard://` URLs and the `?guard-handoff=1` marker, so treat changes to
+those as breaking changes for the app.
 
 
 ## Contributing

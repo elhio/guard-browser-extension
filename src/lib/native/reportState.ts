@@ -1,30 +1,38 @@
 import { browser } from 'wxt/browser';
 import { settings } from '@/lib/settings';
-import { NATIVE_APPLICATION_ID } from './nativeApplication';
+import { sendToApp } from './nativeApplication';
+import { applyAppSettings, noteSettingsChange, syncedSettings, type AppSettingsReply } from './settingsSync';
+import { followAppSession, type AppSessionState } from './appSession';
+import { noteAppRevision } from './appSync';
 
 /**
  * Safari-only bridge between the extension and the container app.
  *
- * The app cannot see any of the extension's state: iOS has no API to query whether an extension is
- * enabled (`SFSafariExtensionManager` is macOS-only), and `browser.storage` is unreachable from a
- * native target. Apple's sanctioned answer is native messaging plus an App Group — so the background
- * reports what it knows, and `SafariWebExtensionHandler` parks it in shared UserDefaults for the app.
+ * The app cannot see the extension's state: `browser.storage` is unreachable from a native target, and
+ * iOS tells the app little more than whether the extension is enabled. Apple's sanctioned answer is native
+ * messaging plus an App Group — so the background reports what it knows, and `SafariWebExtensionHandler`
+ * parks it in shared UserDefaults for the app.
  *
- * The same round trip carries commands the other way. The app can't open extension pages itself (iOS
- * refuses `safari-web-extension://` URLs from an app), so it queues a command that comes back as this
- * message's reply and gets executed here.
+ * The same round trip carries things the other way, since the app can't reach the extension by itself:
+ * Guard's settings when they were changed in the app (`settingsSync.ts`), whether the app is signed in
+ * (`appSession.ts`), and, from older app builds, a command to open a page (iOS refuses
+ * `safari-web-extension://` URLs from an app).
  *
  * Only the background script may talk to the native handler, and only with the `nativeMessaging`
  * permission — which is why both this module and that permission are gated to Safari.
  */
 
-interface NativeReply {
+interface NativeReply extends AppSettingsReply {
+  /** Whether the app is signed in, and to which API. */
+  appSession?: AppSessionState;
   /** The app's "Setup" button was pressed while it had no way to open the page itself. */
   openSetup?: boolean;
   /** The app's "Settings" button was pressed. */
   openOptions?: boolean;
   /** The container app's own version (`CFBundleShortVersionString`), sent with every reply. */
   appVersion?: string;
+  /** The app's revision this reply reflects; the next cheap check compares against it (`appSync.ts`). */
+  revision?: number;
 }
 
 /**
@@ -38,6 +46,9 @@ interface NativeReply {
 export const containerAppVersion = storage.defineItem<string | null>('local:containerAppVersion', {
   fallback: null
 });
+
+/** A report is answered from local state; far slower means the native part is gone. */
+const REPORT_TIMEOUT_MS = 10_000;
 
 /** A job the container app left for us, mirroring `GuardCommand` in the app's ElhioBridge module. */
 export type AppCommand = 'openSetup' | 'openOptions';
@@ -89,20 +100,41 @@ export async function reportStateToApp(): Promise<AppCommand | null> {
   try {
     // Both are IPC hops and neither depends on the other, so overlap them: this sits on the handoff's
     // critical path, between the user's tap and the page they asked for.
-    const [{ hasCompletedSetup }, siteAccess] = await Promise.all([
-      settings.getValue(),
-      hasSiteAccess()
-    ]);
+    const [current, siteAccess] = await Promise.all([settings.getValue(), hasSiteAccess()]);
+    const synced = syncedSettings(current);
+    const settingsChangedAt = await noteSettingsChange(synced);
 
-    const reply = (await browser.runtime.sendNativeMessage(NATIVE_APPLICATION_ID, {
-      hasCompletedSetup,
+    const reply = (await sendToApp({
+      type: 'state',
+      hasCompletedSetup: current.hasCompletedSetup,
       hasSiteAccess: siteAccess,
       // The app has no way to know which site this build talks to — it's baked in here at build time
       // and differs between a dev server and production. It matters: the app opens this URL to hand
       // off to us, and the content script only honours the handoff marker on this exact host.
       websiteUrl: import.meta.env.VITE_WEBSITE_URL,
-      apiUrl: import.meta.env.VITE_API_URL
-    })) as NativeReply | undefined;
+      apiUrl: import.meta.env.VITE_API_URL,
+      settings: synced,
+      settingsChangedAt
+    }, REPORT_TIMEOUT_MS)) as NativeReply | undefined;
+
+    // Each write here triggers another report, which then shows the app the settings taken; the app
+    // stops sending them, so the round trips end.
+    let tookAll = true;
+    await applyAppSettings(reply).catch((error) => {
+      tookAll = false;
+      console.warn('[Guard] Could not take the settings from the app:', error);
+    });
+    await followAppSession(reply?.appSession).catch((error) => {
+      tookAll = false;
+      console.warn('[Guard] Could not follow the app\'s session:', error);
+    });
+    // Only once the reply is taken: after a failed write the old revision stays, so the next check asks
+    // again.
+    if (tookAll) {
+      await noteAppRevision(reply).catch((error) => {
+        console.warn('[Guard] Could not note the app\'s revision:', error);
+      });
+    }
 
     // Not awaited: this sits on the handoff's critical path, and nothing here depends on it landing.
     if (typeof reply?.appVersion === 'string') {

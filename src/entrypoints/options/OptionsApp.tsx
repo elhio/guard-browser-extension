@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react';
 import OnboardingWizard from '@/components/setup/OnboardingWizard';
 import SettingsDashboard from './SettingsDashboard';
 import { settings } from '@/lib/settings/store';
+import { OpenInApp } from '@/components/app/OpenInApp';
+import { APP_SETTINGS_URL, APP_SETUP_URL } from '@/lib/native/nativeApplication';
 
 export default function OptionsApp() {
   const [isSetupComplete, setIsSetupComplete] = useState<boolean | null>(null);
@@ -27,9 +29,22 @@ export default function OptionsApp() {
     );
   }
 
-  return isSetupComplete ? (
+  const page = isSetupComplete ? (
     <SettingsDashboard/>
   ) : (
     <OnboardingWizard onComplete={() => setIsSetupComplete(true)} />
   );
+
+  // On Safari, the settings and the setup live in the Elhio app
+  if (import.meta.env.SAFARI) {
+    return (
+      <OpenInApp
+        url={isSetupComplete ? APP_SETTINGS_URL : APP_SETUP_URL}
+        page={isSetupComplete ? 'settings' : 'setup'}
+      >
+        {page}
+      </OpenInApp>
+    );
+  }
+  return page;
 }

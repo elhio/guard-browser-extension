@@ -1,5 +1,6 @@
 import { ApiError } from '@/lib/api/errors';
 import { t } from '@/lib/i18n';
+import { fetchAppToken, usesAppSession } from '@/lib/native/appSession';
 import { clearSession, settings, type Settings } from '@/lib/settings/store';
 
 /**
@@ -13,6 +14,9 @@ import { clearSession, settings, type Settings } from '@/lib/settings/store';
  * renewal runs once at a time across all of them where the browser has Web Locks (Chrome, Firefox,
  * Safari 15.4+). Correctness doesn't depend on it: the API answers a context that renews with the
  * just-rotated token within a few seconds with the same new pair, instead of taking it for a thief.
+ *
+ * On Safari, Guard may use the container app's session instead (`lib/native/appSession.ts`): then the
+ * app's native part renews, and this module only asks it for a token.
  */
 
 /** The HTTP header that asks the API for the refresh token in the body rather than a cookie. */
@@ -136,6 +140,8 @@ async function renew(stale: string | null): Promise<string> {
   const current = await settings.getValue();
   if (!current.refreshToken) throw sessionOver();
   if (isFresh(current) && current.token !== stale) return current.token;
+  // The app's session: its native part renews, under the app's own lock.
+  if (usesAppSession(current)) return fetchAppToken(stale);
 
   const presented = current.refreshToken;
   const response = await fetch(apiUrl('/api/v1/auth/refresh'), {
@@ -185,8 +191,17 @@ async function renew(stale: string | null): Promise<string> {
 export async function endSession(): Promise<void> {
   const { refreshToken } = await settings.getValue();
   await clearSession();
-  if (!refreshToken) return;
+  // The app's session is the app's to end; signing out happens there.
+  if (!refreshToken || usesAppSession({ refreshToken })) return;
+  await revokeRefreshToken(refreshToken);
+}
 
+/**
+ * Ends the session of `refreshToken` at the API; best effort, it never throws.
+ *
+ * @param refreshToken - The refresh token of the session to end
+ */
+export async function revokeRefreshToken(refreshToken: string): Promise<void> {
   try {
     await fetch(apiUrl('/api/v1/auth/logout'), {
       method: 'POST',

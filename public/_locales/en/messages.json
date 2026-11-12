@@ -588,5 +588,11 @@
   "menu_share_valid_7d": { "message": "7 days" },
   "menu_action_create": { "message": "Create" },
   "menu_action_copy": { "message": "Copy" },
-  "menu_action_copied": { "message": "Copied" }
+  "menu_action_copied": { "message": "Copied" },
+  "open_in_app_title": { "message": "Opening Elhio…" },
+  "open_in_app_settings_body": { "message": "Guard's settings are in the Elhio app." },
+  "open_in_app_setup_body": { "message": "Guard is set up in the Elhio app." },
+  "open_in_app_button": { "message": "Open Elhio" },
+  "open_in_app_settings_here": { "message": "Show the settings here instead" },
+  "open_in_app_setup_here": { "message": "Set up Guard here instead" }
 }
